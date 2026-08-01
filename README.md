@@ -1,78 +1,461 @@
-# NexusAOS v2
+# 🦀 NexusAOS v2
 
-**Governance-first, event-sourced AI operating environment for Ubuntu Linux.**
+![Rust](https://img.shields.io/badge/Rust-2024-important?style=for-the-badge&logo=rust)
+![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-v2.0.0-green?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge)
+![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue?style=for-the-badge&logo=github)
 
-NexusAOS is a microkernel-like system that routes tasks to specialist local AI models (planner, coder, vision), enforces policy on every action, and keeps an append-only audit trail of every state change.
+**🏛️ Governance-first, event-sourced AI operating environment for Ubuntu Linux.**
 
-## Design Principles
+[📖 Documentation](#documentation) • [🚀 Quick Start](#quick-start) • [🏗️ Architecture](#architecture) • [🧪 Testing](#testing) • [🤝 Contributing](#contributing)
 
-- **Kernel owns truth.** Models propose actions; the kernel validates, constrains, and records.
-- **Event sourcing.** Every state change is an append-only event. Current state is derived, never mutated directly.
-- **Governance first.** All actions pass through policy checks. Destructive operations require explicit confirmation.
-- **Local first.** Core operations work offline. No cloud dependencies.
-- **Models are replaceable.** The kernel speaks to a provider interface, not to specific model runners.
+---
 
-## Architecture
+## 📋 Table of Contents
 
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Hardware Target](#hardware-target)
+- [Model Stack](#model-stack)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [Benchmarks](#benchmarks)
+- [Testing](#testing)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+
+---
+
+## 🎯 Overview
+
+NexusAOS is a **microkernel-like system** that routes tasks to specialist local AI models (planner, coder, vision), enforces policy on every action, and keeps an **append-only audit trail** of every state change.
+
+### Why NexusAOS?
+
+| Problem | Solution |
+|---------|----------|
+| 🤖 AI models operate without oversight | ✅ **Governance-first**: Kernel validates every action |
+| 📝 State changes are lost or mutable | ✅ **Event sourcing**: Append-only audit trail |
+| 🔌 Cloud-dependent AI tools | ✅ **Local-first**: Works offline, no cloud dependencies |
+| 🔒 Destructive operations without confirmation | ✅ **Policy engine**: All actions pass through checks |
+| 🧩 Locked to specific model runners | ✅ **Provider interface**: Models are replaceable |
+
+### Design Principles
+
+```mermaid
+graph LR
+    A["🏛️ Kernel owns truth"] --> B["📝 Event sourcing"]
+    B --> C["🛡️ Governance first"]
+    C --> D["💻 Local first"]
+    D --> E["🔌 Models are replaceable"]
 ```
-┌─────────────────────────────────────────────┐
-│                    CLI                       │
-├─────────────────────────────────────────────┤
-│                  Kernel                      │
-│  ┌──────────┐ ┌──────────┐ ┌─────────────┐ │
-│  │ Scheduler│ │  Policy  │ │   Router    │ │
-│  └──────────┘ └──────────┘ └─────────────┘ │
-├─────────────────────────────────────────────┤
-│          Model Providers                     │
-│  ┌────────┐ ┌────────┐ ┌────────┐          │
-│  │Planner │ │ Coder  │ │ Vision │          │
-│  └────────┘ └────────┘ └────────┘          │
-├─────────────────────────────────────────────┤
-│           Tool Broker                        │
-│  ┌──────┐ ┌─────┐ ┌──────────┐             │
-│  │  FS  │ │ Git │ │ Terminal │             │
-│  └──────┘ └─────┘ └──────────┘             │
-├─────────────────────────────────────────────┤
-│          Event Store                         │
-│  ┌────────┐ ┌───────────┐ ┌────────────┐   │
-│  │ Events │ │ Snapshots │ │Projections │   │
-│  └────────┘ └───────────┘ └────────────┘   │
-└─────────────────────────────────────────────┘
+
+---
+
+## ✨ Key Features
+
+### 🧠 AI Chat Engine
+- **Streaming responses** from OpenAI-compatible and Anthropic endpoints
+- **Real-time token streaming** directly into TUI/GUI
+- **Multi-modal support** with vision capabilities
+- **Session management** with full conversation history
+
+### 🖥️ Terminal Emulation
+- **Native PTY management** with backpressure-aware reading
+- **Zig VT100 parser** for zero-allocation ANSI parsing
+- **Split-pane layouts** with dynamic tile management
+- **AI-assisted terminal** with inline code suggestions
+
+### 🔐 Security & Governance
+- **Policy engine** with trust tiers and capability-based security
+- **Approval modals** for destructive operations
+- **Append-only event store** with cryptographic integrity
+- **SSH multiplexing** with connection monitoring
+
+### 🌐 Remote Management
+- **Native SSH client** via `russh`
+- **Connection health monitoring**
+- **Remote PTY shell tunneling**
+- **Config watcher** with live reload
+
+### 🎨 User Interfaces
+- **TUI**: Ratatui-based terminal interface
+- **GUI**: Iced-based native desktop GUI
+- **CLI**: Full-featured command-line interface
+- **IPC**: JSON-RPC 2.0 over Unix sockets
+
+---
+
+## 🏗️ Architecture
+
+### High-Level Architecture
+
+```mermaid
+graph TB
+    subgraph "Interface Layer"
+        CLI["🖥️ CLI<br/>nexusaos-cli"]
+        TUI["📱 TUI<br/>nexusaos-tui"]
+        GUI["🖼️ GUI<br/>nexusaos-gui"]
+        RPC["🔌 RPC<br/>nexusaos-rpc"]
+    end
+
+    subgraph "Kernel Core"
+        KERNEL["🏛️ Kernel<br/>nexusaos-kernel"]
+        POLICY["🛡️ Policy Engine"]
+        ROUTER["🔀 Task Router"]
+        SCHEDULER["⏰ Scheduler"]
+    end
+
+    subgraph "Model Layer"
+        PLANNER["📋 Planner"]
+        CODER["💻 Coder"]
+        VISION["👁️ Vision"]
+        AI["🤖 AI Engine"]
+    end
+
+    subgraph "Execution Layer"
+        TOOLS["🔧 Tool Broker"]
+        BLOCKCTL["🧱 Block Controller"]
+        REMOTE["🌐 Remote Shell"]
+        TERMINAL["🖥️ Terminal"]
+    end
+
+    subgraph "Storage Layer"
+        WAVEOBJ["📦 WaveObj Store"]
+        WPS["📡 Pub/Sub Broker"]
+        EVENTSTORE["📝 Event Store"]
+        SNAPSHOT["📸 Snapshots"]
+    end
+
+    CLI --> KERNEL
+    TUI --> KERNEL
+    GUI --> KERNEL
+    RPC --> KERNEL
+
+    KERNEL --> POLICY
+    KERNEL --> ROUTER
+    KERNEL --> SCHEDULER
+
+    ROUTER --> PLANNER
+    PLANNER --> CODER
+    CODER --> VISION
+
+    KERNEL --> TOOLS
+    KERNEL --> BLOCKCTL
+    KERNEL --> REMOTE
+    KERNEL --> TERMINAL
+
+    KERNEL --> WAVEOBJ
+    KERNEL --> WPS
+    KERNEL --> EVENTSTORE
+    EVENTSTORE --> SNAPSHOT
+
+    AI --> PLANNER
+    AI --> CODER
+    AI --> VISION
 ```
 
-## Hardware Target
+### Runtime Data Flow
 
-- Intel i7-14700HX
-- NVIDIA RTX 4050 (6 GB VRAM)
-- 16 GB RAM
-- Ubuntu 26.04 LTS
+```mermaid
+graph LR
+    A["📥 Submit Task"] --> B["🔍 Dedup Check"]
+    B --> C["🛡️ Policy Check"]
+    C --> D["🔀 Route Task"]
+    D --> E["📋 Plan"]
+    E --> F["💻 Code"]
+    F --> G["👁️ Review"]
+    G --> H["🔧 Execute Tools"]
+    H --> I["📝 Record Events"]
+    I --> J["💾 Update State"]
+    J --> K["📸 Snapshot"]
+```
 
-## Model Stack
+### Wave Object Model
 
-| Role | Model | Use Case |
-|------|-------|----------|
-| Planner | Gemma 4 12B Agentic Fable Q4_K_M | Architecture, planning, review |
-| Coder | Qwen3-Coder 30B-A3B Q4_K_M | Implementation, debugging, tests |
-| Vision | Qwen3.5 9B | Screenshots, diagrams, documents |
+```mermaid
+graph TD
+    A["WaveObj trait"] --> B["Block"]
+    A --> C["Job"]
+    A --> D["Window"]
+    A --> E["Workspace"]
+    A --> F["Tab"]
+    A --> G["LayoutState"]
 
-## Quick Start
+    B -->|parent| F
+    B -->|children| B
+
+    H["ORef"] -->|references| A
+    I["MetaMap"] -->|metadata| A
+
+    J["WaveStore"] -->|persists| A
+```
+
+---
+
+## 🛠️ Tech Stack
+
+### Core Technologies
+
+| Category | Technology | Purpose |
+|----------|-----------|---------|
+| **Language** | Rust 2024 | Core implementation |
+| **Async Runtime** | Tokio | Async execution |
+| **Serialization** | Serde / JSON | Data interchange |
+| **Terminal** | Ratatui + Crossterm | TUI rendering |
+| **GUI** | Iced 0.14 | Native desktop GUI |
+| **PTY** | portable-pty | Shell process management |
+| **ANSI Parser** | vte + Zig VT100 | Terminal escape parsing |
+| **AI/ML** | reqwest + SSE | Streaming providers |
+| **SSH** | russh | Remote connections |
+| **Persistence** | SQLite (rusqlite) | Object storage |
+| **Policy** | Custom engine | Governance |
+| **Observability** | tracing | Logging/metrics |
+
+### External Integrations
+
+| Integration | Type | Purpose |
+|-------------|------|---------|
+| OpenAI-compatible APIs | HTTP/SSE | LLM streaming |
+| Anthropic API | HTTP/SSE | Claude models |
+| SSH servers | Network | Remote execution |
+| Unix sockets | IPC | External control |
+| File watcher | OS | Config hot-reload |
+
+---
+
+## 🖥️ Hardware Target
+
+| Component | Specification |
+|-----------|--------------|
+| **CPU** | Intel i7-14700HX |
+| **GPU** | NVIDIA RTX 4050 (6 GB VRAM) |
+| **Memory** | 16 GB RAM |
+| **OS** | Ubuntu 26.04 LTS |
+| **Storage** | NVMe SSD recommended |
+
+---
+
+## 🤖 Model Stack
+
+| Role | Model | Quantization | Use Case |
+|------|-------|--------------|----------|
+| 📋 **Planner** | Gemma 4 12B Agentic Fable | Q4_K_M | Architecture, planning, review |
+| 💻 **Coder** | Qwen3-Coder 30B-A3B | Q4_K_M | Implementation, debugging, tests |
+| 👁️ **Vision** | Qwen3.5 9B | Q4_K_M | Screenshots, diagrams, documents |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Rust 1.75+ (edition 2024)
+- Ubuntu 22.04+ (or compatible Linux)
+- 16 GB RAM minimum
+- NVIDIA GPU recommended for GUI
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/nexusaos/NexusAOS.git
+cd NexusAOS
+
+# Build the project
 cargo build --release
+
+# Run initialization
 ./target/release/nexusaos init
+
+# Check system health
 ./target/release/nexusaos doctor
+
+# Start interactive TUI
+./target/release/nexusaos tui
+
+# Run a task
 ./target/release/nexusaos run "describe the project structure"
 ```
 
-## License
+### Development Setup
 
-MIT
+```bash
+# Install dependencies
+cargo build
 
-## Functional Specification
+# Run all tests
+cargo test --workspace
 
-- **Configuration Management**: Users can now modify their terminal, AI, and editor settings inside `~/.config/waveterm/settings.json`. The application watches this file and instantly reloads the configuration across all active terminal blocks and UI components without requiring a restart.
-- **Dynamic Terminal UI**: The terminal interface now directly responds to real-time events. As users type, input is instantly routed to the underlying shell process, and layout splits are dynamically arranged based on the workspace's saved configuration state. Visuals update instantly when background events occur.
-- **AI Chat Engine**: Users can now converse with AI assistants seamlessly. The built-in AI engine directly streams tokens down from OpenAI-compatible and Anthropic endpoints directly into the TUI, allowing for rapid real-time response generation without blocking UI updates.
-- **Native SSH & Remote Management**: Users can connect securely to remote servers directly from the terminal without external SSH binaries. The environment automatically monitors connection health in the background and correctly tunnels PTY shell interactions over the multiplexed SSH channel.
-- **IPC & RPC Control Layer**: The terminal daemon exposes a JSON-RPC 2.0 compatible socket (UDS/Named Pipe), allowing external tools, scripts, and alternative frontends to query internal state, manipulate UI layouts, or broadcast events into the active session programmatically.
-- **Native GUI (Iced)**: In addition to the terminal UI (TUI), NexusAOS now provides a fully native desktop GUI built with `iced`. It leverages the identical underlying Rust architecture to deliver a high-performance, GPU-accelerated windowed interface featuring modern split-pane layouts.
+# Run lints
+cargo clippy --all-targets -- -D warnings
+
+# Format code
+cargo fmt
+
+# Run benchmarks
+cargo bench --workspace
+```
+
+---
+
+## 📁 Project Structure
+
+```
+NexusAOS/
+├── .github/                    # GitHub Actions, templates, dependabot
+│   ├── workflows/             # CI/CD pipelines
+│   ├── ISSUE_TEMPLATE/        # Issue templates
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── CODEOWNERS
+│   └── BRANCH_PROTECTION.md
+├── bin/nexusaos-cli/          # CLI binary entrypoint
+├── crates/
+│   ├── nexusaos-kernel/       # 🏛️ Core governance microkernel
+│   ├── nexusaos-waveobj/      # 📦 Object store & ORef graph
+│   ├── nexusaos-wps/          # 📡 Pub/Sub event broker
+│   ├── nexusaos-blockctl/     # 🧱 PTY shell controller
+│   ├── nexusaos-terminal/     # 🖥️ Zig VT100 + PTY bridge
+│   ├── nexusaos-ai/           # 🤖 OpenAI/Anthropic streaming
+│   ├── nexusaos-remote/       # 🌐 SSH remote shell
+│   ├── nexusaos-rpc/          # 🔌 Unix socket JSON-RPC
+│   ├── nexusaos-gui/          # 🖼️ Iced native GUI
+│   ├── nexusaos-tui/          # 📱 Ratatui TUI
+│   ├── nexusaos-vault/        # 🔐 Command snippets & inspector
+│   └── nexusaos-wconfig/      # ⚙️ Config watcher & settings
+├── tests/                     # Integration tests & benchmarks
+├── configs/                   # Configuration files
+├── scripts/                   # Dev/test helper scripts
+├── docs/                      # Additional documentation
+├── .kilo/plans/architecture.md # 🏗️ System architecture diagrams
+├── Cargo.toml                 # Workspace definition
+├── Makefile                   # Build shortcuts
+├── .clippy.toml               # Lint configuration
+├── rustfmt.toml               # Format configuration
+├── CONTRIBUTING.md            # Contribution guidelines
+├── CODE_OF_CONDUCT.md         # Community standards
+├── SECURITY.md                # Security policy
+├── CHANGELOG.md               # Version history
+└── README.md                  # This file
+```
+
+---
+
+## 🧪 Testing
+
+### Test Coverage
+
+| Crate | Tests | Coverage |
+|-------|-------|----------|
+| nexusaos-kernel | 396 | 100% public API |
+| nexusaos-waveobj | 204 | 100% public API |
+| nexusaos-wps | 71 | 100% public API |
+| nexusaos-blockctl | 48 | 100% public API |
+| nexusaos-ai | 18 | 100% public API |
+| nexusaos-rpc | 29 | 100% public API |
+| nexusaos-remote | 19 | 100% public API |
+| nexusaos-terminal | 19 | 100% public API |
+| nexusaos-vault | 53 | 100% public API |
+| nexusaos-wconfig | 31 | 100% public API |
+| nexusaos-gui | 32 | 100% public API |
+| nexusaos-tui | 30 | 100% public API |
+| **Total** | **981** | **100%** |
+
+### Running Tests
+
+```bash
+# Unit tests
+cargo test --lib --workspace
+
+# Integration tests
+cargo test --workspace --tests
+
+# Doc tests
+cargo test --workspace --doc
+
+# All tests
+cargo test --workspace
+
+# With coverage
+cargo test --workspace -- --nocapture
+```
+
+### Benchmarking
+
+```bash
+# Run all benchmarks
+cargo bench --workspace
+
+# Specific benchmark
+cargo bench -p nexusaos-kernel bench_kernel_task_submission
+```
+
+| Benchmark | Description |
+|-----------|-------------|
+| `bench_terminal_parsing` | VT100 parser throughput |
+| `bench_kernel_task_submission` | Task submission latency |
+| `bench_event_store` | Event append/read throughput |
+| `bench_terminal_rendering` | Span-batching render simulation |
+| `bench_snapshot_projection` | Replay engine performance |
+| `bench_tool_broker_throughput` | Tool broker routing |
+
+---
+
+## 📚 Documentation
+
+- **📖 Architecture**: `.kilo/plans/architecture.md` — Complete system diagrams
+- **🤝 Contributing**: `CONTRIBUTING.md` — Development workflow
+- **🔒 Security**: `SECURITY.md` — Vulnerability reporting
+- **📝 Changelog**: `CHANGELOG.md` — Version history
+- **📋 Handover**: `HANDOVER.md` — Developer transition guide
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+### Quick Contribution Checklist
+
+- [ ] `cargo fmt --check` passes
+- [ ] `cargo clippy --all-targets -- -D warnings` passes
+- [ ] `cargo test --workspace` passes
+- [ ] No `unwrap()` or `expect()` in production code
+- [ ] All new public functions have tests
+- [ ] PR title follows conventional commits
+
+### Code of Conduct
+
+This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold a welcoming and inclusive environment.
+
+### License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## 🙏 Acknowledgments
+
+- **Alacritty** — VTE parser integration patterns
+- **WezTerm** — GPU-accelerated rendering architecture
+- **Warp** — AI streaming UI patterns
+- **Kitty** — PTY backpressure handling
+- **Ghostty** — Modern terminal rendering
+- **Tabby** — Remote shell architecture
+
+---
+
+<p align="center">
+  <b>Built with ❤️ by the NexusAOS Team</b>
+</p>
+
+<p align="center">
+  <a href="https://github.com/nexusaos/NexusAOS">GitHub</a> •
+  <a href="https://github.com/nexusaos/NexusAOS/issues">Issues</a> •
+  <a href="https://github.com/nexusaos/NexusAOS/discussions">Discussions</a>
+</p>

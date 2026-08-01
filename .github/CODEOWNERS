@@ -1,0 +1,42 @@
+# CODEOWNERS
+
+# Global owners
+* @nexusaos-maintainers
+
+# Core kernel
+crates/nexusaos-kernel/src/runtime/ @nexusaos-maintainers
+crates/nexusaos-kernel/src/policy.rs @nexusaos-maintainers
+crates/nexusaos-kernel/src/storage/ @nexusaos-maintainers
+
+# Wave object model
+crates/nexusaos-waveobj/src/store.rs @nexusaos-maintainers
+crates/nexusaos-waveobj/src/types.rs @nexusaos-maintainers
+
+# Pub/Sub
+crates/nexusaos-wps/src/broker.rs @nexusaos-maintainers
+
+# Block controller
+crates/nexusaos-blockctl/src/ @nexusaos-maintainers
+
+# Terminal / PTY
+crates/nexusaos-terminal/src/ @nexusaos-maintainers
+
+# AI providers
+crates/nexusaos-ai/src/ @nexusaos-maintainers
+
+# GUI / TUI
+crates/nexusaos-gui/src/ @nexusaos-maintainers
+crates/nexusaos-tui/src/ @nexusaos-maintainers
+
+# Remote / RPC
+crates/nexusaos-remote/src/ @nexusaos-maintainers
+crates/nexusaos-rpc/src/ @nexusaos-maintainers
+
+# Vault / Config
+crates/nexusaos-vault/src/ @nexusaos-maintainers
+crates/nexusaos-wconfig/src/ @nexusaos-maintainers
+
+# CI / Docs
+.github/ @nexusaos-maintainers
+CONTRIBUTING.md @nexusaos-maintainers
+README.md @nexusaos-maintainers

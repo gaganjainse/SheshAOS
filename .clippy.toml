@@ -1,0 +1,17 @@
+# Clippy configuration for NexusAOS
+# See https://doc.rust-lang.org/clippy/ for all options
+
+# Pedantic lints
+pedantic = true
+nursery = true
+
+# Specific lint settings
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+todo = "warn"
+unimplemented = "deny"
+
+# Allow some noisy lints
+allow-dbiquery = true
+allow-comparison-chain = true
