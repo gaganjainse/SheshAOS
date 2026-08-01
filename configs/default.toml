@@ -1,0 +1,93 @@
+# NexusAOS default configuration
+# This file defines the baseline settings. Override per-project via local config.
+
+[general]
+# Directory where NexusAOS stores events, snapshots, and artifacts
+data_dir = "~/.nexusaos/data"
+# Log level: trace, debug, info, warn, error
+log_level = "info"
+
+[resource_limits]
+# Maximum RAM usage in MB before refusing new work
+max_ram_mb = 12288
+# Maximum VRAM usage in MB before refusing model loads
+max_vram_mb = 5632
+# Maximum context tokens for any single inference request
+max_context_tokens = 65536
+# Maximum number of tasks in the scheduler queue
+max_queue_depth = 32
+# Minimum free disk space in GB before refusing writes
+min_disk_free_gb = 5
+
+[policy]
+# Default policy: require confirmation for destructive actions
+confirm_destructive = true
+# Default policy: require confirmation for file writes
+confirm_writes = true
+# Default policy: require confirmation for git commits
+confirm_git_commits = true
+# Default policy: require confirmation for terminal commands
+confirm_terminal = true
+# Task deduplication window in seconds
+dedup_window_secs = 5
+
+[context]
+# Default context budget for simple questions (tokens)
+simple_question = 8192
+# Default context budget for code edits (tokens)
+code_edit = 16384
+# Default context budget for feature work (tokens)
+feature_work = 32768
+# Default context budget for architecture reasoning (tokens)
+architecture = 65536
+# RAM headroom required below available before allowing inference (MB)
+ram_headroom_mb = 2048
+
+# Model provider configurations
+# Each provider maps to a role (planner, coder, vision)
+
+[[model_providers]]
+name = "gemma-planner"
+role = "planner"
+base_url = "http://127.0.0.1:1234"
+model_id = "gemma-4-12b-agentic-fable5-composer2.5-v2-3.5x-tau2"
+max_context = 32768
+
+[[model_providers]]
+name = "qwen-coder"
+role = "coder"
+base_url = "http://127.0.0.1:1234"
+model_id = "qwen3-coder-30b-a3b-instruct"
+max_context = 65536
+
+[[model_providers]]
+name = "qwen-vision"
+role = "vision"
+base_url = "http://127.0.0.1:1234"
+model_id = "qwen/qwen3.5-9b"
+max_context = 16384
+supports_vision = true
+
+# Tool configuration
+
+[tools.filesystem]
+# Allowed root paths for filesystem operations
+allowed_paths = ["."]
+# Denied patterns (glob)
+denied_patterns = ["**/.git/objects/**", "**/node_modules/**", "**/target/**"]
+
+[tools.git]
+# Whether git operations are enabled
+enabled = true
+
+[tools.terminal]
+# Maximum execution time for terminal commands in seconds
+timeout_secs = 30
+# Allowed command prefixes (empty = all allowed but gated by confirmation)
+allowed_prefixes = []
+# Denied command prefixes
+denied_prefixes = ["rm -rf /", "sudo rm", "mkfs", "dd if="]
+
+[shutdown]
+# Maximum time to wait for active tasks during shutdown (seconds)
+drain_timeout_secs = 10

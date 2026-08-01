@@ -1,0 +1,20 @@
+[package]
+name = "nexusaos-waveobj"
+version = "0.1.0"
+edition = "2024"
+description = "Wave Terminal object store: ORef graph, SQLite persistence, and typed metadata"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+rusqlite = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+
+[lints]
+workspace = true

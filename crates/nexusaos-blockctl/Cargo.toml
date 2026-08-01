@@ -1,0 +1,24 @@
+[package]
+name = "nexusaos-blockctl"
+version = "0.1.0"
+edition = "2024"
+description = "Block controller: PTY terminal lifecycle, shell execution, and I/O routing"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+portable-pty = { workspace = true }
+nexusaos-waveobj = { workspace = true }
+nexusaos-wps = { workspace = true }
+async-trait = "0.1"
+
+[dev-dependencies]
+tokio = { workspace = true }
+
+[lints]
+workspace = true

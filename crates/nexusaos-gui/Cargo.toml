@@ -1,0 +1,21 @@
+[package]
+name = "nexusaos-gui"
+version = "0.1.0"
+edition = "2024"
+description = "Native GUI for NexusAOS using iced"
+
+[dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+iced = { version = "0.14", features = ["tokio", "canvas"] }
+portable-pty = { workspace = true }
+vte = "0.13"
+nexusaos-wps = { workspace = true }
+nexusaos-waveobj = { workspace = true }
+nexusaos-blockctl = { workspace = true }
+nexusaos-wconfig = { workspace = true }
+tracing = { workspace = true }
+nexusaos-ai = { version = "0.1.0", path = "../nexusaos-ai" }
+nexusaos-remote = { version = "0.1.0", path = "../nexusaos-remote" }
+
+[lints]
+workspace = true

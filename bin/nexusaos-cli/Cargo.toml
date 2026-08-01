@@ -1,0 +1,23 @@
+[package]
+name = "nexusaos"
+version = "0.1.0"
+edition = "2024"
+description = "NexusAOS CLI Application Binary"
+license = "MIT"
+
+[[bin]]
+name = "nexusaos"
+path = "src/main.rs"
+
+[dependencies]
+nexusaos-kernel.workspace = true
+nexusaos-vault.workspace = true
+nexusaos-tui.workspace = true
+nexusaos-terminal.workspace = true
+tokio.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+crossterm.workspace = true
+ratatui.workspace = true

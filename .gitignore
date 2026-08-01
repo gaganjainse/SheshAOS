@@ -1,0 +1,46 @@
+# ===== Rust =====
+/target
+**/*.rs.bk
+*.pdb
+
+# Cargo workspace build artifacts (any nested crate)
+crates/*/target
+bin/*/target
+tests/*/target
+
+# ===== Secrets / Local config =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ===== Editor / Agent state =====
+.claude/
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# ===== Third-party vendored repos (have their own upstream) =====
+/waveterm
+
+# ===== Runtime data =====
+/data/artifacts
+/data/events
+/data/snapshots
+
+# ===== Python scratch / tooling =====
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== Zig cache =====
+zig-cache/
+zig-out/

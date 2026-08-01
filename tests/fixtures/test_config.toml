@@ -1,0 +1,57 @@
+[general]
+data_dir = "/tmp/nexusaos-test"
+log_level = "debug"
+
+[resource_limits]
+max_ram_mb = 12288
+max_vram_mb = 5632
+max_context_tokens = 65536
+max_queue_depth = 32
+min_disk_free_gb = 5
+
+[policy]
+confirm_destructive = true
+confirm_writes = false
+confirm_git_commits = false
+confirm_terminal = true
+dedup_window_secs = 1
+
+[context]
+simple_question = 8192
+code_edit = 16384
+feature_work = 32768
+architecture = 65536
+ram_headroom_mb = 2048
+
+[[model_providers]]
+name = "test-planner"
+role = "planner"
+base_url = "http://127.0.0.1:11111"
+model_id = "test-planner-model"
+max_context = 32768
+
+[[model_providers]]
+name = "test-coder"
+role = "coder"
+base_url = "http://127.0.0.1:11112"
+model_id = "test-coder-model"
+max_context = 65536
+
+[[model_providers]]
+name = "test-vision"
+role = "vision"
+base_url = "http://127.0.0.1:11113"
+model_id = "test-vision-model"
+max_context = 16384
+supports_vision = true
+
+[tools.filesystem]
+allowed_paths = ["/tmp/nexusaos-test"]
+denied_patterns = ["**/.git/objects/**"]
+
+[tools.git]
+enabled = true
+
+[tools.terminal]
+timeout_secs = 5
+denied_prefixes = ["rm -rf /"]

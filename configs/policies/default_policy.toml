@@ -1,0 +1,76 @@
+# NexusAOS default policy
+# Defines the baseline security and governance rules.
+
+[defaults]
+# Default decision for any unmatched action
+default_decision = "deny"
+
+# Trust tiers:
+# 0 = untrusted (all confirmations required)
+# 1 = basic (read operations allowed, writes confirmed)
+# 2 = trusted (most operations allowed, destructive confirmed)
+# 3 = autonomous (all operations allowed — use with extreme caution)
+default_trust_tier = 1
+
+# Rules are evaluated in order. First match wins.
+
+[[rules]]
+name = "allow-read-filesystem"
+action_pattern = "filesystem.read_*"
+decision = "allow"
+trust_tier = 0
+
+[[rules]]
+name = "allow-list-filesystem"
+action_pattern = "filesystem.list_*"
+decision = "allow"
+trust_tier = 0
+
+[[rules]]
+name = "confirm-write-filesystem"
+action_pattern = "filesystem.write_*"
+decision = "require_confirmation"
+trust_tier = 1
+
+[[rules]]
+name = "confirm-delete-filesystem"
+action_pattern = "filesystem.delete_*"
+decision = "require_confirmation"
+trust_tier = 1
+
+[[rules]]
+name = "allow-git-status"
+action_pattern = "git.status"
+decision = "allow"
+trust_tier = 0
+
+[[rules]]
+name = "allow-git-diff"
+action_pattern = "git.diff"
+decision = "allow"
+trust_tier = 0
+
+[[rules]]
+name = "allow-git-log"
+action_pattern = "git.log"
+decision = "allow"
+trust_tier = 0
+
+[[rules]]
+name = "confirm-git-commit"
+action_pattern = "git.commit"
+decision = "require_confirmation"
+trust_tier = 1
+
+[[rules]]
+name = "confirm-terminal"
+action_pattern = "terminal.*"
+decision = "require_confirmation"
+trust_tier = 1
+
+[[rules]]
+name = "deny-destructive-terminal"
+action_pattern = "terminal.execute"
+decision = "deny"
+trust_tier = 0
+description = "Deny terminal execution at trust tier 0"

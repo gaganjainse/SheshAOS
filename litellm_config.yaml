@@ -1,0 +1,90 @@
+litellm_settings:
+  drop_params: true  # Drops Anthropic parameters to prevent breaking NVIDIA NIM
+
+NVIDIA_NIM_API_KEY=REDACTED-NVIDIA-NIM-KEY
+
+model_list:
+  - model_name: nvidia/nemotron-3-ultra-550b-a55b
+    litellm_params:
+      model: nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: zhipuai/glm-5.2
+    litellm_params:
+      model: nvidia_nim/zhipuai/glm-5.2
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: thinkingmachines/inkling
+    litellm_params:
+      model: nvidia_nim/thinkingmachines/inkling
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: poolside/laguna-xs-2.1
+    litellm_params:
+      model: nvidia_nim/poolside/laguna-xs-2.1
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: stepfun/step-3.7-flash
+    litellm_params:
+      model: nvidia_nim/stepfun/step-3.7-flash
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: deepseek-ai/deepseek-v4-flash
+    litellm_params:
+      model: nvidia_nim/deepseek-ai/deepseek-v4-flash
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: deepseek-ai/deepseek-v4-pro
+    litellm_params:
+      model: nvidia_nim/deepseek-ai/deepseek-v4-pro
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: mistralai/mistral-medium-3.5-120b
+    litellm_params:
+      model: nvidia_nim/mistralai/mistral-medium-3.5-120b
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: nvidia/nemotron-3-super-120b-a12b
+    litellm_params:
+      model: nvidia_nim/nvidia/nemotron-3-super-120b-a12b
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: qwen/qwen3-next-80b-a3b-instruct
+    litellm_params:
+      model: nvidia_nim/qwen/qwen3-next-80b-a3b-instruct
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: openai/gpt-oss-120b
+    litellm_params:
+      model: nvidia_nim/openai/gpt-oss-120b
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: meta/llama-3.3-70b-instruct
+    litellm_params:
+      model: nvidia_nim/meta/llama-3.3-70b-instruct
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: meta/llama-3.2-90b-vision-instruct
+    litellm_params:
+      model: nvidia_nim/meta/llama-3.2-90b-vision-instruct
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: meta/llama-3.1-70b-instruct
+    litellm_params:
+      model: nvidia_nim/meta/llama-3.1-70b-instruct
+      api_key: os.environ/NVIDIA_NIM_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+

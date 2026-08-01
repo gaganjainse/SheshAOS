@@ -1,0 +1,54 @@
+[package]
+name = "nexusaos-tests"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "lib.rs"
+
+[[test]]
+name = "integration"
+path = "integration/cli_kernel_tools_flow.rs"
+
+[[test]]
+name = "visual"
+path = "visual/terminal_rendering.rs"
+
+[[test]]
+name = "pty"
+path = "pty/pty_integration.rs"
+
+[[bench]]
+name = "performance"
+path = "benchmarks/performance.rs"
+
+[[test]]
+name = "ai_integration"
+path = "ai_integration/ai_provider.rs"
+
+[dependencies]
+nexusaos-gui = { path = "../crates/nexusaos-gui" }
+nexusaos-ai = { path = "../crates/nexusaos-ai" }
+nexusaos-kernel = { path = "../crates/nexusaos-kernel" }
+nexusaos-terminal = { path = "../crates/nexusaos-terminal" }
+nexusaos-remote = { path = "../crates/nexusaos-remote" }
+nexusaos-wps = { path = "../crates/nexusaos-wps" }
+nexusaos-waveobj = { path = "../crates/nexusaos-waveobj" }
+nexusaos-blockctl = { path = "../crates/nexusaos-blockctl" }
+nexusaos-wconfig = { path = "../crates/nexusaos-wconfig" }
+
+# Test dependencies
+async-trait = "0.1"
+vte = "0.13"
+tokio = { version = "1", features = ["full", "test-util"] }
+criterion = "0.5"
+tempfile = "3.8"
+mockito = "1.2"
+image = "0.25"
+futures = "0.3"
+uuid = { version = "1", features = ["v4", "v7", "serde"] }
+portable-pty = "0.8"
+russh = "0.45"
+iced = { version = "0.14", features = ["canvas"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"
