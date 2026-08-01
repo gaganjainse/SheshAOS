@@ -194,6 +194,7 @@ impl PolicyEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Utc;
 
     fn test_rules() -> Vec<PolicyRule> {
         vec![
@@ -304,5 +305,218 @@ mod tests {
         let json = serde_json::to_string(&decision).expect("serialize");
         let back: PolicyDecision = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(decision, back);
+    }
+
+    #[test]
+    fn test_trust_tier_getter() {
+        let engine = PolicyEngine::new(vec![], TrustTier::Trusted);
+        assert_eq!(engine.trust_tier(), TrustTier::Trusted);
+    }
+
+    #[test]
+    fn test_set_trust_tier() {
+        let mut engine = PolicyEngine::new(vec![], TrustTier::Untrusted);
+        engine.set_trust_tier(TrustTier::Autonomous);
+        assert_eq!(engine.trust_tier(), TrustTier::Autonomous);
+    }
+
+    #[test]
+    fn test_add_rule_then_evaluate() {
+        let mut engine = PolicyEngine::deny_all();
+        engine.add_rule(PolicyRule {
+            name: "allow-read".into(),
+            action_pattern: "fs.read".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        });
+        let decision = engine.evaluate("fs.read");
+        assert!(decision.is_allowed());
+    }
+
+    #[test]
+    fn test_matches_pattern_exact() {
+        let engine = PolicyEngine::new(vec![], TrustTier::Autonomous);
+        assert!(engine.matches_pattern("fs.read", "fs.read"));
+        assert!(!engine.matches_pattern("fs.read", "fs.write"));
+    }
+
+    #[test]
+    fn test_matches_pattern_wildcard() {
+        let engine = PolicyEngine::new(vec![], TrustTier::Autonomous);
+        assert!(engine.matches_pattern("*", "anything"));
+        assert!(engine.matches_pattern("fs.*", "fs.read"));
+        assert!(engine.matches_pattern("fs.*", "fs.write"));
+        assert!(!engine.matches_pattern("fs.*", "db.query"));
+    }
+
+    #[test]
+    fn test_matches_pattern_prefix_only() {
+        let engine = PolicyEngine::new(vec![], TrustTier::Autonomous);
+        assert!(engine.matches_pattern("fs.read_", "fs.read_file"));
+        assert!(engine.matches_pattern("fs.read_", "fs.read_dir"));
+        assert!(!engine.matches_pattern("fs.read_", "fs.write_file"));
+    }
+
+    #[test]
+    fn test_parse_decision_unknown() {
+        let engine = PolicyEngine::new(vec![], TrustTier::Autonomous);
+        let decision = engine.parse_decision("maybe", "bad-rule");
+        assert!(decision.is_denied());
+        let msg = match decision {
+            PolicyDecision::Deny(msg) => msg,
+            _ => panic!("expected deny"),
+        };
+        assert!(msg.contains("maybe"));
+        assert!(msg.contains("bad-rule"));
+    }
+
+    #[test]
+    fn test_evaluate_first_match_wins() {
+        let rules = vec![
+            PolicyRule {
+                name: "deny-all".into(),
+                action_pattern: "*".into(),
+                decision: "deny".into(),
+                trust_tier: 0,
+                description: None,
+            },
+            PolicyRule {
+                name: "allow-read".into(),
+                action_pattern: "fs.read".into(),
+                decision: "allow".into(),
+                trust_tier: 0,
+                description: None,
+            },
+        ];
+        let engine = PolicyEngine::new(rules, TrustTier::Autonomous);
+        // First match wins: deny-all matches everything first
+        let decision = engine.evaluate("fs.read");
+        assert!(decision.is_denied());
+    }
+
+    #[test]
+    fn test_evaluate_allow_with_trust_tier_gating() {
+        let rules = vec![
+            PolicyRule {
+                name: "allow-admin".into(),
+                action_pattern: "admin.*".into(),
+                decision: "allow".into(),
+                trust_tier: 3, // requires Autonomous
+                description: None,
+            },
+        ];
+        let engine = PolicyEngine::new(rules, TrustTier::Basic);
+        let decision = engine.evaluate("admin.create");
+        assert!(decision.is_denied()); // trust tier too low
+    }
+
+    #[test]
+    fn test_policy_rule_with_description() {
+        let rule = PolicyRule {
+            name: "test".into(),
+            action_pattern: "test.*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: Some("A test rule".to_string()),
+        };
+        assert_eq!(rule.description, Some("A test rule".to_string()));
+    }
+
+    #[test]
+    fn test_policy_rule_serde_roundtrip() {
+        let rule = PolicyRule {
+            name: "test".into(),
+            action_pattern: "test.*".into(),
+            decision: "allow".into(),
+            trust_tier: 2,
+            description: Some("desc".to_string()),
+        };
+        let json = serde_json::to_string(&rule).unwrap();
+        let back: PolicyRule = serde_json::from_str(&json).unwrap();
+        assert_eq!(rule.name, back.name);
+        assert_eq!(rule.trust_tier, back.trust_tier);
+    }
+
+    #[test]
+    fn test_policy_violation_construction() {
+        let violation = PolicyViolation {
+            action: "fs.write".to_string(),
+            rule_name: "deny-writes".to_string(),
+            reason: "no write access".to_string(),
+            timestamp: Utc::now(),
+        };
+        assert_eq!(violation.action, "fs.write");
+        assert_eq!(violation.rule_name, "deny-writes");
+        assert!(violation.reason.contains("no write access"));
+    }
+
+    #[test]
+    fn test_policy_decision_serde_all_variants() {
+        let decisions = vec![
+            PolicyDecision::Allow,
+            PolicyDecision::Deny("reason".into()),
+            PolicyDecision::RequireConfirmation("confirm".into()),
+        ];
+        for d in decisions {
+            let json = serde_json::to_string(&d).unwrap();
+            let back: PolicyDecision = serde_json::from_str(&json).unwrap();
+            assert_eq!(d, back);
+        }
+    }
+
+    #[test]
+    fn test_trust_tier_from_level_all_values() {
+        assert_eq!(TrustTier::from_level(0), TrustTier::Untrusted);
+        assert_eq!(TrustTier::from_level(1), TrustTier::Basic);
+        assert_eq!(TrustTier::from_level(2), TrustTier::Trusted);
+        assert_eq!(TrustTier::from_level(3), TrustTier::Autonomous);
+        // Unknown level defaults to Untrusted
+        assert_eq!(TrustTier::from_level(99), TrustTier::Untrusted);
+        assert_eq!(TrustTier::from_level(255), TrustTier::Untrusted);
+    }
+
+    #[test]
+    fn test_trust_tier_default() {
+        assert_eq!(TrustTier::default(), TrustTier::Basic);
+    }
+
+    #[test]
+    fn test_require_confirmation_decision_message() {
+        let decision = PolicyDecision::RequireConfirmation("need-approval".into());
+        let msg = match decision {
+            PolicyDecision::RequireConfirmation(msg) => msg,
+            _ => panic!("expected require confirmation"),
+        };
+        assert!(msg.contains("need-approval"));
+    }
+
+    #[test]
+    fn test_evaluate_at_different_trust_tiers() {
+        let rules = vec![
+            PolicyRule {
+                name: "read".into(),
+                action_pattern: "fs.read".into(),
+                decision: "allow".into(),
+                trust_tier: 1,
+                description: None,
+            },
+            PolicyRule {
+                name: "write".into(),
+                action_pattern: "fs.write".into(),
+                decision: "allow".into(),
+                trust_tier: 2,
+                description: None,
+            },
+        ];
+        // At Basic: read allowed, write denied (tier 2 > Basic)
+        let engine_basic = PolicyEngine::new(rules.clone(), TrustTier::Basic);
+        assert!(engine_basic.evaluate("fs.read").is_allowed());
+        assert!(engine_basic.evaluate("fs.write").is_denied());
+
+        // At Trusted: both allowed
+        let engine_trusted = PolicyEngine::new(rules, TrustTier::Trusted);
+        assert!(engine_trusted.evaluate("fs.read").is_allowed());
+        assert!(engine_trusted.evaluate("fs.write").is_allowed());
     }
 }

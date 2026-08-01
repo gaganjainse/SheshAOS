@@ -468,7 +468,7 @@ mod tests {
         let block_oid = Uuid::new_v4();
         
         let _ = store.with_tx(|tx| {
-            let sql = format!("INSERT INTO db_block (oid, version, data) VALUES (?1, 1, ?2)");
+            let sql = "INSERT INTO db_block (oid, version, data) VALUES (?1, 1, ?2)";
             tx.execute(&sql, rusqlite::params![block_oid.to_string(), "{}"]).unwrap();
             Err::<(), _>(StoreError::NotFound("test".to_string()))
         });
@@ -494,7 +494,7 @@ mod tests {
         
         store.with_tx(|tx| {
             let data = serde_json::to_string(&block).unwrap();
-            let sql = format!("INSERT INTO db_block (oid, version, data) VALUES (?1, 1, ?2)");
+            let sql = "INSERT INTO db_block (oid, version, data) VALUES (?1, 1, ?2)";
             tx.execute(&sql, rusqlite::params![block_oid.to_string(), data]).unwrap();
             Ok::<(), StoreError>(())
         }).unwrap();

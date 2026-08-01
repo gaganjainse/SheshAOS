@@ -158,4 +158,180 @@ mod tests {
         assert_eq!(TaskState::Executing.to_string(), "Executing");
         assert_eq!(TaskState::RolledBack.to_string(), "RolledBack");
     }
+
+    #[test]
+    fn test_model_role_serde() {
+        let roles = vec![ModelRole::Planner, ModelRole::Coder, ModelRole::Vision, ModelRole::Reviewer];
+        for role in roles {
+            let json = serde_json::to_string(&role).unwrap();
+            let back: ModelRole = serde_json::from_str(&json).unwrap();
+            assert_eq!(role, back);
+        }
+    }
+
+    #[test]
+    fn test_task_state_serde() {
+        let states = vec![
+            TaskState::Received,
+            TaskState::Classified,
+            TaskState::Planned,
+            TaskState::AwaitingConfirmation,
+            TaskState::Executing,
+            TaskState::Blocked,
+            TaskState::Failed,
+            TaskState::RolledBack,
+            TaskState::Completed,
+            TaskState::Archived,
+        ];
+        for state in states {
+            let json = serde_json::to_string(&state).unwrap();
+            let back: TaskState = serde_json::from_str(&json).unwrap();
+            assert_eq!(state, back);
+        }
+    }
+
+    #[test]
+    fn test_model_role_equality() {
+        assert_eq!(ModelRole::Planner, ModelRole::Planner);
+        assert_ne!(ModelRole::Planner, ModelRole::Coder);
+    }
+
+    #[test]
+    fn test_task_state_equality() {
+        assert_eq!(TaskState::Received, TaskState::Received);
+        assert_ne!(TaskState::Received, TaskState::Classified);
+    }
+
+    #[test]
+    fn test_all_valid_transitions_exhaustive() {
+        let transitions = vec![
+            (TaskState::Received, TaskState::Classified),
+            (TaskState::Classified, TaskState::Planned),
+            (TaskState::Classified, TaskState::Failed),
+            (TaskState::Planned, TaskState::AwaitingConfirmation),
+            (TaskState::Planned, TaskState::Executing),
+            (TaskState::Planned, TaskState::Failed),
+            (TaskState::AwaitingConfirmation, TaskState::Executing),
+            (TaskState::AwaitingConfirmation, TaskState::Failed),
+            (TaskState::Executing, TaskState::Completed),
+            (TaskState::Executing, TaskState::Failed),
+            (TaskState::Executing, TaskState::Blocked),
+            (TaskState::Blocked, TaskState::Executing),
+            (TaskState::Blocked, TaskState::Failed),
+            (TaskState::Failed, TaskState::RolledBack),
+            (TaskState::Failed, TaskState::Archived),
+            (TaskState::Completed, TaskState::Archived),
+            (TaskState::RolledBack, TaskState::Archived),
+        ];
+        for (from, to) in transitions {
+            assert!(from.can_transition_to(&to), "{} -> {} should be valid", from, to);
+        }
+    }
+
+    #[test]
+    fn test_all_invalid_transitions_exhaustive() {
+        let invalid = vec![
+            (TaskState::Received, TaskState::Received),
+            (TaskState::Received, TaskState::Planned),
+            (TaskState::Received, TaskState::Failed),
+            (TaskState::Classified, TaskState::Received),
+            (TaskState::Classified, TaskState::Classified),
+            (TaskState::Classified, TaskState::Completed),
+            (TaskState::Planned, TaskState::Received),
+            (TaskState::Planned, TaskState::Classified),
+            (TaskState::AwaitingConfirmation, TaskState::Received),
+            (TaskState::AwaitingConfirmation, TaskState::Planned),
+            (TaskState::AwaitingConfirmation, TaskState::AwaitingConfirmation),
+            (TaskState::Executing, TaskState::Received),
+            (TaskState::Executing, TaskState::Classified),
+            (TaskState::Executing, TaskState::Planned),
+            (TaskState::Blocked, TaskState::Received),
+            (TaskState::Blocked, TaskState::Classified),
+            (TaskState::Blocked, TaskState::Planned),
+            (TaskState::Blocked, TaskState::Blocked),
+            (TaskState::Failed, TaskState::Received),
+            (TaskState::Failed, TaskState::Classified),
+            (TaskState::Failed, TaskState::Planned),
+            (TaskState::Failed, TaskState::Failed),
+            (TaskState::Failed, TaskState::Completed),
+            (TaskState::Completed, TaskState::Received),
+            (TaskState::Completed, TaskState::Classified),
+            (TaskState::Completed, TaskState::Planned),
+            (TaskState::Completed, TaskState::Completed),
+            (TaskState::Completed, TaskState::Failed),
+            (TaskState::Completed, TaskState::Executing),
+            (TaskState::RolledBack, TaskState::Received),
+            (TaskState::RolledBack, TaskState::Failed),
+            (TaskState::RolledBack, TaskState::RolledBack),
+            (TaskState::Archived, TaskState::Received),
+            (TaskState::Archived, TaskState::Classified),
+            (TaskState::Archived, TaskState::Planned),
+            (TaskState::Archived, TaskState::Failed),
+            (TaskState::Archived, TaskState::Completed),
+            (TaskState::Archived, TaskState::RolledBack),
+            (TaskState::Archived, TaskState::Archived),
+        ];
+        for (from, to) in invalid {
+            assert!(!from.can_transition_to(&to), "{} -> {} should be invalid", from, to);
+        }
+    }
+
+    #[test]
+    fn test_task_record_construction() {
+        use crate::task::{TaskInput, TaskRequest};
+        let task_id = TaskId::new();
+        let request = TaskRequest::new(TaskInput::Text("test".into()));
+        let record = TaskRecord {
+            task_id,
+            request: request.clone(),
+            current_state: TaskState::Received,
+            assigned_role: None,
+            state_history: vec![(TaskState::Received, Utc::now())],
+        };
+        assert_eq!(record.task_id, task_id);
+        assert_eq!(record.current_state, TaskState::Received);
+        assert!(record.assigned_role.is_none());
+        assert_eq!(record.state_history.len(), 1);
+    }
+
+    #[test]
+    fn test_task_record_serde() {
+        use crate::task::{TaskInput, TaskRequest};
+        let task_id = TaskId::new();
+        let request = TaskRequest::new(TaskInput::Text("test".into()));
+        let record = TaskRecord {
+            task_id,
+            request,
+            current_state: TaskState::Classified,
+            assigned_role: Some(ModelRole::Coder),
+            state_history: vec![(TaskState::Received, Utc::now()), (TaskState::Classified, Utc::now())],
+        };
+        let json = serde_json::to_string(&record).unwrap();
+        let back: TaskRecord = serde_json::from_str(&json).unwrap();
+        assert_eq!(record.task_id, back.task_id);
+        assert_eq!(record.current_state, back.current_state);
+        assert_eq!(record.assigned_role, back.assigned_role);
+    }
+
+    #[test]
+    fn test_can_transition_to_symmetric_check() {
+        // If A -> B is valid, B -> A should not be (except for Blocked <-> Executing)
+        let pairs = vec![
+            (TaskState::Received, TaskState::Classified),
+            (TaskState::Classified, TaskState::Planned),
+            (TaskState::Planned, TaskState::Executing),
+            (TaskState::Executing, TaskState::Completed),
+            (TaskState::Failed, TaskState::Archived),
+        ];
+        for (from, to) in pairs {
+            assert!(from.can_transition_to(&to));
+            assert!(!to.can_transition_to(&from), "{} -> {} should be invalid (reverse)", to, from);
+        }
+    }
+
+    #[test]
+    fn test_blocked_executing_bidirectional() {
+        assert!(TaskState::Blocked.can_transition_to(&TaskState::Executing));
+        assert!(TaskState::Executing.can_transition_to(&TaskState::Blocked));
+    }
 }

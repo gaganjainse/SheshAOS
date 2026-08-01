@@ -253,4 +253,139 @@ mod tests {
         assert_eq!(decision.primary_role, ModelRole::Coder);
         assert_eq!(decision.review_role, Some(ModelRole::Reviewer));
     }
+
+    #[test]
+    fn test_route_empty_input() {
+        let decision = TaskRouter::route("", false);
+        assert_eq!(decision.primary_role, ModelRole::Planner);
+        assert!(decision.confidence <= 0.5);
+    }
+
+    #[test]
+    fn test_route_single_char() {
+        let decision = TaskRouter::route("a", false);
+        assert_eq!(decision.primary_role, ModelRole::Planner);
+    }
+
+    #[test]
+    fn test_route_case_insensitive() {
+        let decision = TaskRouter::route("IMPLEMENT a feature", false);
+        assert_eq!(decision.primary_role, ModelRole::Coder);
+    }
+
+    #[test]
+    fn test_route_uppercase_keywords() {
+        let decision = TaskRouter::route("DESIGN the ARCHITECTURE", false);
+        assert_eq!(decision.primary_role, ModelRole::Planner);
+    }
+
+    #[test]
+    fn test_route_vision_keywords_without_images() {
+        let decision = TaskRouter::route("Analyze the screenshot of the UI layout", false);
+        assert_eq!(decision.primary_role, ModelRole::Vision);
+    }
+
+    #[test]
+    fn test_route_images_override_keywords() {
+        // Even with planning keywords, images should route to vision
+        let decision = TaskRouter::route("Design this image", true);
+        assert_eq!(decision.primary_role, ModelRole::Vision);
+        assert_eq!(decision.review_role, Some(ModelRole::Planner));
+        assert!(decision.confidence >= 0.8);
+    }
+
+    #[test]
+    fn test_route_planner_no_reviewer() {
+        let decision = TaskRouter::route("Plan the architecture", false);
+        assert_eq!(decision.primary_role, ModelRole::Planner);
+        assert!(decision.review_role.is_none());
+    }
+
+    #[test]
+    fn test_route_vision_no_reviewer() {
+        let decision = TaskRouter::route("Look at this screenshot", false);
+        assert_eq!(decision.primary_role, ModelRole::Vision);
+        assert!(decision.review_role.is_none());
+    }
+
+    #[test]
+    fn test_route_confidence_values() {
+        let ambiguous = TaskRouter::route("hello", false);
+        assert_eq!(ambiguous.confidence, 0.3);
+
+        let one_match = TaskRouter::route("implement code", false);
+        assert_eq!(one_match.confidence, 0.5);
+
+        let two_match = TaskRouter::route("implement code and write tests", false);
+        assert_eq!(two_match.confidence, 0.7);
+
+        let three_match = TaskRouter::route("implement code write tests and fix bugs", false);
+        assert_eq!(three_match.confidence, 0.8);
+
+        let many_match = TaskRouter::route("implement code write tests fix bugs and refactor", false);
+        assert!(many_match.confidence >= 0.9);
+    }
+
+    #[test]
+    fn test_route_tie_planner_wins() {
+        // Equal score for planner and coder: planner should win due to >= comparison
+        let decision = TaskRouter::route("plan and implement", false);
+        // "plan" matches planner (1), "implement" matches coder (1)
+        assert_eq!(decision.primary_role, ModelRole::Planner);
+    }
+
+    #[test]
+    fn test_route_decision_reason_non_empty() {
+        let decision = TaskRouter::route("write some code", false);
+        assert!(!decision.reason.is_empty());
+        assert!(decision.reason.contains("Coding") || decision.reason.contains("coding"));
+    }
+
+    #[test]
+    fn test_route_decision_confidence_range() {
+        for _ in 0..10 {
+            let decision = TaskRouter::route("implement a function", false);
+            assert!(decision.confidence >= 0.0);
+            assert!(decision.confidence <= 1.0);
+        }
+    }
+
+    #[test]
+    fn test_route_special_characters() {
+        let decision = TaskRouter::route("fix bug!!! @#$%", false);
+        assert_eq!(decision.primary_role, ModelRole::Coder);
+    }
+
+    #[test]
+    fn test_route_unicode_input() {
+        let decision = TaskRouter::route("implementar función en español", false);
+        // "implementar" contains "implement" so coder should match
+        assert_eq!(decision.primary_role, ModelRole::Coder);
+    }
+
+    #[test]
+    fn test_route_decision_serde() {
+        let decision = RouteDecision {
+            primary_role: ModelRole::Coder,
+            review_role: Some(ModelRole::Reviewer),
+            confidence: 0.8,
+            reason: "test".to_string(),
+        };
+        let json = serde_json::to_string(&decision).unwrap();
+        let back: RouteDecision = serde_json::from_str(&json).unwrap();
+        assert_eq!(decision.primary_role, back.primary_role);
+        assert_eq!(decision.confidence, back.confidence);
+    }
+
+    #[test]
+    fn test_route_whitespace_only() {
+        let decision = TaskRouter::route("   \t\n  ", false);
+        assert_eq!(decision.primary_role, ModelRole::Planner);
+    }
+
+    #[test]
+    fn test_route_newlines() {
+        let decision = TaskRouter::route("implement\ncode\nand\ntest", false);
+        assert_eq!(decision.primary_role, ModelRole::Coder);
+    }
 }

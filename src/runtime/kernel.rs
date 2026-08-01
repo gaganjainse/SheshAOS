@@ -384,8 +384,19 @@ impl Kernel {
             }
         }
 
+        let mut task_success = true;
+
         if final_output.contains("TOOL:") {
-            let tool_name = "dummy_tool";
+            let tool_line = final_output
+                .lines()
+                .find(|l| l.contains("TOOL:"))
+                .unwrap_or("");
+            let tool_name = tool_line
+                .split(':')
+                .nth(1)
+                .and_then(|s| s.trim().split_whitespace().next())
+                .unwrap_or("unknown");
+
             let tool_req = crate::tools::executor::ToolRequest {
                 tool_name: tool_name.to_string(),
                 arguments: serde_json::json!({}),
@@ -416,6 +427,7 @@ impl Kernel {
                     .await?;
                 }
                 Ok(crate::tools::broker::BrokerResult::Denied(reason)) => {
+                    task_success = false;
                     self.emit_event(Event::new(
                         *task_id,
                         EventKind::ToolFailed,
@@ -429,6 +441,7 @@ impl Kernel {
                     .await?;
                 }
                 Ok(crate::tools::broker::BrokerResult::RequiresConfirmation(reason)) => {
+                    task_success = false;
                     self.emit_event(Event::new(
                         *task_id,
                         EventKind::ToolFailed,
@@ -442,6 +455,7 @@ impl Kernel {
                     .await?;
                 }
                 Err(e) => {
+                    task_success = false;
                     self.emit_event(Event::new(
                         *task_id,
                         EventKind::ToolFailed,
@@ -461,13 +475,21 @@ impl Kernel {
         if current_state == TaskState::Planned {
             self.transition_task(task_id, TaskState::Executing).await?;
         }
-        self.transition_task(task_id, TaskState::Completed).await?;
+        if task_success {
+            self.transition_task(task_id, TaskState::Completed).await?;
+        } else {
+            self.transition_task(task_id, TaskState::Failed).await?;
+        }
 
         Ok(crate::task::TaskOutcome {
             task_id: *task_id,
-            success: true,
+            success: task_success,
             output: Some(final_output),
-            error: None,
+            error: if task_success {
+                None
+            } else {
+                Some("Tool execution failed".to_string())
+            },
             completed_at: Utc::now(),
         })
     }

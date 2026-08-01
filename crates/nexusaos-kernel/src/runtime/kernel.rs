@@ -482,6 +482,7 @@ impl Kernel {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use std::sync::Mutex;
+    use std::path::PathBuf;
 
     use async_trait::async_trait;
 
@@ -676,5 +677,291 @@ mod tests {
 
         let state = kernel.task_state(&id).await.unwrap();
         assert_eq!(state, TaskState::Completed);
+    }
+
+    #[tokio::test]
+    async fn test_task_state_not_found() {
+        let store = Arc::new(MockEventStore::new());
+        let rule = crate::policy::PolicyRule {
+            name: "allow".into(),
+            action_pattern: "*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
+        let registry = Arc::new(ProviderRegistry::new());
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store, policy, registry, broker).await.unwrap();
+
+        let fake_id = TaskId::new();
+        let result = kernel.task_state(&fake_id).await;
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            NexusError::Task(TaskError::NotFound { .. }) => {}
+            _ => panic!("Expected TaskNotFound"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_tasks_in_state() {
+        let store = Arc::new(MockEventStore::new());
+        let rule = crate::policy::PolicyRule {
+            name: "allow".into(),
+            action_pattern: "*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
+        let registry = Arc::new(ProviderRegistry::new());
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store, policy, registry, broker).await.unwrap();
+
+        let id1 = kernel.submit_task(TaskInput::Text("task1".into())).await.unwrap();
+        let id2 = kernel.submit_task(TaskInput::Text("task2".into())).await.unwrap();
+
+        let classified = kernel.tasks_in_state(&TaskState::Classified).await;
+        assert_eq!(classified.len(), 2);
+        assert!(classified.contains(&id1));
+        assert!(classified.contains(&id2));
+
+        let received = kernel.tasks_in_state(&TaskState::Received).await;
+        assert!(received.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_task_count() {
+        let store = Arc::new(MockEventStore::new());
+        let rule = crate::policy::PolicyRule {
+            name: "allow".into(),
+            action_pattern: "*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
+        let registry = Arc::new(ProviderRegistry::new());
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store, policy, registry, broker).await.unwrap();
+
+        assert_eq!(kernel.task_count().await, 0);
+        kernel.submit_task(TaskInput::Text("t1".into())).await.unwrap();
+        assert_eq!(kernel.task_count().await, 1);
+        kernel.submit_task(TaskInput::Text("t2".into())).await.unwrap();
+        assert_eq!(kernel.task_count().await, 2);
+    }
+
+    #[tokio::test]
+    async fn test_transition_task_not_found() {
+        let store = Arc::new(MockEventStore::new());
+        let rule = crate::policy::PolicyRule {
+            name: "allow".into(),
+            action_pattern: "*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
+        let registry = Arc::new(ProviderRegistry::new());
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store, policy, registry, broker).await.unwrap();
+
+        let fake_id = TaskId::new();
+        let result = kernel.transition_task(&fake_id, TaskState::Planned).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_execute_task_no_planner() {
+        let store = Arc::new(MockEventStore::new());
+        let rule = crate::policy::PolicyRule {
+            name: "allow".into(),
+            action_pattern: "*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
+        let registry = Arc::new(ProviderRegistry::new());
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store, policy, Arc::new(registry), broker).await.unwrap();
+
+        let id = kernel.submit_task(TaskInput::Text("do something".into())).await.unwrap();
+        let result = kernel.execute_task(&id).await;
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            NexusError::Provider(crate::error::ProviderError::Unavailable { .. }) => {}
+            _ => panic!("Expected Provider Unavailable"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_submit_task_events_emitted() {
+        let store = Arc::new(MockEventStore::new());
+        let rule = crate::policy::PolicyRule {
+            name: "allow".into(),
+            action_pattern: "*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
+        let registry = Arc::new(ProviderRegistry::new());
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store.clone(), policy, registry, broker).await.unwrap();
+
+        let id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
+
+        let events = store.get_all_events().await.unwrap();
+        // Should have at least TaskCreated and TaskClassified events
+        assert!(events.len() >= 2);
+        let kinds: Vec<_> = events.iter().map(|e| &e.kind).collect();
+        assert!(kinds.contains(&&EventKind::TaskCreated));
+        assert!(kinds.contains(&&EventKind::TaskClassified));
+    }
+
+    #[tokio::test]
+    async fn test_execute_task_planner_only_no_code() {
+        let store = Arc::new(MockEventStore::new());
+        let rule = crate::policy::PolicyRule {
+            name: "allow".into(),
+            action_pattern: "*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
+
+        let mut registry = ProviderRegistry::new();
+        registry.register(Box::new(MockProvider {
+            role: crate::state::ModelRole::Planner,
+            content: "Here is the plan. No code needed.".into(),
+        }));
+
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store, policy, Arc::new(registry), broker).await.unwrap();
+
+        let id = kernel.submit_task(TaskInput::Text("plan something".into())).await.unwrap();
+        let outcome = kernel.execute_task(&id).await.unwrap();
+        assert!(outcome.success);
+        assert!(outcome.output.unwrap().contains("Here is the plan."));
+
+        let state = kernel.task_state(&id).await.unwrap();
+        assert_eq!(state, TaskState::Completed);
+    }
+
+    #[tokio::test]
+    async fn test_kernel_new() {
+        let store = Arc::new(MockEventStore::new());
+        let policy = PolicyEngine::deny_all();
+        let registry = Arc::new(ProviderRegistry::new());
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store, policy, registry, broker).await.unwrap();
+        assert_eq!(kernel.task_count().await, 0);
+    }
+
+    #[tokio::test]
+    async fn test_transition_through_multiple_states() {
+        let store = Arc::new(MockEventStore::new());
+        let rule = crate::policy::PolicyRule {
+            name: "allow".into(),
+            action_pattern: "*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
+        let registry = Arc::new(ProviderRegistry::new());
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store, policy, registry, broker).await.unwrap();
+
+        let id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
+        assert_eq!(kernel.task_state(&id).await.unwrap(), TaskState::Classified);
+
+        kernel.transition_task(&id, TaskState::Planned).await.unwrap();
+        assert_eq!(kernel.task_state(&id).await.unwrap(), TaskState::Planned);
+
+        kernel.transition_task(&id, TaskState::AwaitingConfirmation).await.unwrap();
+        assert_eq!(kernel.task_state(&id).await.unwrap(), TaskState::AwaitingConfirmation);
+
+        kernel.transition_task(&id, TaskState::Executing).await.unwrap();
+        assert_eq!(kernel.task_state(&id).await.unwrap(), TaskState::Executing);
+
+        kernel.transition_task(&id, TaskState::Blocked).await.unwrap();
+        assert_eq!(kernel.task_state(&id).await.unwrap(), TaskState::Blocked);
+
+        kernel.transition_task(&id, TaskState::Executing).await.unwrap();
+        kernel.transition_task(&id, TaskState::Completed).await.unwrap();
+        assert_eq!(kernel.task_state(&id).await.unwrap(), TaskState::Completed);
+    }
+
+    #[tokio::test]
+    async fn test_vision_task_input() {
+        let store = Arc::new(MockEventStore::new());
+        let rule = crate::policy::PolicyRule {
+            name: "allow".into(),
+            action_pattern: "*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
+        let registry = Arc::new(ProviderRegistry::new());
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store, policy, registry, broker).await.unwrap();
+
+        let id = kernel.submit_task(TaskInput::Vision {
+            text: "describe this image".into(),
+            image_paths: vec![PathBuf::from("/tmp/img.png")],
+        }).await.unwrap();
+        assert_eq!(kernel.task_state(&id).await.unwrap(), TaskState::Classified);
+    }
+
+    #[tokio::test]
+    async fn test_multi_task_input() {
+        let store = Arc::new(MockEventStore::new());
+        let rule = crate::policy::PolicyRule {
+            name: "allow".into(),
+            action_pattern: "*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
+        let registry = Arc::new(ProviderRegistry::new());
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store, policy, registry, broker).await.unwrap();
+
+        let input = TaskInput::Multi {
+            parts: vec![
+                TaskInput::Text("part1".into()),
+                TaskInput::Text("part2".into()),
+            ],
+        };
+        let id = kernel.submit_task(input).await.unwrap();
+        assert_eq!(kernel.task_state(&id).await.unwrap(), TaskState::Classified);
+    }
+
+    #[tokio::test]
+    async fn test_submit_task_creates_record_with_correct_state_history() {
+        let store = Arc::new(MockEventStore::new());
+        let rule = crate::policy::PolicyRule {
+            name: "allow".into(),
+            action_pattern: "*".into(),
+            decision: "allow".into(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
+        let registry = Arc::new(ProviderRegistry::new());
+        let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
+        let kernel = Kernel::new(store.clone(), policy, registry, broker).await.unwrap();
+
+        let id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
+
+        // The projection should have the task with state history
+        let events = store.get_task_events(&id).await.unwrap();
+        assert!(events.len() >= 1);
     }
 }

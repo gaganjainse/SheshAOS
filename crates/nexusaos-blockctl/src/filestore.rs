@@ -18,7 +18,7 @@ impl BlockFileStore {
     }
 
     pub fn append(&self, block_id: &str, data: &[u8]) {
-        let mut zones = self.zones.write().unwrap();
+        let mut zones = self.zones.write().unwrap_or_else(|e| e.into_inner());
         let zone = zones.entry(block_id.to_string()).or_insert_with(|| ZoneData {
             data: Vec::new(),
             max_size: 1_048_576,
@@ -32,12 +32,12 @@ impl BlockFileStore {
     }
 
     pub fn read_all(&self, block_id: &str) -> Option<Vec<u8>> {
-        let zones = self.zones.read().unwrap();
+        let zones = self.zones.read().unwrap_or_else(|e| e.into_inner());
         zones.get(block_id).map(|zone| zone.data.clone())
     }
 
     pub fn read_tail(&self, block_id: &str, max_bytes: usize) -> Option<Vec<u8>> {
-        let zones = self.zones.read().unwrap();
+        let zones = self.zones.read().unwrap_or_else(|e| e.into_inner());
         zones.get(block_id).map(|zone| {
             let start = if zone.data.len() > max_bytes {
                 zone.data.len() - max_bytes
@@ -49,24 +49,24 @@ impl BlockFileStore {
     }
 
     pub fn truncate(&self, block_id: &str) {
-        let mut zones = self.zones.write().unwrap();
+        let mut zones = self.zones.write().unwrap_or_else(|e| e.into_inner());
         if let Some(zone) = zones.get_mut(block_id) {
             zone.data.clear();
         }
     }
 
     pub fn delete_zone(&self, block_id: &str) {
-        let mut zones = self.zones.write().unwrap();
+        let mut zones = self.zones.write().unwrap_or_else(|e| e.into_inner());
         zones.remove(block_id);
     }
 
     pub fn zone_size(&self, block_id: &str) -> usize {
-        let zones = self.zones.read().unwrap();
+        let zones = self.zones.read().unwrap_or_else(|e| e.into_inner());
         zones.get(block_id).map(|zone| zone.data.len()).unwrap_or(0)
     }
 
     pub fn set_max_size(&self, block_id: &str, max_size: usize) {
-        let mut zones = self.zones.write().unwrap();
+        let mut zones = self.zones.write().unwrap_or_else(|e| e.into_inner());
         let zone = zones.entry(block_id.to_string()).or_insert_with(|| ZoneData {
             data: Vec::new(),
             max_size,

@@ -65,7 +65,7 @@ impl ControllerRegistry {
     }
 
     pub fn register(&self, block_id: &str, controller: Arc<dyn Controller>) -> Result<(), ControllerError> {
-        let mut controllers = self.controllers.write().unwrap();
+        let mut controllers = self.controllers.write().unwrap_or_else(|e| e.into_inner());
         if controllers.contains_key(block_id) {
             return Err(ControllerError::AlreadyExists(block_id.to_string()));
         }
@@ -74,12 +74,12 @@ impl ControllerRegistry {
     }
 
     pub fn get(&self, block_id: &str) -> Option<Arc<dyn Controller>> {
-        let controllers = self.controllers.read().unwrap();
+        let controllers = self.controllers.read().unwrap_or_else(|e| e.into_inner());
         controllers.get(block_id).cloned()
     }
 
     pub fn remove(&self, block_id: &str) -> Option<Arc<dyn Controller>> {
-        let mut controllers = self.controllers.write().unwrap();
+        let mut controllers = self.controllers.write().unwrap_or_else(|e| e.into_inner());
         controllers.remove(block_id)
     }
 
@@ -89,13 +89,13 @@ impl ControllerRegistry {
     }
 
     pub fn list(&self) -> Vec<ControllerStatus> {
-        let controllers = self.controllers.read().unwrap();
+        let controllers = self.controllers.read().unwrap_or_else(|e| e.into_inner());
         controllers.values().map(|c| c.runtime_status()).collect()
     }
 
     pub fn stop_all(&self) {
         let controllers = {
-            let controllers = self.controllers.read().unwrap();
+            let controllers = self.controllers.read().unwrap_or_else(|e| e.into_inner());
             controllers.values().cloned().collect::<Vec<_>>()
         };
         for controller in controllers {

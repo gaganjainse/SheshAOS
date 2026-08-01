@@ -100,7 +100,7 @@ impl Broker {
     }
 
     pub fn subscribe(&self, route_id: &str, request: SubscriptionRequest) {
-        let mut subs = self.subs.write().unwrap();
+        let mut subs = self.subs.write().unwrap_or_else(|e| e.into_inner());
         let topic_subs = subs.entry(request.topic).or_default();
         
         if request.scopes.is_empty() {
@@ -125,7 +125,7 @@ impl Broker {
     }
 
     pub fn unsubscribe(&self, route_id: &str, topic: &str) {
-        let mut subs = self.subs.write().unwrap();
+        let mut subs = self.subs.write().unwrap_or_else(|e| e.into_inner());
         if let Some(topic_subs) = subs.get_mut(topic) {
             topic_subs.all_subs.retain(|r| r != route_id);
             for routes in topic_subs.scope_subs.values_mut() {
@@ -138,7 +138,7 @@ impl Broker {
     }
 
     pub fn unsubscribe_all(&self, route_id: &str) {
-        let mut subs = self.subs.write().unwrap();
+        let mut subs = self.subs.write().unwrap_or_else(|e| e.into_inner());
         for topic_subs in subs.values_mut() {
             topic_subs.all_subs.retain(|r| r != route_id);
             for routes in topic_subs.scope_subs.values_mut() {
@@ -151,7 +151,7 @@ impl Broker {
     }
 
     pub fn get_matching_routes(&self, event: &WaveEvent) -> Vec<String> {
-        let subs = self.subs.read().unwrap();
+        let subs = self.subs.read().unwrap_or_else(|e| e.into_inner());
         let topic_subs = match subs.get(&event.topic) {
             Some(ts) => ts,
             None => return vec![],
@@ -171,11 +171,11 @@ impl Broker {
             }
         }
 
-        if !event.scopes.is_empty() {
-            if let Some(routes) = topic_subs.star_subs.get("*") {
-                for r in routes {
-                    matched.insert(r.clone());
-                }
+        if !event.scopes.is_empty()
+            && let Some(routes) = topic_subs.star_subs.get("*")
+        {
+            for r in routes {
+                matched.insert(r.clone());
             }
         }
         
@@ -198,7 +198,7 @@ impl Broker {
 
         if event.persist > 0 {
             let seq = self.sequence.fetch_add(1, Ordering::SeqCst);
-            let mut hist = self.history.write().unwrap();
+            let mut hist = self.history.write().unwrap_or_else(|e| e.into_inner());
             hist.push(HistoryEntry {
                 event,
                 sequence: seq,
@@ -207,7 +207,7 @@ impl Broker {
     }
 
     pub fn read_history(&self, topic: &str, max_items: usize) -> Vec<WaveEvent> {
-        let hist = self.history.read().unwrap();
+        let hist = self.history.read().unwrap_or_else(|e| e.into_inner());
         hist.read_topic(topic, max_items)
     }
 
@@ -216,7 +216,7 @@ impl Broker {
     }
 
     pub fn subscriber_count(&self, topic: &str) -> usize {
-        let subs = self.subs.read().unwrap();
+        let subs = self.subs.read().unwrap_or_else(|e| e.into_inner());
         if let Some(ts) = subs.get(topic) {
             let mut all = HashSet::new();
             for r in &ts.all_subs {

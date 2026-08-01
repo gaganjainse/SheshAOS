@@ -87,6 +87,7 @@ mod tests {
     use async_trait::async_trait;
 
     use super::*;
+    use crate::task::Priority;
 
     struct MockEventStore {
         events: Mutex<Vec<Event>>,
@@ -146,5 +147,113 @@ mod tests {
 
         assert_eq!(task.current_state, TaskState::Classified);
         assert_eq!(task.state_history.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_replay_empty_store() {
+        let store = MockEventStore::new();
+        let projection = ReplayEngine::replay(&store).await.unwrap();
+        assert_eq!(projection.tasks.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_task_history() {
+        let store = MockEventStore::new();
+        let task_id = TaskId::new();
+
+        let event = Event::new(
+            task_id,
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "kernel".into(),
+        );
+        store.append(event).await.unwrap();
+
+        let history = ReplayEngine::task_history(&store, &task_id).await.unwrap();
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].kind, EventKind::TaskCreated);
+    }
+
+    #[tokio::test]
+    async fn test_task_history_empty() {
+        let store = MockEventStore::new();
+        let task_id = TaskId::new();
+        let history = ReplayEngine::task_history(&store, &task_id).await.unwrap();
+        assert!(history.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_replay_multiple_tasks() {
+        let store = MockEventStore::new();
+        let t1 = TaskId::new();
+        let t2 = TaskId::new();
+
+        let e1 = Event::new(t1, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "k".into());
+        let e2 = Event::new(t2, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "k".into());
+        let e3 = Event::new(t1, EventKind::TaskStateChanged, EventPayload::StateChanged { from: "Received".into(), to: "Classified".into() }, "k".into());
+
+        store.append(e1).await.unwrap();
+        store.append(e2).await.unwrap();
+        store.append(e3).await.unwrap();
+
+        let projection = ReplayEngine::replay(&store).await.unwrap();
+        assert_eq!(projection.tasks.len(), 2);
+        assert_eq!(projection.tasks.get(&t1).unwrap().current_state, TaskState::Classified);
+        assert_eq!(projection.tasks.get(&t2).unwrap().current_state, TaskState::Received);
+    }
+
+    #[tokio::test]
+    async fn test_replay_ignores_system_events() {
+        let store = MockEventStore::new();
+
+        // System event (no task_id) should be ignored
+        let sys_event = Event::system(
+            EventKind::SystemStarted,
+            EventPayload::SystemEvent { message: "started".into() },
+            "k".into(),
+        );
+        store.append(sys_event).await.unwrap();
+
+        let projection = ReplayEngine::replay(&store).await.unwrap();
+        assert_eq!(projection.tasks.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_replay_unknown_state_skipped() {
+        let store = MockEventStore::new();
+        let task_id = TaskId::new();
+
+        let e1 = Event::new(task_id, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "k".into());
+        let e2 = Event::new(task_id, EventKind::TaskStateChanged, EventPayload::StateChanged { from: "Received".into(), to: "UnknownState".into() }, "k".into());
+
+        store.append(e1).await.unwrap();
+        store.append(e2).await.unwrap();
+
+        let projection = ReplayEngine::replay(&store).await.unwrap();
+        let task = projection.tasks.get(&task_id).unwrap();
+        // Unknown state is skipped, so state remains Received
+        assert_eq!(task.current_state, TaskState::Received);
+    }
+
+    #[tokio::test]
+    async fn test_replay_state_history_preserved() {
+        let store = MockEventStore::new();
+        let task_id = TaskId::new();
+
+        let mut e1 = Event::new(task_id, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "k".into());
+        e1.sequence = crate::events::SequenceNumber(1);
+        let mut e2 = Event::new(task_id, EventKind::TaskStateChanged, EventPayload::StateChanged { from: "Received".into(), to: "Classified".into() }, "k".into());
+        e2.sequence = crate::events::SequenceNumber(2);
+        let mut e3 = Event::new(task_id, EventKind::TaskStateChanged, EventPayload::StateChanged { from: "Classified".into(), to: "Planned".into() }, "k".into());
+        e3.sequence = crate::events::SequenceNumber(3);
+
+        store.append(e1).await.unwrap();
+        store.append(e2).await.unwrap();
+        store.append(e3).await.unwrap();
+
+        let projection = ReplayEngine::replay(&store).await.unwrap();
+        let task = projection.tasks.get(&task_id).unwrap();
+        assert_eq!(task.current_state, TaskState::Planned);
+        assert_eq!(task.state_history.len(), 3);
     }
 }

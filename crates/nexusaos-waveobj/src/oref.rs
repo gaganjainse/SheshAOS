@@ -193,4 +193,444 @@ mod tests {
             assert!(oref.is_ok(), "Failed for otype: {}", otype);
         }
     }
+
+    #[test]
+    fn test_is_valid_otype_valid_values() {
+        for &otype in VALID_OTYPES {
+            assert!(is_valid_otype(otype), "Should be valid: {}", otype);
+        }
+    }
+
+    #[test]
+    fn test_is_valid_otype_invalid_values() {
+        assert!(!is_valid_otype(""));
+        assert!(!is_valid_otype("invalid"));
+        assert!(!is_valid_otype("Block"));
+        assert!(!is_valid_otype("block "));
+        assert!(!is_valid_otype(" block"));
+        assert!(!is_valid_otype("BLOCK"));
+        assert!(!is_valid_otype("block:"));
+        assert!(!is_valid_otype("block "));
+        assert!(!is_valid_otype("layoutstate"));
+    }
+
+    #[test]
+    fn test_new_valid_otype() {
+        let oid = Uuid::new_v4();
+        for &otype in VALID_OTYPES {
+            let oref = ORef::new(otype.to_string(), oid).unwrap();
+            assert_eq!(oref.otype, otype);
+            assert_eq!(oref.oid, oid);
+        }
+    }
+
+    #[test]
+    fn test_new_invalid_otype_uppercase() {
+        let oid = Uuid::new_v4();
+        assert!(matches!(
+            ORef::new("Block".to_string(), oid),
+            Err(ORefError::InvalidOType(_))
+        ));
+    }
+
+    #[test]
+    fn test_new_invalid_otype_unknown() {
+        let oid = Uuid::new_v4();
+        assert!(matches!(
+            ORef::new("unknown".to_string(), oid),
+            Err(ORefError::InvalidOType(_))
+        ));
+    }
+
+    #[test]
+    fn test_new_invalid_otype_empty() {
+        let oid = Uuid::new_v4();
+        assert!(matches!(
+            ORef::new(String::new(), oid),
+            Err(ORefError::InvalidOType(_))
+        ));
+    }
+
+    #[test]
+    fn test_new_invalid_otype_with_digits() {
+        let oid = Uuid::new_v4();
+        assert!(matches!(
+            ORef::new("block1".to_string(), oid),
+            Err(ORefError::InvalidOType(_))
+        ));
+    }
+
+    #[test]
+    fn test_new_invalid_otype_with_uppercase_and_digits() {
+        let oid = Uuid::new_v4();
+        assert!(matches!(
+            ORef::new("Block2".to_string(), oid),
+            Err(ORefError::InvalidOType(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_all_valid_otypes() {
+        let oid = Uuid::new_v4();
+        for &otype in VALID_OTYPES {
+            let s = format!("{}:{}", otype, oid);
+            let oref = ORef::parse(&s).unwrap();
+            assert_eq!(oref.otype, otype);
+            assert_eq!(oref.oid, oid);
+        }
+    }
+
+    #[test]
+    fn test_parse_no_colon() {
+        assert!(matches!(
+            ORef::parse("block"),
+            Err(ORefError::InvalidFormat(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_empty_string() {
+        assert!(matches!(
+            ORef::parse(""),
+            Err(ORefError::InvalidFormat(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_too_many_colons() {
+        let oid = Uuid::new_v4();
+        let s = format!("block:{}:extra", oid);
+        assert!(matches!(
+            ORef::parse(&s),
+            Err(ORefError::InvalidFormat(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_colon_at_start() {
+        assert!(matches!(
+            ORef::parse(":uuid"),
+            Err(ORefError::InvalidFormat(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_colon_at_end() {
+        let oid = Uuid::new_v4();
+        assert!(matches!(
+            ORef::parse(&format!("block:{}", "")),
+            Err(ORefError::InvalidOid(_))
+        ));
+        // Actually the split gives ["block", ""] and "" is not a valid UUID
+        assert!(matches!(
+            ORef::parse(&format!("{}:", oid)),
+            Err(ORefError::InvalidOType(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_empty_otype_part() {
+        let oid = Uuid::new_v4();
+        // ":" splits into ["", "uuid"] which is 2 parts but empty otype is invalid
+        assert!(matches!(
+            ORef::parse(&format!(":{}", oid)),
+            Err(ORefError::InvalidOType(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_invalid_uuid_variants() {
+        let invalid_uuids = vec![
+            "not-a-uuid",
+            "12345",
+            "gggggggg-gggg-gggg-gggg-gggggggggggg",
+            "00000000-0000-0000-0000-00000000000", // too short
+            "00000000-0000-0000-0000-0000000000000", // too long
+            "z0000000-0000-0000-0000-000000000000", // invalid hex
+        ];
+
+        for uuid_str in invalid_uuids {
+            let s = format!("block:{}", uuid_str);
+            assert!(
+                matches!(ORef::parse(&s), Err(ORefError::InvalidOid(_))),
+                "Should fail for invalid UUID: {}",
+                uuid_str
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_valid_urn_uuid() {
+        let oid = Uuid::new_v4();
+        let s = format!("block:urn:uuid:{}", oid);
+        // This has too many colons, so it should fail
+        assert!(matches!(
+            ORef::parse(&s),
+            Err(ORefError::InvalidFormat(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_braced_uuid() {
+        let oid = Uuid::new_v4();
+        let s = format!("block:{{{}}}", oid);
+        // Braced UUID is not valid via parse_str for standard UUID
+        assert!(matches!(
+            ORef::parse(&s),
+            Err(ORefError::InvalidOid(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_valid_uuid_no_hyphens() {
+        let oid = Uuid::new_v4();
+        let hex = oid.simple().to_string();
+        let s = format!("block:{}", hex);
+        // UUID simple format is a valid hex format
+        let parsed = ORef::parse(&s);
+        assert!(parsed.is_ok());
+        let oref = parsed.unwrap();
+        assert_eq!(oref.otype, "block");
+        assert_eq!(oref.oid, oid);
+    }
+
+    #[test]
+    fn test_parse_uppercase_otype_fails() {
+        let oid = Uuid::new_v4();
+        assert!(matches!(
+            ORef::parse(&format!("Block:{}", oid)),
+            Err(ORefError::InvalidOType(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_otype_with_digits_fails() {
+        let oid = Uuid::new_v4();
+        assert!(matches!(
+            ORef::parse(&format!("tab2:{}", oid)),
+            Err(ORefError::InvalidOType(_))
+        ));
+    }
+
+    #[test]
+    fn test_from_str_trait() {
+        let oid = Uuid::new_v4();
+        let s = format!("workspace:{}", oid);
+        let oref: ORef = s.parse().unwrap();
+        assert_eq!(oref.otype, "workspace");
+        assert_eq!(oref.oid, oid);
+    }
+
+    #[test]
+    fn test_from_str_invalid_format() {
+        let result: Result<ORef, ORefError> = "invalid".parse();
+        assert!(matches!(result, Err(ORefError::InvalidFormat(_))));
+    }
+
+    #[test]
+    fn test_from_str_invalid_otype() {
+        let oid = Uuid::new_v4();
+        let result: Result<ORef, ORefError> = format!("invalid:{}", oid).parse();
+        assert!(matches!(result, Err(ORefError::InvalidOType(_))));
+    }
+
+    #[test]
+    fn test_from_str_invalid_oid() {
+        let result: Result<ORef, ORefError> = "block:not-a-uuid".parse();
+        assert!(matches!(result, Err(ORefError::InvalidOid(_))));
+    }
+
+    #[test]
+    fn test_display_format() {
+        let oid = Uuid::new_v4();
+        let oref = ORef::new("block".to_string(), oid).unwrap();
+        let displayed = format!("{}", oref);
+        assert_eq!(displayed, format!("block:{}", oid));
+    }
+
+    #[test]
+    fn test_display_all_otypes() {
+        let oid = Uuid::new_v4();
+        for &otype in VALID_OTYPES {
+            let oref = ORef::new(otype.to_string(), oid).unwrap();
+            let displayed = oref.to_string();
+            assert_eq!(displayed, format!("{}:{}", otype, oid));
+        }
+    }
+
+    #[test]
+    fn test_clone() {
+        let oid = Uuid::new_v4();
+        let oref = ORef::new("tab".to_string(), oid).unwrap();
+        let cloned = oref.clone();
+        assert_eq!(oref, cloned);
+    }
+
+    #[test]
+    fn test_eq_and_ne() {
+        let oid1 = Uuid::new_v4();
+        let oid2 = Uuid::new_v4();
+
+        let oref1 = ORef::new("block".to_string(), oid1).unwrap();
+        let oref2 = ORef::new("block".to_string(), oid1).unwrap();
+        let oref3 = ORef::new("block".to_string(), oid2).unwrap();
+        let oref4 = ORef::new("window".to_string(), oid1).unwrap();
+
+        assert_eq!(oref1, oref2);
+        assert_ne!(oref1, oref3);
+        assert_ne!(oref1, oref4);
+    }
+
+    #[test]
+    fn test_hash_consistency() {
+        let oid = Uuid::new_v4();
+        let oref1 = ORef::new("block".to_string(), oid).unwrap();
+        let oref2 = ORef::new("block".to_string(), oid).unwrap();
+
+        let mut hasher1 = DefaultHasher::new();
+        let mut hasher2 = DefaultHasher::new();
+        oref1.hash(&mut hasher1);
+        oref2.hash(&mut hasher2);
+
+        assert_eq!(hasher1.finish(), hasher2.finish());
+    }
+
+    #[test]
+    fn test_hash_different_otypes_different_hash() {
+        let oid = Uuid::new_v4();
+        let oref1 = ORef::new("block".to_string(), oid).unwrap();
+        let oref2 = ORef::new("window".to_string(), oid).unwrap();
+
+        let mut hasher1 = DefaultHasher::new();
+        let mut hasher2 = DefaultHasher::new();
+        oref1.hash(&mut hasher1);
+        oref2.hash(&mut hasher2);
+
+        assert_ne!(hasher1.finish(), hasher2.finish());
+    }
+
+    #[test]
+    fn test_hash_different_oids_different_hash() {
+        let oid1 = Uuid::new_v4();
+        let oid2 = Uuid::new_v4();
+
+        let oref1 = ORef::new("block".to_string(), oid1).unwrap();
+        let oref2 = ORef::new("block".to_string(), oid2).unwrap();
+
+        let mut hasher1 = DefaultHasher::new();
+        let mut hasher2 = DefaultHasher::new();
+        oref1.hash(&mut hasher1);
+        oref2.hash(&mut hasher2);
+
+        assert_ne!(hasher1.finish(), hasher2.finish());
+    }
+
+    #[test]
+    fn test_deserialize_invalid_string() {
+        let invalid_inputs = vec![
+            "block",
+            "invalid:uuid",
+            "block:not-a-uuid-at-all",
+            "",
+        ];
+
+        for input in invalid_inputs {
+            let json_str = format!("\"{}\"", input);
+            let result: Result<ORef, _> = serde_json::from_str(&json_str);
+            assert!(result.is_err(), "Should fail for: {}", input);
+        }
+    }
+
+    #[test]
+    fn test_deserialize_valid() {
+        let oid = Uuid::new_v4();
+        let json_str = format!("\"block:{}\"", oid);
+        let oref: ORef = serde_json::from_str(&json_str).unwrap();
+        assert_eq!(oref.otype, "block");
+        assert_eq!(oref.oid, oid);
+    }
+
+    #[test]
+    fn test_serialize_all_otypes() {
+        let oid = Uuid::new_v4();
+        for &otype in VALID_OTYPES {
+            let oref = ORef::new(otype.to_string(), oid).unwrap();
+            let json = serde_json::to_string(&oref).unwrap();
+            assert_eq!(json, format!("\"{}:{}\"", otype, oid));
+
+            let deserialized: ORef = serde_json::from_str(&json).unwrap();
+            assert_eq!(oref, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_oref_error_display() {
+        let err1 = ORefError::InvalidFormat("bad".to_string());
+        assert_eq!(
+            err1.to_string(),
+            "invalid ORef format: expected 'otype:oid', got 'bad'"
+        );
+
+        let err2 = ORefError::InvalidOType("Block".to_string());
+        assert_eq!(err2.to_string(), "invalid object type: 'Block'");
+
+        let err3 = ORefError::InvalidOid("not-a-uuid".to_string());
+        assert_eq!(err3.to_string(), "invalid OID (not a valid UUID): 'not-a-uuid'");
+    }
+
+    #[test]
+    fn test_oref_error_partial_eq() {
+        assert_eq!(
+            ORefError::InvalidFormat("a".to_string()),
+            ORefError::InvalidFormat("a".to_string())
+        );
+        assert_ne!(
+            ORefError::InvalidFormat("a".to_string()),
+            ORefError::InvalidFormat("b".to_string())
+        );
+        assert_ne!(
+            ORefError::InvalidFormat("a".to_string()),
+            ORefError::InvalidOType("a".to_string())
+        );
+    }
+
+    #[test]
+    fn test_oref_error_eq_different_fields() {
+        assert_ne!(
+            ORefError::InvalidOType("a".to_string()),
+            ORefError::InvalidOid("a".to_string())
+        );
+    }
+
+    #[test]
+    fn test_parse_uuid_new_v4_roundtrip() {
+        let oid = Uuid::new_v4();
+        let oref = ORef::new("block".to_string(), oid).unwrap();
+        let s = oref.to_string();
+        let parsed = ORef::parse(&s).unwrap();
+        assert_eq!(oref, parsed);
+    }
+
+    #[test]
+    fn test_parse_uuid_nil() {
+        let nil_oid = Uuid::nil();
+        let oref = ORef::new("block".to_string(), nil_oid).unwrap();
+        assert_eq!(oref.oid, nil_oid);
+        assert_eq!(oref.to_string(), format!("block:{}", nil_oid));
+    }
+
+    #[test]
+    fn test_parse_uuid_max() {
+        let max_oid = Uuid::max();
+        let oref = ORef::new("block".to_string(), max_oid).unwrap();
+        assert_eq!(oref.oid, max_oid);
+    }
+
+    #[test]
+    fn test_parse_uuid_from_u64() {
+        let oid = Uuid::from_u128(0);
+        let oref = ORef::new("block".to_string(), oid).unwrap();
+        assert_eq!(oref.otype, "block");
+        assert_eq!(oref.oid, oid);
+    }
 }

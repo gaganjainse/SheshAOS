@@ -196,4 +196,223 @@ mod tests {
         };
         assert!(tool.execute(&deny_req).await.is_err());
     }
+
+    #[tokio::test]
+    async fn test_filesystem_list_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let tool = FilesystemTool::new(vec![temp_dir.path().to_path_buf()], vec![]);
+
+        // Create some files
+        std::fs::write(temp_dir.path().join("a.txt"), "a").unwrap();
+        std::fs::write(temp_dir.path().join("b.txt"), "b").unwrap();
+
+        let req = ToolRequest {
+            tool_name: "filesystem".to_string(),
+            arguments: json!({
+                "action": "list_dir",
+                "path": temp_dir.path().to_str().unwrap()
+            }),
+        };
+        let res = tool.execute(&req).await.unwrap();
+        assert!(res.success);
+        assert!(res.output.contains("a.txt"));
+        assert!(res.output.contains("b.txt"));
+    }
+
+    #[tokio::test]
+    async fn test_filesystem_delete_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let tool = FilesystemTool::new(vec![temp_dir.path().to_path_buf()], vec![]);
+
+        let file_path = temp_dir.path().join("to_delete.txt");
+        std::fs::write(&file_path, "temp").unwrap();
+
+        let req = ToolRequest {
+            tool_name: "filesystem".to_string(),
+            arguments: json!({
+                "action": "delete_file",
+                "path": file_path.to_str().unwrap()
+            }),
+        };
+        let res = tool.execute(&req).await.unwrap();
+        assert!(res.success);
+        assert!(!file_path.exists());
+    }
+
+    #[tokio::test]
+    async fn test_filesystem_unknown_action() {
+        let temp_dir = TempDir::new().unwrap();
+        let tool = FilesystemTool::new(vec![temp_dir.path().to_path_buf()], vec![]);
+
+        let req = ToolRequest {
+            tool_name: "filesystem".to_string(),
+            arguments: json!({
+                "action": "chmod",
+                "path": "/tmp/test"
+            }),
+        };
+        let err = tool.execute(&req).await.unwrap_err();
+        match err {
+            ToolError::ExecutionFailed { reason, .. } => assert!(reason.contains("Unknown action")),
+            _ => panic!("Expected ExecutionFailed"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_filesystem_missing_path_argument() {
+        let temp_dir = TempDir::new().unwrap();
+        let tool = FilesystemTool::new(vec![temp_dir.path().to_path_buf()], vec![]);
+
+        let req = ToolRequest {
+            tool_name: "filesystem".to_string(),
+            arguments: json!({
+                "action": "read_file"
+                // missing path
+            }),
+        };
+        let err = tool.execute(&req).await.unwrap_err();
+        match err {
+            ToolError::ExecutionFailed { reason, .. } => assert!(reason.contains("Missing 'path' argument")),
+            _ => panic!("Expected ExecutionFailed"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_filesystem_missing_content_for_write() {
+        let temp_dir = TempDir::new().unwrap();
+        let tool = FilesystemTool::new(vec![temp_dir.path().to_path_buf()], vec![]);
+
+        let req = ToolRequest {
+            tool_name: "filesystem".to_string(),
+            arguments: json!({
+                "action": "write_file",
+                "path": temp_dir.path().join("test.txt").to_str().unwrap()
+                // missing content
+            }),
+        };
+        let err = tool.execute(&req).await.unwrap_err();
+        match err {
+            ToolError::ExecutionFailed { reason, .. } => assert!(reason.contains("Missing 'content' argument")),
+            _ => panic!("Expected ExecutionFailed"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_filesystem_path_denied_for_write() {
+        let temp_dir = TempDir::new().unwrap();
+        // Empty allowed paths means nothing is allowed
+        let tool = FilesystemTool::new(vec![], vec![]);
+
+        let req = ToolRequest {
+            tool_name: "filesystem".to_string(),
+            arguments: json!({
+                "action": "write_file",
+                "path": temp_dir.path().join("test.txt").to_str().unwrap(),
+                "content": "data"
+            }),
+        };
+        let err = tool.execute(&req).await.unwrap_err();
+        match err {
+            ToolError::PathDenied { .. } => {}
+            _ => panic!("Expected PathDenied"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_filesystem_empty_allowed_paths() {
+        let tool = FilesystemTool::new(vec![], vec![]);
+        let req = ToolRequest {
+            tool_name: "filesystem".to_string(),
+            arguments: json!({
+                "action": "list_dir",
+                "path": "/tmp"
+            }),
+        };
+        let err = tool.execute(&req).await.unwrap_err();
+        match err {
+            ToolError::PathDenied { .. } => {}
+            _ => panic!("Expected PathDenied"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_filesystem_denied_pattern_in_path() {
+        let temp_dir = TempDir::new().unwrap();
+        // Create a .env file inside allowed path
+        let env_path = temp_dir.path().join(".env");
+        std::fs::write(&env_path, "SECRET=value").unwrap();
+
+        let tool = FilesystemTool::new(vec![temp_dir.path().to_path_buf()], vec![".env".to_string()]);
+
+        let req = ToolRequest {
+            tool_name: "filesystem".to_string(),
+            arguments: json!({
+                "action": "read_file",
+                "path": env_path.to_str().unwrap()
+            }),
+        };
+        let err = tool.execute(&req).await.unwrap_err();
+        match err {
+            ToolError::PathDenied { .. } => {}
+            _ => panic!("Expected PathDenied"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_filesystem_read_nonexistent_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let tool = FilesystemTool::new(vec![temp_dir.path().to_path_buf()], vec![]);
+
+        let req = ToolRequest {
+            tool_name: "filesystem".to_string(),
+            arguments: json!({
+                "action": "read_file",
+                "path": temp_dir.path().join("nonexistent.txt").to_str().unwrap()
+            }),
+        };
+        let err = tool.execute(&req).await.unwrap_err();
+        match err {
+            ToolError::Io(_) => {}
+            _ => panic!("Expected Io error"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_filesystem_read_empty_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let tool = FilesystemTool::new(vec![temp_dir.path().to_path_buf()], vec![]);
+
+        let file_path = temp_dir.path().join("empty.txt");
+        std::fs::write(&file_path, "").unwrap();
+
+        let req = ToolRequest {
+            tool_name: "filesystem".to_string(),
+            arguments: json!({
+                "action": "read_file",
+                "path": file_path.to_str().unwrap()
+            }),
+        };
+        let res = tool.execute(&req).await.unwrap();
+        assert!(res.success);
+        assert_eq!(res.output, "");
+    }
+
+    #[tokio::test]
+    async fn test_filesystem_delete_nonexistent_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let tool = FilesystemTool::new(vec![temp_dir.path().to_path_buf()], vec![]);
+
+        let req = ToolRequest {
+            tool_name: "filesystem".to_string(),
+            arguments: json!({
+                "action": "delete_file",
+                "path": temp_dir.path().join("nonexistent.txt").to_str().unwrap()
+            }),
+        };
+        let err = tool.execute(&req).await.unwrap_err();
+        match err {
+            ToolError::Io(_) => {}
+            _ => panic!("Expected Io error"),
+        }
+    }
 }

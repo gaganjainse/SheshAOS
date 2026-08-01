@@ -60,17 +60,13 @@ impl ModelProvider for AnthropicProvider {
                     let mut output = String::new();
                     let text = String::from_utf8_lossy(&bytes);
                     for line in text.lines() {
-                        if line.starts_with("data: ") {
-                            let data = &line[6..];
-                            if let Ok(val) = serde_json::from_str::<Value>(data) {
-                                if val.get("type").and_then(|t| t.as_str()) == Some("content_block_delta") {
-                                    if let Some(delta) = val.get("delta") {
-                                        if let Some(content) = delta.get("text").and_then(|c| c.as_str()) {
-                                            output.push_str(content);
-                                        }
-                                    }
-                                }
-                            }
+                        if let Some(data) = line.strip_prefix("data: ")
+                            && let Ok(val) = serde_json::from_str::<Value>(data)
+                            && val.get("type").and_then(|t| t.as_str()) == Some("content_block_delta")
+                            && let Some(delta) = val.get("delta")
+                            && let Some(content) = delta.get("text").and_then(|c| c.as_str())
+                        {
+                            output.push_str(content);
                         }
                     }
                     Ok(output)

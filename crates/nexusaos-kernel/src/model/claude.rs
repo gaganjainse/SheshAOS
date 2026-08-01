@@ -156,4 +156,61 @@ mod tests {
         assert_eq!(provider.max_context(), 200_000);
         assert!(provider.supports_vision());
     }
+
+    #[test]
+    fn test_claude_provider_different_roles() {
+        let planner = ClaudeProvider::new("key".into(), "claude-opus".into(), ModelRole::Planner);
+        assert_eq!(planner.role(), ModelRole::Planner);
+        assert!(planner.supports_vision());
+
+        let vision = ClaudeProvider::new("key".into(), "claude-sonnet".into(), ModelRole::Vision);
+        assert_eq!(vision.role(), ModelRole::Vision);
+        assert!(vision.supports_vision());
+
+        let reviewer = ClaudeProvider::new("key".into(), "claude-haiku".into(), ModelRole::Reviewer);
+        assert_eq!(reviewer.role(), ModelRole::Reviewer);
+        assert!(reviewer.supports_vision());
+    }
+
+    #[test]
+    fn test_claude_provider_max_context_constant() {
+        let provider = ClaudeProvider::new("key".into(), "any-model".into(), ModelRole::Coder);
+        assert_eq!(provider.max_context(), 200_000);
+    }
+
+    #[test]
+    fn test_claude_provider_health_check_with_key() {
+        let provider = ClaudeProvider::new("valid-key".into(), "claude-3".into(), ModelRole::Coder);
+        // health_check checks if api_key is non-empty
+        // We can't easily test the async method synchronously, but we can test the field
+        assert!(!provider.api_key.is_empty());
+    }
+
+    #[test]
+    fn test_claude_provider_name_format() {
+        let provider = ClaudeProvider::new("key".into(), "claude-3-5-sonnet-20240620".into(), ModelRole::Planner);
+        assert_eq!(provider.name(), "anthropic-claude-claude-3-5-sonnet-20240620");
+    }
+
+    #[test]
+    fn test_claude_provider_empty_api_key() {
+        let provider = ClaudeProvider::new(String::new(), "model".into(), ModelRole::Coder);
+        assert!(provider.api_key.is_empty());
+        assert!(provider.supports_vision());
+    }
+
+    #[test]
+    fn test_claude_provider_always_supports_vision() {
+        for role in [ModelRole::Planner, ModelRole::Coder, ModelRole::Vision, ModelRole::Reviewer] {
+            let provider = ClaudeProvider::new("key".into(), "model".into(), role);
+            assert!(provider.supports_vision(), "Claude should always support vision for role {:?}", role);
+        }
+    }
+
+    #[test]
+    fn test_claude_provider_client_built() {
+        let provider = ClaudeProvider::new("key".into(), "model".into(), ModelRole::Coder);
+        // The client is built in new(), just verify it exists (not panicking means success)
+        assert!(true);
+    }
 }

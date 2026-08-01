@@ -98,6 +98,7 @@ mod tests {
     use std::env;
 
     use serde_json::json;
+    use tempfile::TempDir;
 
     use super::*;
 
@@ -111,6 +112,270 @@ mod tests {
         let res = tool.execute(&req).await.unwrap();
         // Since we are running in a real environment which may or may not be a git repo
         // we just assert that we got some output from git.
-        assert!(res.output.len() > 0);
+        assert!(!res.output.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_git_diff() {
+        let temp_dir = TempDir::new().unwrap();
+        // Initialize a git repo
+        let _ = Command::new("git")
+            .arg("init")
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+
+        let tool = GitTool::new(temp_dir.path().to_path_buf());
+
+        let req = ToolRequest {
+            tool_name: "git".to_string(),
+            arguments: json!({ "action": "diff" }),
+        };
+        let res = tool.execute(&req).await.unwrap();
+        assert!(res.success); // diff with no changes returns empty but succeeds
+    }
+
+    #[tokio::test]
+    async fn test_git_diff_staged() {
+        let temp_dir = TempDir::new().unwrap();
+        let _ = Command::new("git")
+            .arg("init")
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["config", "user.email", "test@test.com"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["config", "user.name", "Test"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+
+        let file_path = temp_dir.path().join("test.txt");
+        std::fs::write(&file_path, "hello").unwrap();
+        let _ = Command::new("git")
+            .arg("add")
+            .arg("test.txt")
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+
+        let tool = GitTool::new(temp_dir.path().to_path_buf());
+
+        let req = ToolRequest {
+            tool_name: "git".to_string(),
+            arguments: json!({ "action": "diff", "staged": true }),
+        };
+        let res = tool.execute(&req).await.unwrap();
+        // staged diff should show the added file
+        assert!(res.success);
+    }
+
+    #[tokio::test]
+    async fn test_git_log() {
+        let temp_dir = TempDir::new().unwrap();
+        let _ = Command::new("git")
+            .arg("init")
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["config", "user.email", "test@test.com"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["config", "user.name", "Test"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+
+        let file_path = temp_dir.path().join("test.txt");
+        std::fs::write(&file_path, "hello").unwrap();
+        let _ = Command::new("git")
+            .arg("add")
+            .arg("test.txt")
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["commit", "-m", "initial"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+
+        let tool = GitTool::new(temp_dir.path().to_path_buf());
+
+        let req = ToolRequest {
+            tool_name: "git".to_string(),
+            arguments: json!({ "action": "log", "count": 1 }),
+        };
+        let res = tool.execute(&req).await.unwrap();
+        assert!(res.success);
+        assert!(res.output.contains("initial"));
+    }
+
+    #[tokio::test]
+    async fn test_git_add() {
+        let temp_dir = TempDir::new().unwrap();
+        let _ = Command::new("git")
+            .arg("init")
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["config", "user.email", "test@test.com"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["config", "user.name", "Test"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+
+        let file_path = temp_dir.path().join("test.txt");
+        std::fs::write(&file_path, "hello").unwrap();
+
+        let tool = GitTool::new(temp_dir.path().to_path_buf());
+
+        let req = ToolRequest {
+            tool_name: "git".to_string(),
+            arguments: json!({ "action": "add", "paths": ["test.txt"] }),
+        };
+        let res = tool.execute(&req).await.unwrap();
+        assert!(res.success);
+    }
+
+    #[tokio::test]
+    async fn test_git_commit() {
+        let temp_dir = TempDir::new().unwrap();
+        let _ = Command::new("git")
+            .arg("init")
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["config", "user.email", "test@test.com"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["config", "user.name", "Test"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+
+        let file_path = temp_dir.path().join("test.txt");
+        std::fs::write(&file_path, "hello").unwrap();
+        let _ = Command::new("git")
+            .arg("add")
+            .arg("test.txt")
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+
+        let tool = GitTool::new(temp_dir.path().to_path_buf());
+
+        let req = ToolRequest {
+            tool_name: "git".to_string(),
+            arguments: json!({ "action": "commit", "message": "add test file" }),
+        };
+        let res = tool.execute(&req).await.unwrap();
+        assert!(res.success);
+        assert!(res.output.contains("add test file") || res.output.contains("1 file"));
+    }
+
+    #[tokio::test]
+    async fn test_git_unknown_action() {
+        let temp_dir = TempDir::new().unwrap();
+        let tool = GitTool::new(temp_dir.path().to_path_buf());
+
+        let req = ToolRequest {
+            tool_name: "git".to_string(),
+            arguments: json!({ "action": "push" }),
+        };
+        let err = tool.execute(&req).await.unwrap_err();
+        match err {
+            ToolError::ExecutionFailed { reason, .. } => assert!(reason.contains("Unknown action")),
+            _ => panic!("Expected ExecutionFailed"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_git_missing_message_for_commit() {
+        let temp_dir = TempDir::new().unwrap();
+        let tool = GitTool::new(temp_dir.path().to_path_buf());
+
+        let req = ToolRequest {
+            tool_name: "git".to_string(),
+            arguments: json!({ "action": "commit" }),
+        };
+        let err = tool.execute(&req).await.unwrap_err();
+        match err {
+            ToolError::ExecutionFailed { reason, .. } => assert!(reason.contains("Missing 'message' argument")),
+            _ => panic!("Expected ExecutionFailed"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_git_in_non_repo_directory() {
+        let temp_dir = TempDir::new().unwrap();
+        let tool = GitTool::new(temp_dir.path().to_path_buf());
+
+        let req = ToolRequest {
+            tool_name: "git".to_string(),
+            arguments: json!({ "action": "status" }),
+        };
+        let res = tool.execute(&req).await.unwrap();
+        // In a non-git directory, git status will fail
+        assert!(!res.success || res.output.contains("fatal") || res.output.contains("not a git"));
+    }
+
+    #[tokio::test]
+    async fn test_git_log_default_count() {
+        let temp_dir = TempDir::new().unwrap();
+        let _ = Command::new("git")
+            .arg("init")
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["config", "user.email", "test@test.com"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["config", "user.name", "Test"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+
+        let file_path = temp_dir.path().join("test.txt");
+        std::fs::write(&file_path, "hello").unwrap();
+        let _ = Command::new("git")
+            .arg("add")
+            .arg("test.txt")
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+        let _ = Command::new("git")
+            .args(["commit", "-m", "initial"])
+            .current_dir(temp_dir.path())
+            .output()
+            .await;
+
+        let tool = GitTool::new(temp_dir.path().to_path_buf());
+
+        // Test default count (should use 10)
+        let req = ToolRequest {
+            tool_name: "git".to_string(),
+            arguments: json!({ "action": "log" }),
+        };
+        let res = tool.execute(&req).await.unwrap();
+        assert!(res.success);
     }
 }

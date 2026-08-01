@@ -190,17 +190,16 @@ impl ModelProvider for OpenAiCompatProvider {
                 let line = buffer[..pos].trim().to_string();
                 buffer.drain(..=pos);
 
-                if line.starts_with("data: ") {
-                    let data = &line["data: ".len()..];
+                if let Some(data) = line.strip_prefix("data: ") {
                     if data == "[DONE]" {
                         break;
                     }
-                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(data) {
-                        if let Some(token) = val["choices"][0]["delta"]["content"].as_str() {
-                            let token_str = token.to_string();
-                            full_content.push_str(&token_str);
-                            on_token(&token_str);
-                        }
+                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(data)
+                        && let Some(token) = val["choices"][0]["delta"]["content"].as_str()
+                    {
+                        let token_str = token.to_string();
+                        full_content.push_str(&token_str);
+                        on_token(&token_str);
                     }
                 }
             }
@@ -253,5 +252,178 @@ mod tests {
         };
 
         assert!(OpenAiCompatProvider::new(&config).is_err());
+    }
+
+    #[test]
+    fn test_from_config_alias() {
+        let config = ModelProviderConfig {
+            name: "test".to_string(),
+            role: "planner".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+            model_id: "llama3".to_string(),
+            max_context: 4096,
+            supports_vision: false,
+        };
+        let provider = OpenAiCompatProvider::from_config(&config).unwrap();
+        assert_eq!(provider.name(), "test");
+        assert_eq!(provider.role(), ModelRole::Planner);
+    }
+
+    #[test]
+    fn test_base_url_trailing_slash_trimmed() {
+        let config = ModelProviderConfig {
+            name: "test".to_string(),
+            role: "coder".to_string(),
+            base_url: "http://localhost:11434/".to_string(),
+            model_id: "llama3".to_string(),
+            max_context: 4096,
+            supports_vision: false,
+        };
+        let provider = OpenAiCompatProvider::new(&config).unwrap();
+        assert_eq!(provider.base_url, "http://localhost:11434");
+    }
+
+    #[test]
+    fn test_base_url_no_trailing_slash() {
+        let config = ModelProviderConfig {
+            name: "test".to_string(),
+            role: "coder".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+            model_id: "llama3".to_string(),
+            max_context: 4096,
+            supports_vision: false,
+        };
+        let provider = OpenAiCompatProvider::new(&config).unwrap();
+        assert_eq!(provider.base_url, "http://localhost:11434");
+    }
+
+    #[test]
+    fn test_provider_uppercase_role() {
+        let config = ModelProviderConfig {
+            name: "test".to_string(),
+            role: "PLANNER".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+            model_id: "llama3".to_string(),
+            max_context: 4096,
+            supports_vision: false,
+        };
+        let provider = OpenAiCompatProvider::new(&config).unwrap();
+        assert_eq!(provider.role(), ModelRole::Planner);
+    }
+
+    #[test]
+    fn test_provider_mixed_case_role() {
+        let config = ModelProviderConfig {
+            name: "test".to_string(),
+            role: "CoDeR".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+            model_id: "llama3".to_string(),
+            max_context: 4096,
+            supports_vision: false,
+        };
+        let provider = OpenAiCompatProvider::new(&config).unwrap();
+        assert_eq!(provider.role(), ModelRole::Coder);
+    }
+
+    #[test]
+    fn test_provider_max_context() {
+        let config = ModelProviderConfig {
+            name: "test".to_string(),
+            role: "vision".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+            model_id: "llava".to_string(),
+            max_context: 8192,
+            supports_vision: true,
+        };
+        let provider = OpenAiCompatProvider::new(&config).unwrap();
+        assert_eq!(provider.max_context(), 8192);
+    }
+
+    #[test]
+    fn test_provider_supports_vision() {
+        let config = ModelProviderConfig {
+            name: "test".to_string(),
+            role: "vision".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+            model_id: "llava".to_string(),
+            max_context: 4096,
+            supports_vision: true,
+        };
+        let provider = OpenAiCompatProvider::new(&config).unwrap();
+        assert!(provider.supports_vision());
+    }
+
+    #[test]
+    fn test_provider_no_vision() {
+        let config = ModelProviderConfig {
+            name: "test".to_string(),
+            role: "coder".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+            model_id: "llama3".to_string(),
+            max_context: 4096,
+            supports_vision: false,
+        };
+        let provider = OpenAiCompatProvider::new(&config).unwrap();
+        assert!(!provider.supports_vision());
+    }
+
+    #[test]
+    fn test_provider_name() {
+        let config = ModelProviderConfig {
+            name: "my-provider".to_string(),
+            role: "planner".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+            model_id: "llama3".to_string(),
+            max_context: 4096,
+            supports_vision: false,
+        };
+        let provider = OpenAiCompatProvider::new(&config).unwrap();
+        assert_eq!(provider.name(), "my-provider");
+    }
+
+    #[test]
+    fn test_provider_model_id_stored() {
+        let config = ModelProviderConfig {
+            name: "test".to_string(),
+            role: "planner".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+            model_id: "llama3-70b".to_string(),
+            max_context: 4096,
+            supports_vision: false,
+        };
+        let provider = OpenAiCompatProvider::new(&config).unwrap();
+        assert_eq!(provider.model_id, "llama3-70b");
+    }
+
+    #[test]
+    fn test_client_builder_success() {
+        let config = ModelProviderConfig {
+            name: "test".to_string(),
+            role: "planner".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+            model_id: "llama3".to_string(),
+            max_context: 4096,
+            supports_vision: false,
+        };
+        let provider = OpenAiCompatProvider::new(&config).unwrap();
+        // Verify the provider was constructed successfully with a client
+        assert_eq!(provider.name(), "test");
+    }
+
+    #[test]
+    fn test_all_roles() {
+        let roles = vec![("planner", ModelRole::Planner), ("coder", ModelRole::Coder), ("vision", ModelRole::Vision), ("reviewer", ModelRole::Reviewer)];
+        for (role_str, expected) in roles {
+            let config = ModelProviderConfig {
+                name: "test".to_string(),
+                role: role_str.to_string(),
+                base_url: "http://localhost".to_string(),
+                model_id: "model".to_string(),
+                max_context: 4096,
+                supports_vision: false,
+            };
+            let provider = OpenAiCompatProvider::new(&config).unwrap();
+            assert_eq!(provider.role(), expected);
+        }
     }
 }

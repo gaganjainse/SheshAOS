@@ -59,10 +59,10 @@ impl Controller for ShellController {
         let cmd = CommandBuilder::new(&self.shell_path);
         let mut child = pair.slave.spawn_command(cmd).map_err(|e| ControllerError::Shell(e.to_string()))?;
 
-        *self.status.lock().unwrap() = "running".to_string();
+        *self.status.lock().unwrap_or_else(|e| e.into_inner()) = "running".to_string();
 
         let (tx, mut rx) = mpsc::channel::<BlockInput>(256);
-        *self.input_tx.lock().unwrap() = Some(tx);
+        *self.input_tx.lock().unwrap_or_else(|e| e.into_inner()) = Some(tx);
 
         let mut reader = pair.master.try_clone_reader().map_err(|e| ControllerError::Shell(e.to_string()))?;
         let block_id = self.block_id.clone();
@@ -113,32 +113,32 @@ impl Controller for ShellController {
         tokio::task::spawn_blocking(move || {
             if let Ok(exit_status) = child.wait() {
                 let code = exit_status.exit_code();
-                *exit_code.lock().unwrap() = Some(code as i32);
+                *exit_code.lock().unwrap_or_else(|e| e.into_inner()) = Some(code as i32);
             }
-            *status.lock().unwrap() = "done".to_string();
+            *status.lock().unwrap_or_else(|e| e.into_inner()) = "done".to_string();
         });
 
         Ok(())
     }
 
     async fn stop(&self, graceful: bool) -> Result<(), ControllerError> {
-        let mut tx_guard = self.input_tx.lock().unwrap();
+        let mut tx_guard = self.input_tx.lock().unwrap_or_else(|e| e.into_inner());
         *tx_guard = None; // Drop the sender to close the channel
 
         if !graceful {
             // Best effort without OS specific kill
         }
 
-        *self.status.lock().unwrap() = "done".to_string();
+        *self.status.lock().unwrap_or_else(|e| e.into_inner()) = "done".to_string();
         Ok(())
     }
 
     fn runtime_status(&self) -> ControllerStatus {
         ControllerStatus {
             block_id: self.block_id.clone(),
-            status: self.status.lock().unwrap().clone(),
+            status: self.status.lock().unwrap_or_else(|e| e.into_inner()).clone(),
             conn_name: self.conn_name.clone(),
-            exit_code: *self.exit_code.lock().unwrap(),
+            exit_code: *self.exit_code.lock().unwrap_or_else(|e| e.into_inner()),
         }
     }
 
@@ -148,7 +148,7 @@ impl Controller for ShellController {
 
     async fn send_input(&self, input: BlockInput) -> Result<(), ControllerError> {
         let tx = {
-            let guard = self.input_tx.lock().unwrap();
+            let guard = self.input_tx.lock().unwrap_or_else(|e| e.into_inner());
             guard.clone()
         };
         

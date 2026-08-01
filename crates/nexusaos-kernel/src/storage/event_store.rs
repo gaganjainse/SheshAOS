@@ -150,6 +150,7 @@ impl crate::runtime::kernel::EventStore for EventStore {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
     use tempfile::TempDir;
 
     use super::*;
@@ -182,5 +183,179 @@ mod tests {
 
         let since_events = store.read_since(1).await.unwrap();
         assert_eq!(since_events.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_event_store_open_new_directory() {
+        let temp_dir = TempDir::new().unwrap();
+        let new_path = temp_dir.path().join("new_store");
+        let store = EventStore::open(new_path).await.unwrap();
+        assert_eq!(store.count(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_event_store_duplicate_rejected() {
+        let temp_dir = TempDir::new().unwrap();
+        let store = EventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+
+        let task_id = TaskId::new();
+        let mut event = Event::new(
+            task_id,
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+
+        store.append(&mut event).await.unwrap();
+        // Try to append the same event again
+        let result = store.append(&mut event).await;
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            StorageError::DuplicateEvent { .. } => {}
+            _ => panic!("Expected DuplicateEvent"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_event_store_read_for_task_no_match() {
+        let temp_dir = TempDir::new().unwrap();
+        let store = EventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+
+        let task_id = TaskId::new();
+        let mut event = Event::new(
+            task_id,
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        store.append(&mut event).await.unwrap();
+
+        let other_id = TaskId::new();
+        let events = store.read_for_task(&other_id).await.unwrap();
+        assert!(events.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_event_store_read_since() {
+        let temp_dir = TempDir::new().unwrap();
+        let store = EventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+
+        let mut e1 = Event::new(TaskId::new(), EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string());
+        e1.sequence = crate::events::SequenceNumber(1);
+        store.append(&mut e1).await.unwrap();
+
+        let mut e2 = Event::new(TaskId::new(), EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string());
+        e2.sequence = crate::events::SequenceNumber(2);
+        store.append(&mut e2).await.unwrap();
+
+        let mut e3 = Event::new(TaskId::new(), EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string());
+        e3.sequence = crate::events::SequenceNumber(3);
+        store.append(&mut e3).await.unwrap();
+
+        let since_2 = store.read_since(2).await.unwrap();
+        assert_eq!(since_2.len(), 2); // seq 2 and 3
+
+        let since_3 = store.read_since(3).await.unwrap();
+        assert_eq!(since_3.len(), 1); // seq 3 only
+
+        let since_4 = store.read_since(4).await.unwrap();
+        assert!(since_4.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_event_store_multiple_events() {
+        let temp_dir = TempDir::new().unwrap();
+        let store = EventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+
+        for i in 0..10 {
+            let mut event = Event::new(
+                TaskId::new(),
+                EventKind::TaskCreated,
+                EventPayload::TaskCreated { request: serde_json::json!({"i": i}) },
+                "test".to_string(),
+            );
+            store.append(&mut event).await.unwrap();
+        }
+
+        assert_eq!(store.count(), 10);
+        let all = store.read_all().await.unwrap();
+        assert_eq!(all.len(), 10);
+    }
+
+    #[tokio::test]
+    async fn test_event_store_reopen_preserves_index() {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir.path().to_path_buf();
+
+        {
+            let store = EventStore::open(path.clone()).await.unwrap();
+            let mut event = Event::new(
+                TaskId::new(),
+                EventKind::TaskCreated,
+                EventPayload::TaskCreated { request: serde_json::json!({}) },
+                "test".to_string(),
+            );
+            store.append(&mut event).await.unwrap();
+            assert_eq!(store.count(), 1);
+        }
+
+        // Reopen the store
+        let store2 = EventStore::open(path).await.unwrap();
+        assert_eq!(store2.count(), 1);
+        let events = store2.read_all().await.unwrap();
+        assert_eq!(events.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_event_store_get_all_events_trait() {
+        let temp_dir = TempDir::new().unwrap();
+        let store: Arc<dyn crate::runtime::kernel::EventStore> = Arc::new(
+            EventStore::open(temp_dir.path().to_path_buf()).await.unwrap()
+        );
+
+        let task_id = TaskId::new();
+        let mut event = Event::new(
+            task_id,
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        store.append(event).await.unwrap();
+
+        let all = store.get_all_events().await.unwrap();
+        assert_eq!(all.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_event_store_get_task_events_trait() {
+        let temp_dir = TempDir::new().unwrap();
+        let store: Arc<dyn crate::runtime::kernel::EventStore> = Arc::new(
+            EventStore::open(temp_dir.path().to_path_buf()).await.unwrap()
+        );
+
+        let task_id = TaskId::new();
+        let mut event = Event::new(
+            task_id,
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        store.append(event).await.unwrap();
+
+        let task_events = store.get_task_events(&task_id).await.unwrap();
+        assert_eq!(task_events.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_event_store_invalid_json_line_skipped() {
+        let temp_dir = TempDir::new().unwrap();
+        let path = temp_dir.path().to_path_buf();
+
+        // Write a bad JSON line directly to the file
+        let file_path = path.join("events.jsonl");
+        tokio::fs::write(&file_path, "not json at all\n").await.unwrap();
+
+        let store = EventStore::open(path).await.unwrap();
+        assert_eq!(store.count(), 0);
     }
 }

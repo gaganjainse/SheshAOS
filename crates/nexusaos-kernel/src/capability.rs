@@ -243,4 +243,240 @@ mod tests {
         set.cleanup_expired();
         assert!(set.leases.is_empty());
     }
+
+    #[test]
+    fn test_scope_equality() {
+        assert_eq!(Scope::Path(PathBuf::from("/tmp")), Scope::Path(PathBuf::from("/tmp")));
+        assert_eq!(Scope::Global, Scope::Global);
+        assert_eq!(Scope::Command("ls".into()), Scope::Command("ls".into()));
+        assert_ne!(Scope::Path(PathBuf::from("/tmp")), Scope::Path(PathBuf::from("/var")));
+    }
+
+    #[test]
+    fn test_capability_equality() {
+        let cap1 = Capability { name: "read".into(), scope: Scope::Path(PathBuf::from("/etc")), description: "read etc".into() };
+        let cap2 = Capability { name: "read".into(), scope: Scope::Path(PathBuf::from("/etc")), description: "read etc".into() };
+        assert_eq!(cap1, cap2);
+    }
+
+    #[test]
+    fn test_lease_valid_no_expiry() {
+        let cap = Capability { name: "perm".into(), scope: Scope::Global, description: "perm".into() };
+        let lease = CapabilityLease {
+            id: Uuid::new_v4(),
+            capability: cap,
+            granted_at: Utc::now(),
+            expires_at: None,
+            granted_by: "admin".into(),
+            revoked: false,
+        };
+        assert!(lease.is_valid());
+    }
+
+    #[test]
+    fn test_lease_valid_future_expiry() {
+        let cap = Capability { name: "perm".into(), scope: Scope::Global, description: "perm".into() };
+        let now = Utc::now();
+        let future = now + chrono::Duration::days(1);
+        let lease = CapabilityLease {
+            id: Uuid::new_v4(),
+            capability: cap,
+            granted_at: now,
+            expires_at: Some(future),
+            granted_by: "admin".into(),
+            revoked: false,
+        };
+        assert!(lease.is_valid());
+    }
+
+    #[test]
+    fn test_lease_expires_at_now_boundary() {
+        let cap = Capability { name: "perm".into(), scope: Scope::Global, description: "perm".into() };
+        let now = Utc::now();
+        let lease = CapabilityLease {
+            id: Uuid::new_v4(),
+            capability: cap,
+            granted_at: now,
+            expires_at: Some(now),
+            granted_by: "admin".into(),
+            revoked: false,
+        };
+        assert!(!lease.is_valid());
+    }
+
+    #[test]
+    fn test_capability_set_empty() {
+        let set = CapabilitySet::new();
+        assert!(set.leases.is_empty());
+        assert!(!set.has_capability("anything"));
+        assert!(!set.check_path(Path::new("/any")));
+        assert!(!set.check_command("anything"));
+    }
+
+    #[test]
+    fn test_grant_with_ttl() {
+        let cap = Capability { name: "temp".into(), scope: Scope::Global, description: "temp".into() };
+        let mut set = CapabilitySet::new();
+        let ttl = Duration::from_secs(3600);
+        let lease = set.grant(cap, "admin".into(), Some(ttl));
+        assert!(lease.is_valid());
+        assert!(set.has_capability("temp"));
+        assert_eq!(set.leases.len(), 1);
+    }
+
+    #[test]
+    fn test_revoke_nonexistent_lease() {
+        let mut set = CapabilitySet::new();
+        let fake_id = Uuid::new_v4();
+        set.revoke(&fake_id);
+        assert!(set.leases.is_empty());
+    }
+
+    #[test]
+    fn test_revoke_partial_set() {
+        let cap1 = Capability { name: "a".to_string(), scope: Scope::Global, description: "".into() };
+        let cap2 = Capability { name: "b".to_string(), scope: Scope::Global, description: "".into() };
+        let mut set = CapabilitySet::new();
+        let id1 = set.grant(cap1, "admin".to_string(), None).id;
+        let id2 = set.grant(cap2, "admin".to_string(), None).id;
+        assert_eq!(set.leases.len(), 2);
+
+        set.revoke(&id1);
+        assert!(set.has_capability("b"));
+        assert!(!set.has_capability("a"));
+        assert_eq!(set.leases.len(), 2); // not cleaned up yet
+    }
+
+    #[test]
+    fn test_cleanup_mixed_expired_and_valid() {
+        let now = Utc::now();
+        let past = now - chrono::Duration::days(1);
+        let future = now + chrono::Duration::days(1);
+
+        let mut set = CapabilitySet::new();
+        set.leases.push(CapabilityLease {
+            id: Uuid::new_v4(),
+            capability: Capability { name: "expired".into(), scope: Scope::Global, description: "".into() },
+            granted_at: past,
+            expires_at: Some(past),
+            granted_by: "admin".into(),
+            revoked: false,
+        });
+        set.leases.push(CapabilityLease {
+            id: Uuid::new_v4(),
+            capability: Capability { name: "valid".into(), scope: Scope::Global, description: "".into() },
+            granted_at: now,
+            expires_at: Some(future),
+            granted_by: "admin".into(),
+            revoked: false,
+        });
+        set.leases.push(CapabilityLease {
+            id: Uuid::new_v4(),
+            capability: Capability { name: "revoked".into(), scope: Scope::Global, description: "".into() },
+            granted_at: now,
+            expires_at: Some(future),
+            granted_by: "admin".into(),
+            revoked: true,
+        });
+
+        set.cleanup_expired();
+        assert_eq!(set.leases.len(), 1);
+        assert!(set.has_capability("valid"));
+    }
+
+    #[test]
+    fn test_covers_path_non_path_scope() {
+        let cap = Capability { name: "cmd".into(), scope: Scope::Command("ls".into()), description: "".into() };
+        let mut set = CapabilitySet::new();
+        set.grant(cap, "admin".into(), None);
+        assert!(!set.check_path(Path::new("/etc/passwd")));
+    }
+
+    #[test]
+    fn test_covers_command_non_command_scope() {
+        let cap = Capability { name: "path".into(), scope: Scope::Path(PathBuf::from("/etc")), description: "".into() };
+        let mut set = CapabilitySet::new();
+        set.grant(cap, "admin".into(), None);
+        assert!(!set.check_command("ls -la"));
+    }
+
+    #[test]
+    fn test_path_coverage_edge_cases() {
+        let cap = Capability { name: "fs".into(), scope: Scope::Path(PathBuf::from("/etc")), description: "".into() };
+        let mut set = CapabilitySet::new();
+        set.grant(cap, "admin".into(), None);
+
+        assert!(set.check_path(Path::new("/etc")));
+        assert!(set.check_path(Path::new("/etc/nginx/nginx.conf")));
+        assert!(!set.check_path(Path::new("/etc_"))); // prefix match, not contains
+        assert!(!set.check_path(Path::new("/var/etc")));
+    }
+
+    #[test]
+    fn test_command_coverage_edge_cases() {
+        let cap = Capability { name: "cmd".into(), scope: Scope::Command("git".into()), description: "".into() };
+        let mut set = CapabilitySet::new();
+        set.grant(cap, "admin".into(), None);
+
+        assert!(set.check_command("git"));
+        assert!(set.check_command("git status"));
+        assert!(set.check_command("git log --oneline"));
+        assert!(!set.check_command("gittxt"));
+    }
+
+    #[test]
+    fn test_has_capability_multiple_grants() {
+        let mut set = CapabilitySet::new();
+        set.grant(Capability { name: "a".into(), scope: Scope::Global, description: "".into() }, "admin".into(), None);
+        set.grant(Capability { name: "b".into(), scope: Scope::Global, description: "".into() }, "admin".into(), None);
+        set.grant(Capability { name: "c".into(), scope: Scope::Global, description: "".into() }, "admin".into(), None);
+
+        assert!(set.has_capability("a"));
+        assert!(set.has_capability("b"));
+        assert!(set.has_capability("c"));
+        assert!(!set.has_capability("d"));
+    }
+
+    #[test]
+    fn test_scope_serde_roundtrip() {
+        let scopes = vec![
+            Scope::Path(PathBuf::from("/tmp")),
+            Scope::Command("ls".into()),
+            Scope::Model("gpt4".into()),
+            Scope::Tool("editor".into()),
+            Scope::Global,
+        ];
+        for scope in scopes {
+            let json = serde_json::to_string(&scope).unwrap();
+            let back: Scope = serde_json::from_str(&json).unwrap();
+            assert_eq!(scope, back);
+        }
+    }
+
+    #[test]
+    fn test_capability_lease_serde_roundtrip() {
+        let lease = CapabilityLease {
+            id: Uuid::new_v4(),
+            capability: Capability { name: "test".into(), scope: Scope::Global, description: "desc".into() },
+            granted_at: Utc::now(),
+            expires_at: None,
+            granted_by: "admin".into(),
+            revoked: false,
+        };
+        let json = serde_json::to_string(&lease).unwrap();
+        let back: CapabilityLease = serde_json::from_str(&json).unwrap();
+        assert_eq!(lease.id, back.id);
+        assert_eq!(lease.capability.name, back.capability.name);
+        assert_eq!(lease.granted_by, back.granted_by);
+    }
+
+    #[test]
+    fn test_grant_returns_reference_to_last_lease() {
+        let mut set = CapabilitySet::new();
+        let cap = Capability { name: "ref".to_string(), scope: Scope::Global, description: "".into() };
+        let id1 = set.grant(cap.clone(), "admin".to_string(), None).id;
+        let id2 = set.grant(cap, "admin".to_string(), None).id;
+        assert_eq!(id1, set.leases[0].id);
+        assert_eq!(id2, set.leases[1].id);
+    }
 }

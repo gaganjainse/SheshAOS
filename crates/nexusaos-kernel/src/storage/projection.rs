@@ -52,8 +52,6 @@ impl TaskProjection {
             }
             EventPayload::StateChanged { to, .. } => {
                 if let Some(task) = self.tasks.get_mut(&task_id) {
-                    // Convert string to TaskState if possible.
-                    // Assuming string representation matches enum name loosely or exactly.
                     let new_state = match to.as_str() {
                         "Received" => Some(TaskState::Received),
                         "Classified" => Some(TaskState::Classified),
@@ -81,7 +79,6 @@ impl TaskProjection {
                 }
             }
             _ => {
-                // Update updated_at for other task-related events
                 if let Some(task) = self.tasks.get_mut(&task_id) {
                     task.updated_at = event.timestamp;
                 }
@@ -123,7 +120,7 @@ impl Default for TaskProjection {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::events::EventKind;
+    use crate::events::{Event, EventKind, EventPayload};
 
     #[test]
     fn test_projection_rebuild() {
@@ -156,5 +153,178 @@ mod tests {
 
         let classified_tasks = projection.tasks_in_state(&TaskState::Classified);
         assert_eq!(classified_tasks.len(), 1);
+    }
+
+    #[test]
+    fn test_projection_new() {
+        let proj = TaskProjection::new();
+        assert_eq!(proj.task_count(), 0);
+        assert_eq!(proj.last_sequence, 0);
+    }
+
+    #[test]
+    fn test_projection_default() {
+        let proj = TaskProjection::default();
+        assert_eq!(proj.task_count(), 0);
+    }
+
+    #[test]
+    fn test_apply_task_created() {
+        let mut proj = TaskProjection::new();
+        let task_id = TaskId::new();
+        let mut event = Event::new(
+            task_id,
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({"prompt": "test"}) },
+            "test".to_string(),
+        );
+        event.sequence = crate::events::SequenceNumber(1);
+
+        proj.apply(&event);
+        assert_eq!(proj.task_count(), 1);
+        let task = proj.get_task(&task_id).unwrap();
+        assert_eq!(task.current_state, TaskState::Received);
+        assert_eq!(task.assigned_role, None);
+    }
+
+    #[test]
+    fn test_apply_state_changed() {
+        let mut proj = TaskProjection::new();
+        let task_id = TaskId::new();
+
+        let mut e1 = Event::new(task_id, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string());
+        e1.sequence = crate::events::SequenceNumber(1);
+        proj.apply(&e1);
+
+        let mut e2 = Event::new(task_id, EventKind::TaskStateChanged, EventPayload::StateChanged { from: "Received".into(), to: "Executing".into() }, "test".into());
+        e2.sequence = crate::events::SequenceNumber(2);
+        proj.apply(&e2);
+
+        let task = proj.get_task(&task_id).unwrap();
+        assert_eq!(task.current_state, TaskState::Executing);
+    }
+
+    #[test]
+    fn test_apply_model_request_sets_assigned_role() {
+        let mut proj = TaskProjection::new();
+        let task_id = TaskId::new();
+
+        let mut e1 = Event::new(task_id, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string());
+        e1.sequence = crate::events::SequenceNumber(1);
+        proj.apply(&e1);
+
+        let mut e2 = Event::new(task_id, EventKind::ModelRequested, EventPayload::ModelRequest { role: "Coder".into(), prompt_tokens: 0, context_budget: 100 }, "test".into());
+        e2.sequence = crate::events::SequenceNumber(2);
+        proj.apply(&e2);
+
+        let task = proj.get_task(&task_id).unwrap();
+        assert_eq!(task.assigned_role, Some("Coder".to_string()));
+    }
+
+    #[test]
+    fn test_apply_system_event_ignored() {
+        let mut proj = TaskProjection::new();
+        let mut event = Event::system(
+            EventKind::SystemStarted,
+            EventPayload::SystemEvent { message: "started".into() },
+            "test".into(),
+        );
+        event.sequence = crate::events::SequenceNumber(1);
+        proj.apply(&event);
+        assert_eq!(proj.task_count(), 0);
+    }
+
+    #[test]
+    fn test_apply_unknown_state_skipped() {
+        let mut proj = TaskProjection::new();
+        let task_id = TaskId::new();
+
+        let mut e1 = Event::new(task_id, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string());
+        e1.sequence = crate::events::SequenceNumber(1);
+        proj.apply(&e1);
+
+        let mut e2 = Event::new(task_id, EventKind::TaskStateChanged, EventPayload::StateChanged { from: "Received".into(), to: "FakeState".into() }, "test".into());
+        e2.sequence = crate::events::SequenceNumber(2);
+        proj.apply(&e2);
+
+        let task = proj.get_task(&task_id).unwrap();
+        assert_eq!(task.current_state, TaskState::Received); // unchanged
+    }
+
+    #[test]
+    fn test_get_task_not_found() {
+        let proj = TaskProjection::new();
+        let fake_id = TaskId::new();
+        assert!(proj.get_task(&fake_id).is_none());
+    }
+
+    #[test]
+    fn test_tasks_in_state_empty_projection() {
+        let proj = TaskProjection::new();
+        let result = proj.tasks_in_state(&TaskState::Received);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_tasks_in_state_multiple_tasks() {
+        let proj = TaskProjection::rebuild(&[
+            Event::new(TaskId::new(), EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string()),
+            Event::new(TaskId::new(), EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string()),
+        ]);
+        let received = proj.tasks_in_state(&TaskState::Received);
+        assert_eq!(received.len(), 2);
+    }
+
+    #[test]
+    fn test_rebuild_multiple_tasks_different_states() {
+        let t1 = TaskId::new();
+        let t2 = TaskId::new();
+
+        let mut e1 = Event::new(t1, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string());
+        e1.sequence = crate::events::SequenceNumber(1);
+        let mut e2 = Event::new(t2, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string());
+        e2.sequence = crate::events::SequenceNumber(2);
+        let mut e3 = Event::new(t1, EventKind::TaskStateChanged, EventPayload::StateChanged { from: "Received".into(), to: "Completed".into() }, "test".into());
+        e3.sequence = crate::events::SequenceNumber(3);
+
+        let proj = TaskProjection::rebuild(&[e1, e2, e3]);
+        assert_eq!(proj.task_count(), 2);
+        assert_eq!(proj.get_task(&t1).unwrap().current_state, TaskState::Completed);
+        assert_eq!(proj.get_task(&t2).unwrap().current_state, TaskState::Received);
+    }
+
+    #[test]
+    fn test_projection_last_sequence_updated() {
+        let mut proj = TaskProjection::new();
+        let mut event = Event::new(
+            TaskId::new(),
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        event.sequence = crate::events::SequenceNumber(42);
+        proj.apply(&event);
+        assert_eq!(proj.last_sequence, 42);
+    }
+
+    #[test]
+    fn test_apply_updates_updated_at() {
+        let mut proj = TaskProjection::new();
+        let task_id = TaskId::new();
+        let ts1 = Utc::now();
+        let ts2 = ts1 + chrono::Duration::seconds(10);
+
+        let mut e1 = Event::new(task_id, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string());
+        e1.timestamp = ts1;
+        e1.sequence = crate::events::SequenceNumber(1);
+        proj.apply(&e1);
+
+        let mut e2 = Event::new(task_id, EventKind::TaskStateChanged, EventPayload::StateChanged { from: "Received".into(), to: "Classified".into() }, "test".into());
+        e2.timestamp = ts2;
+        e2.sequence = crate::events::SequenceNumber(2);
+        proj.apply(&e2);
+
+        let task = proj.get_task(&task_id).unwrap();
+        assert_eq!(task.updated_at, ts2);
     }
 }

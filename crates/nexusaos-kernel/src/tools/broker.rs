@@ -120,4 +120,112 @@ mod tests {
             _ => panic!("Expected Completed"),
         }
     }
+
+    #[tokio::test]
+    async fn test_broker_deny_policy() {
+        let rule = PolicyRule {
+            name: "deny-dummy".to_string(),
+            action_pattern: "dummy.execute".to_string(),
+            decision: "deny".to_string(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Basic);
+        let mut broker = ToolBroker::new(Arc::new(policy));
+        broker.register(Arc::new(DummyTool));
+
+        let req = ToolRequest { tool_name: "dummy".to_string(), arguments: json!({}) };
+        let res = broker.execute(&req).await.unwrap();
+        match res {
+            BrokerResult::Denied(reason) => assert!(reason.contains("deny") || reason.contains("Deny")),
+            _ => panic!("Expected Denied"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_broker_require_confirmation_policy() {
+        let rule = PolicyRule {
+            name: "confirm-dummy".to_string(),
+            action_pattern: "dummy.execute".to_string(),
+            decision: "require_confirmation".to_string(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Basic);
+        let mut broker = ToolBroker::new(Arc::new(policy));
+        broker.register(Arc::new(DummyTool));
+
+        let req = ToolRequest { tool_name: "dummy".to_string(), arguments: json!({}) };
+        let res = broker.execute(&req).await.unwrap();
+        match res {
+            BrokerResult::RequiresConfirmation(reason) => assert!(!reason.is_empty()),
+            _ => panic!("Expected RequiresConfirmation"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_broker_unknown_tool() {
+        let rule = PolicyRule {
+            name: "allow-all".to_string(),
+            action_pattern: "*".to_string(),
+            decision: "allow".to_string(),
+            trust_tier: 0,
+            description: None,
+        };
+        let policy = PolicyEngine::new(vec![rule], TrustTier::Basic);
+        let mut broker = ToolBroker::new(Arc::new(policy));
+        broker.register(Arc::new(DummyTool));
+
+        let req = ToolRequest { tool_name: "nonexistent".to_string(), arguments: json!({}) };
+        let err = broker.execute(&req).await.unwrap_err();
+        match err {
+            ToolError::NotFound { name } => assert_eq!(name, "nonexistent"),
+            _ => panic!("Expected NotFound"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_broker_available_tools() {
+        let policy = PolicyEngine::deny_all();
+        let mut broker = ToolBroker::new(Arc::new(policy));
+        broker.register(Arc::new(DummyTool));
+
+        struct AnotherTool;
+        #[async_trait]
+        impl ToolExecutor for AnotherTool {
+            fn name(&self) -> &str { "another" }
+            fn description(&self) -> &str { "another tool" }
+            fn is_destructive(&self) -> bool { false }
+            async fn execute(&self, _req: &ToolRequest) -> Result<ToolResult, ToolError> {
+                Ok(ToolResult { success: true, output: "ok".into(), data: None })
+            }
+        }
+
+        broker.register(Arc::new(AnotherTool));
+        let tools = broker.available_tools();
+        assert_eq!(tools.len(), 2);
+        assert!(tools.contains(&"dummy".to_string()));
+        assert!(tools.contains(&"another".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_broker_no_registered_tools() {
+        let policy = PolicyEngine::deny_all();
+        let broker = ToolBroker::new(Arc::new(policy));
+        assert!(broker.available_tools().is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_broker_deny_all_engine() {
+        let policy = PolicyEngine::deny_all();
+        let mut broker = ToolBroker::new(Arc::new(policy));
+        broker.register(Arc::new(DummyTool));
+
+        let req = ToolRequest { tool_name: "dummy".to_string(), arguments: json!({}) };
+        let res = broker.execute(&req).await.unwrap();
+        match res {
+            BrokerResult::Denied(_) => {}
+            _ => panic!("Expected Denied with deny_all policy"),
+        }
+    }
 }

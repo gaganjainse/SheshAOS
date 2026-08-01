@@ -148,4 +148,208 @@ mod tests {
 
         assert_eq!(request, deserialized);
     }
+
+    #[test]
+    fn test_task_id_default() {
+        let id = TaskId::default();
+        assert_eq!(id.to_string(), id.0.to_string());
+    }
+
+    #[test]
+    fn test_task_id_from_str() {
+        let uuid_str = "01958104-7a9c-7a5a-9c5a-3a5a7a9c7a5a";
+        let id: TaskId = uuid_str.parse().expect("should parse");
+        assert_eq!(id.to_string(), uuid_str);
+    }
+
+    #[test]
+    fn test_task_id_from_str_invalid() {
+        let result: Result<TaskId, _> = "not-a-uuid".parse();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_task_id_ordering_v7() {
+        let id1 = TaskId::new();
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        let id2 = TaskId::new();
+        assert!(id1 < id2);
+    }
+
+    #[test]
+    fn test_priority_all_variants_ordering() {
+        assert!(Priority::Low < Priority::Normal);
+        assert!(Priority::Normal < Priority::High);
+        assert!(Priority::High < Priority::Critical);
+        assert!(Priority::Low < Priority::High);
+        assert!(Priority::Low < Priority::Critical);
+        assert!(Priority::Normal < Priority::Critical);
+    }
+
+    #[test]
+    fn test_priority_equality() {
+        assert_eq!(Priority::Low, Priority::Low);
+        assert_ne!(Priority::Low, Priority::Normal);
+    }
+
+    #[test]
+    fn test_priority_default_is_normal() {
+        assert_eq!(Priority::default(), Priority::Normal);
+    }
+
+    #[test]
+    fn test_task_input_text() {
+        let input = TaskInput::Text("hello".to_string());
+        match input {
+            TaskInput::Text(t) => assert_eq!(t, "hello"),
+            _ => panic!("Expected Text variant"),
+        }
+    }
+
+    #[test]
+    fn test_task_input_vision() {
+        let input = TaskInput::Vision {
+            text: "describe this".to_string(),
+            image_paths: vec![PathBuf::from("/tmp/a.png"), PathBuf::from("/tmp/b.png")],
+        };
+        match input {
+            TaskInput::Vision { text, image_paths } => {
+                assert_eq!(text, "describe this");
+                assert_eq!(image_paths.len(), 2);
+            }
+            _ => panic!("Expected Vision variant"),
+        }
+    }
+
+    #[test]
+    fn test_task_input_multi() {
+        let input = TaskInput::Multi {
+            parts: vec![TaskInput::Text("a".into()), TaskInput::Text("b".into())],
+        };
+        match input {
+            TaskInput::Multi { parts } => assert_eq!(parts.len(), 2),
+            _ => panic!("Expected Multi variant"),
+        }
+    }
+
+    #[test]
+    fn test_task_input_serde_text() {
+        let input = TaskInput::Text("test".into());
+        let json = serde_json::to_string(&input).unwrap();
+        let back: TaskInput = serde_json::from_str(&json).unwrap();
+        match back {
+            TaskInput::Text(t) => assert_eq!(t, "test"),
+            _ => panic!("Wrong variant"),
+        }
+    }
+
+    #[test]
+    fn test_task_input_serde_vision() {
+        let input = TaskInput::Vision { text: "desc".into(), image_paths: vec![PathBuf::from("/img.png")] };
+        let json = serde_json::to_string(&input).unwrap();
+        let back: TaskInput = serde_json::from_str(&json).unwrap();
+        match back {
+            TaskInput::Vision { text, image_paths } => {
+                assert_eq!(text, "desc");
+                assert_eq!(image_paths, vec![PathBuf::from("/img.png")]);
+            }
+            _ => panic!("Wrong variant"),
+        }
+    }
+
+    #[test]
+    fn test_task_input_serde_multi() {
+        let input = TaskInput::Multi { parts: vec![TaskInput::Text("a".into())] };
+        let json = serde_json::to_string(&input).unwrap();
+        let back: TaskInput = serde_json::from_str(&json).unwrap();
+        match back {
+            TaskInput::Multi { parts } => assert_eq!(parts.len(), 1),
+            _ => panic!("Wrong variant"),
+        }
+    }
+
+    #[test]
+    fn test_task_request_fields() {
+        let input = TaskInput::Text("task".into());
+        let req = TaskRequest::new(input.clone());
+        assert_eq!(req.input, input);
+        assert_eq!(req.priority, Priority::Normal);
+        assert!(req.parent_task_id.is_none());
+        assert_eq!(req.metadata, serde_json::Value::Null);
+        assert!(req.created_at <= Utc::now());
+    }
+
+    #[test]
+    fn test_task_outcome_construction() {
+        let task_id = TaskId::new();
+        let outcome = TaskOutcome {
+            task_id,
+            success: true,
+            output: Some("done".into()),
+            error: None,
+            completed_at: Utc::now(),
+        };
+        assert!(outcome.success);
+        assert_eq!(outcome.output, Some("done".into()));
+        assert!(outcome.error.is_none());
+    }
+
+    #[test]
+    fn test_task_outcome_failure() {
+        let task_id = TaskId::new();
+        let outcome = TaskOutcome {
+            task_id,
+            success: false,
+            output: None,
+            error: Some("boom".into()),
+            completed_at: Utc::now(),
+        };
+        assert!(!outcome.success);
+        assert!(outcome.output.is_none());
+        assert_eq!(outcome.error, Some("boom".into()));
+    }
+
+    #[test]
+    fn test_task_outcome_serde() {
+        let task_id = TaskId::new();
+        let outcome = TaskOutcome {
+            task_id,
+            success: true,
+            output: Some("result".into()),
+            error: None,
+            completed_at: Utc::now(),
+        };
+        let json = serde_json::to_string(&outcome).unwrap();
+        let back: TaskOutcome = serde_json::from_str(&json).unwrap();
+        assert_eq!(outcome.task_id, back.task_id);
+        assert_eq!(outcome.success, back.success);
+    }
+
+    #[test]
+    fn test_task_request_with_high_priority() {
+        let req = TaskRequest {
+            id: TaskId::new(),
+            input: TaskInput::Text("urgent".into()),
+            priority: Priority::Critical,
+            created_at: Utc::now(),
+            parent_task_id: None,
+            metadata: serde_json::json!({"tag": "urgent"}),
+        };
+        assert_eq!(req.priority, Priority::Critical);
+        assert_eq!(req.metadata["tag"], "urgent");
+    }
+
+    #[test]
+    fn test_task_request_with_parent() {
+        let parent_id = TaskId::new();
+        let req = TaskRequest {
+            id: TaskId::new(),
+            input: TaskInput::Text("subtask".into()),
+            priority: Priority::Normal,
+            created_at: Utc::now(),
+            parent_task_id: Some(parent_id),
+            metadata: serde_json::Value::Null,
+        };
+        assert_eq!(req.parent_task_id, Some(parent_id));
+    }
 }

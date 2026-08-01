@@ -138,8 +138,7 @@ impl App {
         while self.running {
             tokio::select! {
                 maybe_event = events.next() => {
-                    if let Some(Ok(event)) = maybe_event {
-                        if let Event::Key(key) = event {
+                    if let Some(Ok(Event::Key(key))) = maybe_event {
                             // Basic exit for demo
                             if key.code == KeyCode::F(10) {
                                 self.running = false;
@@ -158,7 +157,6 @@ impl App {
                             // but for simplicity redraw
                             terminal.draw(|f| crate::ui::render_ui(f, self))?;
                         }
-                    }
                 }
                 
                 Ok((_route, wave_event)) = broker_rx.recv() => {

@@ -219,4 +219,147 @@ mod tests {
             assert_eq!(payload, deserialized);
         }
     }
+
+    #[test]
+    fn test_event_id_default() {
+        let id = EventId::default();
+        assert_eq!(id.to_string().len(), 36);
+    }
+
+    #[test]
+    fn test_event_id_new_unique() {
+        let id1 = EventId::new();
+        let id2 = EventId::new();
+        assert_ne!(id1, id2);
+    }
+
+    #[test]
+    fn test_event_id_ordering() {
+        let id1 = EventId::new();
+        // Sleep briefly to ensure different timestamps for UUIDv7
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        let id2 = EventId::new();
+        assert!(id1 < id2);
+    }
+
+    #[test]
+    fn test_event_metadata_correlation_id() {
+        let task_id = TaskId::new();
+        let event = Event::new(
+            task_id,
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: json!({}) },
+            "src".to_string(),
+        );
+        // Default correlation_id is None
+        assert!(event.metadata.correlation_id.is_none());
+    }
+
+    #[test]
+    fn test_event_kind_variants() {
+        // Ensure all EventKind variants are constructible and debuggable
+        let kinds = vec![
+            EventKind::TaskCreated,
+            EventKind::TaskClassified,
+            EventKind::TaskStateChanged,
+            EventKind::ModelRequested,
+            EventKind::ModelResponded,
+            EventKind::ModelFailed,
+            EventKind::ToolRequested,
+            EventKind::ToolCompleted,
+            EventKind::ToolFailed,
+            EventKind::PolicyChecked,
+            EventKind::PolicyDenied,
+            EventKind::ConfirmationRequested,
+            EventKind::ConfirmationGranted,
+            EventKind::ConfirmationDenied,
+            EventKind::CheckpointCreated,
+            EventKind::SnapshotCreated,
+            EventKind::SystemStarted,
+            EventKind::SystemShutdown,
+            EventKind::Error,
+        ];
+        for kind in kinds {
+            let debug = format!("{:?}", kind);
+            assert!(!debug.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_event_policy_check_with_reason() {
+        let payload = EventPayload::PolicyCheck {
+            action: "filesystem.write".to_string(),
+            decision: "deny".to_string(),
+            reason: Some("not allowed".to_string()),
+        };
+        let json = serde_json::to_string(&payload).unwrap();
+        let back: EventPayload = serde_json::from_str(&json).unwrap();
+        match back {
+            EventPayload::PolicyCheck { reason, .. } => assert_eq!(reason, Some("not allowed".to_string())),
+            _ => panic!("Wrong variant"),
+        }
+    }
+
+    #[test]
+    fn test_event_error_event_with_details() {
+        let payload = EventPayload::ErrorEvent {
+            message: "fatal".to_string(),
+            details: None,
+        };
+        let json = serde_json::to_string(&payload).unwrap();
+        let back: EventPayload = serde_json::from_str(&json).unwrap();
+        match back {
+            EventPayload::ErrorEvent { message, details } => {
+                assert_eq!(message, "fatal");
+                assert!(details.is_none());
+            }
+            _ => panic!("Wrong variant"),
+        }
+    }
+
+    #[test]
+    fn test_event_sequence_number_default() {
+        let seq = SequenceNumber(0);
+        assert_eq!(seq, SequenceNumber(0));
+        assert!(seq < SequenceNumber(1));
+    }
+
+    #[test]
+    fn test_event_kind_serde() {
+        let kind = EventKind::SystemStarted;
+        let json = serde_json::to_string(&kind).unwrap();
+        let back: EventKind = serde_json::from_str(&json).unwrap();
+        assert_eq!(kind, back);
+    }
+
+    #[test]
+    fn test_event_new_with_all_fields() {
+        let task_id = TaskId::new();
+        let event = Event::new(
+            task_id,
+            EventKind::ModelRequested,
+            EventPayload::ModelRequest {
+                role: "planner".to_string(),
+                prompt_tokens: 100,
+                context_budget: 4096,
+            },
+            "kernel".to_string(),
+        );
+        assert_eq!(event.task_id, Some(task_id));
+        assert_eq!(event.kind, EventKind::ModelRequested);
+        assert_eq!(event.sequence, SequenceNumber(0));
+        assert_eq!(event.metadata.source, "kernel");
+    }
+
+    #[test]
+    fn test_event_system_new_with_all_fields() {
+        let event = Event::system(
+            EventKind::SystemShutdown,
+            EventPayload::SystemEvent { message: "bye".to_string() },
+            "kernel".to_string(),
+        );
+        assert!(event.task_id.is_none());
+        assert_eq!(event.kind, EventKind::SystemShutdown);
+        assert_eq!(event.metadata.source, "kernel");
+    }
 }

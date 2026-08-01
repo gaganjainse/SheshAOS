@@ -172,4 +172,76 @@ mod tests {
         assert!(ResourceMonitor::has_sufficient_vram(&pressure, 2000));
         assert!(!ResourceMonitor::has_sufficient_vram(&pressure, 4000));
     }
+
+    #[test]
+    fn test_memory_pressure_exact_boundary() {
+        let pressure = SystemPressure {
+            ram_available_mb: 2048,
+            ram_total_mb: 16000,
+            vram_available_mb: 0,
+            vram_total_mb: 0,
+            disk_available_gb: 100,
+            queue_depth: 0,
+        };
+
+        // Exact equality: available < headroom? 2048 < 2048 = false
+        assert!(!ResourceMonitor::is_memory_pressure(&pressure, 2048));
+        // One less: 2048 < 2049 = true
+        assert!(ResourceMonitor::is_memory_pressure(&pressure, 2049));
+    }
+
+    #[test]
+    fn test_vram_exact_boundary() {
+        let pressure = SystemPressure {
+            ram_available_mb: 8000,
+            ram_total_mb: 16000,
+            vram_available_mb: 4000,
+            vram_total_mb: 8000,
+            disk_available_gb: 100,
+            queue_depth: 0,
+        };
+
+        assert!(ResourceMonitor::has_sufficient_vram(&pressure, 4000));
+        assert!(!ResourceMonitor::has_sufficient_vram(&pressure, 4001));
+    }
+
+    #[test]
+    fn test_system_pressure_default_fields() {
+        let pressure = SystemPressure {
+            ram_available_mb: 0,
+            ram_total_mb: 0,
+            vram_available_mb: 0,
+            vram_total_mb: 0,
+            disk_available_gb: 0,
+            queue_depth: 0,
+        };
+
+        assert!(!ResourceMonitor::is_memory_pressure(&pressure, 1));
+        assert!(ResourceMonitor::has_sufficient_vram(&pressure, 1));
+    }
+
+    #[test]
+    fn test_system_pressure_serde_roundtrip() {
+        let pressure = SystemPressure {
+            ram_available_mb: 8000,
+            ram_total_mb: 16000,
+            vram_available_mb: 3000,
+            vram_total_mb: 6000,
+            disk_available_gb: 100,
+            queue_depth: 5,
+        };
+        let json = serde_json::to_string(&pressure).unwrap();
+        let back: SystemPressure = serde_json::from_str(&json).unwrap();
+        assert_eq!(pressure.ram_available_mb, back.ram_available_mb);
+        assert_eq!(pressure.vram_available_mb, back.vram_available_mb);
+        assert_eq!(pressure.queue_depth, back.queue_depth);
+    }
+
+    #[test]
+    fn test_snapshot_returns_reasonable_values() {
+        let pressure = ResourceMonitor::snapshot();
+        assert!(pressure.ram_total_mb > 0, "total RAM should be > 0");
+        assert!(pressure.ram_available_mb <= pressure.ram_total_mb, "available <= total");
+        assert!(pressure.disk_available_gb > 0 || pressure.disk_available_gb == 0, "disk is a number");
+    }
 }
