@@ -53,8 +53,8 @@ impl PtyManager {
             .try_clone_reader()
             .map_err(|e| std::io::Error::other(e.to_string()))?;
         let n = reader.read(buf)?;
-        // Apply backpressure: if buffer would exceed max, yield to let other tasks run
-        if n > 0 && n >= PTY_READ_CHUNK {
+        // Apply backpressure: if buffer read exceeds chunk size, yield to prevent starving the GUI renderer
+        if (PTY_READ_CHUNK..=PTY_MAX_BUFFER).contains(&n) {
             std::thread::yield_now();
         }
         Ok(n)
@@ -74,6 +74,7 @@ impl PtyManager {
     /// task naturally slows down when the consumer falls behind.
     pub fn spawn_reader_task(&mut self, capacity: usize) -> mpsc::Receiver<Vec<u8>> {
         let (tx, rx) = mpsc::channel(capacity);
+        let tx_clone = tx.clone();
         self.output_tx = Some(tx);
         let shutdown = self.shutdown.clone();
         let mut reader = self.pair.master.try_clone_reader().expect("Failed to clone PTY reader");
@@ -88,7 +89,7 @@ impl PtyManager {
                     Ok(0) => break, // EOF
                     Ok(n) => {
                         let chunk = buf[..n].to_vec();
-                        if tx.send(chunk).await.is_err() {
+                        if tx_clone.send(chunk).await.is_err() {
                             // Consumer dropped, stop reading
                             break;
                         }

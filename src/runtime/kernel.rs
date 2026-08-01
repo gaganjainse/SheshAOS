@@ -66,6 +66,35 @@ impl Kernel {
 
     /// Submit a new task. Returns the TaskId.
     pub async fn submit_task(&self, input: TaskInput) -> Result<TaskId, NexusError> {
+        // Check for duplicate tasks within the dedup window
+        {
+            let config = self.config.read().await;
+            if let Some(dedup_secs) = config.tools.terminal.dedup_window_secs {
+                let dedup_window = chrono::Duration::seconds(dedup_secs as i64);
+                let now = Utc::now();
+                let proj = self.projection.read().await;
+                for (existing_id, record) in &proj.tasks {
+                    if let Some((_, created_at)) = record.state_history.first() {
+                        if now.signed_duration_since(*created_at) < dedup_window {
+                            let existing_text = match &record.request.input {
+                                TaskInput::Text(t) => t.clone(),
+                                TaskInput::Vision { text, .. } => text.clone(),
+                                TaskInput::Multi { .. } => "multi".to_string(),
+                            };
+                            let new_text = match &input {
+                                TaskInput::Text(t) => t.clone(),
+                                TaskInput::Vision { text, .. } => text.clone(),
+                                TaskInput::Multi { .. } => "multi".to_string(),
+                            };
+                            if existing_text == new_text {
+                                return Ok(*existing_id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         let task_id = TaskId::new();
         let request = TaskRequest::new(input.clone());
 

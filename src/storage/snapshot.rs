@@ -106,6 +106,49 @@ impl SnapshotStore {
 
         Ok(ids)
     }
+
+    /// Compact snapshots by removing all but the `keep_count` most recent ones.
+    /// Returns the number of snapshots removed.
+    pub async fn compact(&self, keep_count: usize) -> Result<usize, StorageError> {
+        if !self.path.exists() {
+            return Ok(0);
+        }
+
+        let mut snapshots: Vec<(PathBuf, DateTime<Utc>)> = Vec::new();
+        let mut entries = fs::read_dir(&self.path).await?;
+        while let Some(entry) = entries.next_entry().await? {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+            let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+                continue;
+            };
+            if !name.starts_with("snapshot_") || !name.ends_with(".json") {
+                continue;
+            }
+            let Ok(content) = fs::read_to_string(&path).await else {
+                continue;
+            };
+            let Ok(snapshot) = serde_json::from_str::<Snapshot>(&content) else {
+                continue;
+            };
+            snapshots.push((path, snapshot.created_at));
+        }
+
+        // Sort by timestamp descending (newest first)
+        snapshots.sort_by(|a, b| b.1.cmp(&a.1));
+
+        // Remove all but the keep_count most recent
+        let to_remove = snapshots.into_iter().skip(keep_count);
+        let mut removed = 0;
+        for (path, _) in to_remove {
+            fs::remove_file(&path).await?;
+            removed += 1;
+        }
+
+        Ok(removed)
+    }
 }
 
 #[cfg(test)]

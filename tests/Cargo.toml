@@ -21,6 +21,7 @@ path = "pty/pty_integration.rs"
 [[bench]]
 name = "performance"
 path = "benchmarks/performance.rs"
+harness = false
 
 [[test]]
 name = "ai_integration"

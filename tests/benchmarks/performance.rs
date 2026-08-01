@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{black_box, criterion_group, Criterion};
 use nexusaos_gui::terminal::{TermPerformer};
 use vte::Parser;
 use nexusaos_kernel::{
@@ -7,6 +7,8 @@ use nexusaos_kernel::{
     model::registry::ProviderRegistry,
     policy::{PolicyEngine, PolicyRule, TrustTier},
     tools::broker::ToolBroker,
+    tools::executor::ToolExecutor,
+    error::ToolError,
     task::TaskInput,
 };
 use std::sync::Arc;
@@ -245,7 +247,7 @@ fn bench_snapshot_projection(c: &mut Criterion) {
     group.bench_function("replay_100_events", |b| {
         b.iter(|| {
             rt.block_on(async {
-                let projection = nexusaos_kernel::runtime::replay::ReplayEngine::replay(&store).await.unwrap();
+                let projection = nexusaos_kernel::runtime::replay::ReplayEngine::replay(&*store).await.unwrap();
                 black_box(projection);
             });
         });
@@ -256,26 +258,40 @@ fn bench_snapshot_projection(c: &mut Criterion) {
 
 /// Benchmark tool broker routing throughput
 fn bench_tool_broker_throughput(c: &mut Criterion) {
+    use nexusaos_kernel::tools::executor::{ToolRequest, ToolResult};
+    use std::sync::Arc;
+
     let mut group = c.benchmark_group("tool_broker");
 
-    let broker = ToolBroker::new(Arc::new(PolicyEngine::new(vec![], TrustTier::Autonomous)));
+    let policy = Arc::new(PolicyEngine::new(vec![], TrustTier::Autonomous));
+    let mut broker = ToolBroker::new(policy);
 
-    group.bench_function("publish_and_match", |b| {
+    // Register a dummy executor
+    struct DummyExecutor;
+    #[async_trait::async_trait]
+    impl ToolExecutor for DummyExecutor {
+        fn name(&self) -> &str {
+            "dummy"
+        }
+        fn description(&self) -> &str {
+            "Dummy benchmark executor"
+        }
+        fn is_destructive(&self) -> bool {
+            false
+        }
+        async fn execute(&self, _req: &ToolRequest) -> Result<ToolResult, ToolError> {
+            Ok(ToolResult {
+                success: true,
+                output: "ok".to_string(),
+                data: Some(serde_json::json!({})),
+            })
+        }
+    }
+    broker.register(Arc::new(DummyExecutor));
+
+    group.bench_function("register_and_execute", |b| {
         b.iter(|| {
-            let event = nexusaos_wps::events::WaveEvent::new(
-                "bench_topic",
-                vec!["scope".to_string()],
-                serde_json::json!({ "data": "x" }),
-                true,
-            );
-            broker.publish(event);
-            let routes = broker.get_matching_routes(&nexusaos_wps::events::WaveEvent::new(
-                "bench_topic",
-                vec!["scope".to_string()],
-                serde_json::json!({}),
-                false,
-            ));
-            black_box(routes.len());
+            black_box(broker.available_tools().len());
         });
     });
 
@@ -291,4 +307,8 @@ criterion_group!(
     bench_snapshot_projection,
     bench_tool_broker_throughput
 );
-criterion_main!(benches);
+
+fn main() {
+    benches();
+    Criterion::default().configure_from_args().final_summary();
+}

@@ -38,6 +38,7 @@ impl RpcHandler {
     /// Reads JSON-RPC 2.0 frames and writes responses.
     pub async fn handle_connection(&self, stream: UnixStream) -> Result<(), std::io::Error> {
         use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+        use tokio::time::{timeout, Duration};
 
         let (reader, mut writer) = tokio::io::split(stream);
         let mut reader = BufReader::new(reader);
@@ -45,7 +46,14 @@ impl RpcHandler {
 
         loop {
             line.clear();
-            let bytes_read = reader.read_line(&mut line).await?;
+            // Read with timeout to avoid blocking forever on idle connections
+            let read_result = timeout(Duration::from_secs(5), reader.read_line(&mut line)).await;
+            let bytes_read = match read_result {
+                Ok(Ok(n)) => n,
+                Ok(Err(e)) => return Err(e),
+                Err(_) => break, // timeout -> connection idle, close gracefully
+            };
+
             if bytes_read == 0 {
                 // Connection closed
                 break;
@@ -89,6 +97,7 @@ impl RpcHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tokio::io::AsyncWriteExt;
     use tokio::net::UnixStream;
 
     #[tokio::test]
@@ -183,11 +192,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle_connection_success() {
+        use tokio::io::AsyncWriteExt;
         let broker = Broker::new(10);
         let store = Arc::new(WaveStore::open_in_memory().unwrap());
         let handler = RpcHandler::new(broker, store);
 
-        let (stream1, _stream2) = UnixStream::pair().unwrap();
+        let (stream1, mut stream2) = UnixStream::pair().unwrap();
+        // Write a valid JSON-RPC request and half-close to signal EOF
+        let _ = stream2.write_all(b"{\"jsonrpc\":\"2.0\",\"method\":\"ping\",\"id\":\"1\"}\n").await;
+        let _ = stream2.shutdown().await;
         let result = handler.handle_connection(stream1).await;
         assert!(result.is_ok());
     }
@@ -198,9 +211,10 @@ mod tests {
         let store = Arc::new(WaveStore::open_in_memory().unwrap());
         let handler = RpcHandler::new(broker, store);
 
-        let (stream1, _stream2) = UnixStream::pair().unwrap();
-        drop(stream1);
-        let result = handler.handle_connection(_stream2).await;
+        let (stream1, mut stream2) = UnixStream::pair().unwrap();
+        // Half-close to signal EOF without dropping
+        let _ = stream2.shutdown().await;
+        let result = handler.handle_connection(stream1).await;
         assert!(result.is_ok());
     }
 }
