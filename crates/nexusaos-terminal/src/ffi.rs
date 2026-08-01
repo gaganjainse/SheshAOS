@@ -124,10 +124,10 @@ mod tests {
         if let Some(parser) = ZigVt100Parser::new(80, 24) {
             parser.feed(b"Line\r\nAnother\r\n");
             // The parser should handle \r\n sequences
-            let lines = parser.lines_processed();
+            let _lines = parser.lines_processed();
             let bytes = parser.bytes_processed();
-            assert!(lines >= 0);
-            assert!(bytes >= 0);
+            // Verify the parser processed the input (exact counts depend on Zig impl)
+            assert!(bytes >= 14); // "Line\r\nAnother\r\n" is 15 bytes
         }
     }
 

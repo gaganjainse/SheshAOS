@@ -167,7 +167,7 @@ impl<'a> Program<Message> for TerminalView<'a> {
                         content: span.text,
                         position: Point::new(x, y),
                         color: span.fg,
-                        size: iced::Pixels(14.0).into(),
+                        size: iced::Pixels(14.0),
                         font: iced::Font::MONOSPACE,
                         ..Default::default()
                     };
