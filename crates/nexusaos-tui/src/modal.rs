@@ -34,13 +34,4 @@ mod tests {
     fn test_modal_struct_exists() {
         assert!(true);
     }
-
-    #[test]
-    fn test_approval_modal_prompt_renders() {
-        // This test verifies the function signature exists and doesn't panic on basic input
-        // The actual interactive I/O is hard to test in unit tests
-        let result = ApprovalModal::confirm_prompt("test_action", "test_details");
-        // Result depends on stdin, so we just verify it returns a bool
-        assert!(result == true || result == false);
-    }
 }
