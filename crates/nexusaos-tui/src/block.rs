@@ -210,4 +210,124 @@ mod tests {
         let grid = TileGrid::new();
         assert_eq!(grid.blocks.len(), 4);
     }
+
+    #[test]
+    fn test_block_kind_titles() {
+        assert_eq!(BlockKind::PtyTerminal.title(), "🖥️ Terminal PTY Shell [local]");
+        assert_eq!(BlockKind::WaveAi.title(), "✨ Wave AI Assistant (Local Gemma-12B / Qwen-30B)");
+        assert_eq!(BlockKind::CodeEditor.title(), "📄 Code Editor (Syntax Highlighting)");
+        assert!(!BlockKind::QuickLauncher.title().is_empty());
+    }
+
+    #[test]
+    fn test_block_kind_icons() {
+        assert_eq!(BlockKind::PtyTerminal.icon(), "🖥️");
+        assert_eq!(BlockKind::WaveAi.icon(), "✨");
+        assert!(!BlockKind::SysInfoGauges.icon().is_empty());
+    }
+
+    #[test]
+    fn test_tile_block_new_has_content() {
+        let block = TileBlock::new(1, BlockKind::PtyTerminal);
+        assert!(!block.content.is_empty());
+        assert_eq!(block.id, 1);
+        assert_eq!(block.kind, BlockKind::PtyTerminal);
+        assert!(!block.is_maximized);
+    }
+
+    #[test]
+    fn test_tile_block_new_wave_ai() {
+        let block = TileBlock::new(2, BlockKind::WaveAi);
+        assert!(block.content[0].contains("WAVE AI PANEL"));
+    }
+
+    #[test]
+    fn test_tile_grid_default() {
+        let grid = TileGrid::default();
+        assert_eq!(grid.blocks.len(), 4);
+        assert_eq!(grid.active_index, 0);
+    }
+
+    #[test]
+    fn test_tile_grid_active_block() {
+        let grid = TileGrid::new();
+        let active = grid.active_block();
+        assert!(active.is_some());
+        assert_eq!(active.unwrap().id, 1);
+    }
+
+    #[test]
+    fn test_tile_grid_split_tile() {
+        let mut grid = TileGrid::new();
+        assert_eq!(grid.blocks.len(), 4);
+        grid.split_tile(BlockKind::CsvViewer);
+        assert_eq!(grid.blocks.len(), 5);
+        assert_eq!(grid.active_index, 4);
+    }
+
+    #[test]
+    fn test_tile_grid_split_tile_max() {
+        let mut grid = TileGrid::new();
+        for _ in 0..10 {
+            grid.split_tile(BlockKind::PtyTerminal);
+        }
+        assert_eq!(grid.blocks.len(), 8); // capped at 8
+    }
+
+    #[test]
+    fn test_tile_grid_close_active() {
+        let mut grid = TileGrid::new();
+        assert_eq!(grid.blocks.len(), 4);
+        grid.close_active();
+        assert_eq!(grid.blocks.len(), 3);
+    }
+
+    #[test]
+    fn test_tile_grid_close_last_block() {
+        let mut grid = TileGrid::new();
+        while grid.blocks.len() > 1 {
+            grid.close_active();
+        }
+        grid.close_active(); // should not panic
+        assert_eq!(grid.blocks.len(), 1);
+    }
+
+    #[test]
+    fn test_tile_grid_toggle_maximize() {
+        let mut grid = TileGrid::new();
+        assert!(!grid.active_block().unwrap().is_maximized);
+        grid.toggle_maximize();
+        assert!(grid.active_block().unwrap().is_maximized);
+        grid.toggle_maximize();
+        assert!(!grid.active_block().unwrap().is_maximized);
+    }
+
+    #[test]
+    fn test_tile_grid_cycle_focus() {
+        let mut grid = TileGrid::new();
+        assert_eq!(grid.active_index, 0);
+        grid.cycle_focus();
+        assert_eq!(grid.active_index, 1);
+        grid.cycle_focus();
+        assert_eq!(grid.active_index, 2);
+    }
+
+    #[test]
+    fn test_tile_grid_cycle_focus_wraps() {
+        let mut grid = TileGrid::new();
+        let len = grid.blocks.len();
+        for _ in 0..len {
+            grid.cycle_focus();
+        }
+        assert_eq!(grid.active_index, 0); // wraps around
+    }
+
+    #[test]
+    fn test_tile_grid_active_block_mut() {
+        let mut grid = TileGrid::new();
+        if let Some(block) = grid.active_block_mut() {
+            block.is_maximized = true;
+        }
+        assert!(grid.active_block().unwrap().is_maximized);
+    }
 }

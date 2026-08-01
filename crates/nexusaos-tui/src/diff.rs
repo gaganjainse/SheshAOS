@@ -35,4 +35,27 @@ mod tests {
         assert!(rendered.contains("\x1b[31m-old_line\x1b[0m"));
         assert!(rendered.contains("\x1b[32m+new_line\x1b[0m"));
     }
+
+    #[test]
+    fn test_render_diff_with_chunk_header() {
+        let diff = "@@ -1,2 +1,2 @@\n-old\n+new";
+        let rendered = DiffViewer::render_diff("file.txt", diff);
+        assert!(rendered.contains("\x1b[36m@@ -1,2 +1,2 @@\x1b[0m"));
+    }
+
+    #[test]
+    fn test_render_diff_context_lines() {
+        let diff = " unchanged\n-old\n+new\n unchanged";
+        let rendered = DiffViewer::render_diff("file.txt", diff);
+        assert!(rendered.contains(" unchanged\n"));
+        assert!(rendered.contains("\x1b[31m-old\x1b[0m"));
+        assert!(rendered.contains("\x1b[32m+new\x1b[0m"));
+    }
+
+    #[test]
+    fn test_render_diff_empty() {
+        let rendered = DiffViewer::render_diff("file.txt", "");
+        assert!(rendered.contains("--- a/file.txt"));
+        assert!(rendered.contains("+++ b/file.txt"));
+    }
 }

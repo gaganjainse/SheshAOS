@@ -169,4 +169,190 @@ mod tests {
         assert!(registry.remove("blk1").is_some());
         assert!(registry.remove("blk1").is_none());
     }
+
+    #[test]
+    fn test_registry_default_constructor() {
+        let registry = ControllerRegistry::default();
+        assert!(registry.list().is_empty());
+        assert!(registry.get("any").is_none());
+    }
+
+    #[test]
+    fn test_registry_multiple_controllers() {
+        let registry = ControllerRegistry::new();
+        let c1 = Arc::new(MockController {
+            block_id: "blk1".to_string(),
+            started: AtomicBool::new(false),
+        });
+        let c2 = Arc::new(MockController {
+            block_id: "blk2".to_string(),
+            started: AtomicBool::new(false),
+        });
+
+        assert!(registry.register("blk1", c1).is_ok());
+        assert!(registry.register("blk2", c2).is_ok());
+
+        let statuses = registry.list();
+        assert_eq!(statuses.len(), 2);
+        assert!(statuses.iter().any(|s| s.block_id == "blk1"));
+        assert!(statuses.iter().any(|s| s.block_id == "blk2"));
+    }
+
+    #[test]
+    fn test_registry_remove_nonexistent() {
+        let registry = ControllerRegistry::new();
+        assert!(registry.remove("nonexistent").is_none());
+    }
+
+    #[test]
+    fn test_registry_list_empty() {
+        let registry = ControllerRegistry::new();
+        assert!(registry.list().is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_registry_send_input_not_found() {
+        let registry = ControllerRegistry::new();
+        let result = registry.send_input("nonexistent", BlockInput::Data(b"hello".to_vec())).await;
+        assert!(result.is_err());
+        match result {
+            Err(ControllerError::BlockNotFound(id)) => assert_eq!(id, "nonexistent"),
+            _ => panic!("expected BlockNotFound error"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_registry_send_input_found() {
+        use std::sync::atomic::AtomicBool;
+        let registry = ControllerRegistry::new();
+        let controller = Arc::new(MockController {
+            block_id: "blk1".to_string(),
+            started: AtomicBool::new(false),
+        });
+        registry.register("blk1", controller).unwrap();
+
+        let result = registry.send_input("blk1", BlockInput::Data(b"test".to_vec())).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_registry_stop_all() {
+        use std::sync::atomic::AtomicBool;
+        let registry = ControllerRegistry::new();
+        let c1 = Arc::new(MockController {
+            block_id: "blk1".to_string(),
+            started: AtomicBool::new(true),
+        });
+        let c2 = Arc::new(MockController {
+            block_id: "blk2".to_string(),
+            started: AtomicBool::new(true),
+        });
+        registry.register("blk1", c1.clone()).unwrap();
+        registry.register("blk2", c2.clone()).unwrap();
+
+        registry.stop_all();
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+
+        let statuses = registry.list();
+        assert_eq!(statuses.len(), 2);
+        assert!(statuses.iter().all(|s| s.status == "init"));
+    }
+
+    #[test]
+    fn test_controller_status_serialization() {
+        let status = ControllerStatus {
+            block_id: "blk1".to_string(),
+            status: "running".to_string(),
+            conn_name: "local".to_string(),
+            exit_code: Some(0),
+        };
+
+        let json = serde_json::to_string(&status).unwrap();
+        let parsed: ControllerStatus = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.block_id, "blk1");
+        assert_eq!(parsed.status, "running");
+        assert_eq!(parsed.conn_name, "local");
+        assert_eq!(parsed.exit_code, Some(0));
+    }
+
+    #[test]
+    fn test_controller_status_deserialization() {
+        let json = r#"{"block_id":"blk1","status":"done","conn_name":"remote","exit_code":1}"#;
+        let status: ControllerStatus = serde_json::from_str(json).unwrap();
+        assert_eq!(status.block_id, "blk1");
+        assert_eq!(status.status, "done");
+        assert_eq!(status.conn_name, "remote");
+        assert_eq!(status.exit_code, Some(1));
+    }
+
+    #[test]
+    fn test_block_input_data_variant() {
+        let input = BlockInput::Data(b"hello".to_vec());
+        match input {
+            BlockInput::Data(d) => assert_eq!(d, b"hello"),
+            _ => panic!("expected Data variant"),
+        }
+    }
+
+    #[test]
+    fn test_block_input_resize_variant() {
+        let input = BlockInput::Resize { rows: 24, cols: 80 };
+        match input {
+            BlockInput::Resize { rows, cols } => {
+                assert_eq!(rows, 24);
+                assert_eq!(cols, 80);
+            }
+            _ => panic!("expected Resize variant"),
+        }
+    }
+
+    #[test]
+    fn test_block_input_signal_variant() {
+        let input = BlockInput::Signal(2);
+        match input {
+            BlockInput::Signal(sig) => assert_eq!(sig, 2),
+            _ => panic!("expected Signal variant"),
+        }
+    }
+
+    #[test]
+    fn test_controller_error_display() {
+        let err = ControllerError::BlockNotFound("blk1".to_string());
+        assert_eq!(err.to_string(), "block not found: blk1");
+
+        let err = ControllerError::AlreadyExists("blk1".to_string());
+        assert_eq!(err.to_string(), "controller already exists for block: blk1");
+
+        let err = ControllerError::NotRunning("blk1".to_string());
+        assert_eq!(err.to_string(), "controller not running for block: blk1");
+
+        let err = ControllerError::Shell("pty error".to_string());
+        assert_eq!(err.to_string(), "shell error: pty error");
+    }
+
+    #[test]
+    fn test_controller_error_io_from() {
+        let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
+        let controller_err: ControllerError = io_err.into();
+        match controller_err {
+            ControllerError::Io(_) => {}
+            _ => panic!("expected Io variant"),
+        }
+    }
+
+    #[test]
+    fn test_registry_get_returns_cloned_arc() {
+        use std::sync::atomic::AtomicBool;
+        let registry = ControllerRegistry::new();
+        let controller = Arc::new(MockController {
+            block_id: "blk1".to_string(),
+            started: AtomicBool::new(false),
+        });
+        registry.register("blk1", controller.clone()).unwrap();
+
+        let retrieved = registry.get("blk1").unwrap();
+        assert_eq!(retrieved.runtime_status().block_id, "blk1");
+        assert_eq!(retrieved.conn_name(), "mock");
+    }
 }

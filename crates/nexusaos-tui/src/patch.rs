@@ -79,4 +79,58 @@ mod tests {
         let updated = fs::read_to_string(&file_path).unwrap();
         assert!(updated.contains("line 2 modified"));
     }
+
+    #[test]
+    fn test_patch_engine_missing_file() {
+        let result = PatchEngine::apply_patch(Path::new("/nonexistent/path/file.txt"), &[]);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), PatchError::FileNotFound(_)));
+    }
+
+    #[test]
+    fn test_patch_engine_add_lines() {
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("test.txt");
+        fs::write(&file_path, "line 1\nline 2").unwrap();
+
+        let patch = vec![
+            "+new line 1".to_string(),
+            "+new line 2".to_string(),
+        ];
+
+        PatchEngine::apply_patch(&file_path, &patch).unwrap();
+        let updated = fs::read_to_string(&file_path).unwrap();
+        assert!(updated.contains("new line 1"));
+        assert!(updated.contains("new line 2"));
+    }
+
+    #[test]
+    fn test_patch_engine_delete_all() {
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("test.txt");
+        fs::write(&file_path, "line 1\nline 2\nline 3").unwrap();
+
+        let patch = vec![
+            "-line 1".to_string(),
+            "-line 2".to_string(),
+            "-line 3".to_string(),
+        ];
+
+        PatchEngine::apply_patch(&file_path, &patch).unwrap();
+        let updated = fs::read_to_string(&file_path).unwrap();
+        assert!(updated.is_empty() || updated == "");
+    }
+
+    #[test]
+    fn test_patch_engine_no_changes() {
+        let temp = TempDir::new().unwrap();
+        let file_path = temp.path().join("test.txt");
+        fs::write(&file_path, "line 1\nline 2").unwrap();
+
+        let patch = vec![];
+
+        PatchEngine::apply_patch(&file_path, &patch).unwrap();
+        let updated = fs::read_to_string(&file_path).unwrap();
+        assert_eq!(updated, "line 1\nline 2");
+    }
 }

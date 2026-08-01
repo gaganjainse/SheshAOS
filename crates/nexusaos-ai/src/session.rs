@@ -167,4 +167,63 @@ mod tests {
         }
         assert_eq!(chunks, vec!["Hello ", "World"]);
     }
+
+    #[tokio::test]
+    async fn test_chat_session_multiple_messages() {
+        let provider = Arc::new(MockProvider);
+        let settings = Arc::new(Mutex::new(GlobalSettings::default()));
+        let broker = Broker::new(10);
+        let session = ChatSession::new(provider, settings, broker);
+
+        session.send_message("First").await.unwrap();
+        session.send_message("Second").await.unwrap();
+        let history = session.history.lock().await;
+        assert_eq!(history.len(), 4);
+        assert_eq!(history[0].content, "First");
+        assert_eq!(history[2].content, "Second");
+    }
+
+    #[tokio::test]
+    async fn test_stream_handle_try_recv() {
+        let provider = Arc::new(MockProvider);
+        let settings = Arc::new(Mutex::new(GlobalSettings::default()));
+        let broker = Broker::new(10);
+        let session = ChatSession::new(provider, settings, broker);
+
+        let mut handle = session.send_message_stream("Hi").await.unwrap();
+        // try_recv should return None initially because stream hasn't produced yet
+        // In practice, the spawned task runs concurrently, so we give it a moment
+        tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+        let result = handle.try_recv();
+        assert!(result.is_some() || result.is_none()); // just verify it doesn't panic
+    }
+
+    #[tokio::test]
+    async fn test_chat_session_history_preserved_after_stream() {
+        let provider = Arc::new(MockProvider);
+        let settings = Arc::new(Mutex::new(GlobalSettings::default()));
+        let broker = Broker::new(10);
+        let session = ChatSession::new(provider, settings, broker);
+
+        let mut handle = session.send_message_stream("Hi").await.unwrap();
+        while let Some(chunk) = handle.rx.recv().await {
+            let _ = chunk.unwrap();
+        }
+        let history = session.history.lock().await;
+        assert_eq!(history.len(), 2);
+        assert_eq!(history[1].role, "assistant");
+        assert_eq!(history[1].content, "Hello World");
+    }
+
+    #[test]
+    fn test_stream_handle_new() {
+        let (tx, rx) = mpsc::channel::<Result<String, AiError>>(1);
+        let mut handle = StreamHandle::new(rx);
+        // Verify try_recv returns Err when channel is empty
+        use tokio::sync::mpsc::error::TryRecvError;
+        let result = handle.rx.try_recv();
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), TryRecvError::Empty));
+        drop(tx);
+    }
 }

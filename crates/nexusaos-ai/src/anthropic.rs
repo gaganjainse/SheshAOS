@@ -87,5 +87,20 @@ mod tests {
     fn test_provider_creation() {
         let provider = AnthropicProvider::new("http://localhost".into(), "key".into());
         assert_eq!(provider.base_url, "http://localhost");
+        assert_eq!(provider.api_key, "key");
+    }
+
+    #[test]
+    fn test_anthropic_url_construction() {
+        let provider = AnthropicProvider::new("http://localhost:8080".into(), "key".into());
+        assert!(provider.base_url.ends_with("8080"));
+    }
+
+    #[test]
+    fn test_anthropic_provider_clone() {
+        let provider = AnthropicProvider::new("http://localhost".into(), "key".into());
+        let cloned = provider.clone();
+        assert_eq!(provider.base_url, cloned.base_url);
+        assert_eq!(provider.api_key, cloned.api_key);
     }
 }

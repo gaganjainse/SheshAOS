@@ -831,4 +831,195 @@ mod tests {
         let ctrl_d = (b'd' & 0x1F) as char;
         assert_eq!(ctrl_d as u8, 4);
     }
+
+    #[test]
+    fn test_terminal_default() {
+        let t = TerminalState::default();
+        // Title is set from SHELL env var in new()
+        assert!(!t.title().is_empty());
+    }
+
+    #[test]
+    fn test_terminal_title_set_and_get() {
+        let mut t = TerminalState::default();
+        t.performer.title = "myterm".to_string();
+        assert_eq!(t.title(), "myterm");
+    }
+
+    #[test]
+    fn test_terminal_write_empty() {
+        let t = TerminalState::default();
+        t.write_to_pty(b"");
+        // Should not panic
+    }
+
+    #[test]
+    fn test_terminal_write_non_empty() {
+        let t = TerminalState::default();
+        t.write_to_pty(b"hello");
+        // Should not panic; underlying writer may be None in test
+    }
+
+    #[test]
+    fn test_terminal_handle_char_lowercase() {
+        let mut t = TerminalState::default();
+        t.handle_char('a');
+        // Should not panic
+    }
+
+    #[test]
+    fn test_terminal_handle_char_unicode() {
+        let mut t = TerminalState::default();
+        t.handle_char('ñ');
+        // Should not panic
+    }
+
+    #[test]
+    fn test_terminal_handle_key_unknown() {
+        let mut t = TerminalState::default();
+        use keyboard::Key;
+        t.handle_key(Key::Unidentified, keyboard::Modifiers::empty());
+        // Should not panic
+    }
+
+    #[test]
+    fn test_term_performer_new_defaults() {
+        let p = TermPerformer::new(24, 80);
+        assert_eq!(p.rows, 24);
+        assert_eq!(p.cols, 80);
+        assert_eq!(p.cursor_row, 0);
+        assert_eq!(p.cursor_col, 0);
+        assert_eq!(p.grid.len(), 24);
+        assert_eq!(p.grid[0].len(), 80);
+    }
+
+    #[test]
+    fn test_term_performer_scrollback_initially_empty() {
+        let p = TermPerformer::new(24, 80);
+        assert!(p.scrollback.is_empty());
+    }
+
+    #[test]
+    fn test_term_performer_dirty_lines_init() {
+        let p = TermPerformer::new(5, 10);
+        assert_eq!(p.dirty_lines.len(), 5);
+        assert!(p.dirty_lines.iter().all(|&d| d));
+    }
+
+    #[test]
+    fn test_term_performer_clear_dirty() {
+        let mut p = TermPerformer::new(5, 10);
+        p.clear_dirty();
+        assert!(p.dirty_lines.iter().all(|&d| !d));
+    }
+
+    #[test]
+    fn test_cell_default() {
+        let c = Cell::default();
+        assert_eq!(c.ch, ' ');
+        assert_eq!(c.attr.fg, TermColor::Default);
+    }
+
+    #[test]
+    fn test_cell_attr_default() {
+        let attr = CellAttr::default();
+        assert_eq!(attr.fg, TermColor::Default);
+        assert_eq!(attr.bg, TermColor::Default);
+        assert!(!attr.bold);
+    }
+
+    #[test]
+    fn test_term_color_indexed() {
+        assert_eq!(TermColor::Indexed(1), TermColor::Indexed(1));
+        assert_ne!(TermColor::Indexed(1), TermColor::Indexed(2));
+    }
+
+    #[test]
+    fn test_term_color_rgb() {
+        assert_eq!(TermColor::Rgb(1, 2, 3), TermColor::Rgb(1, 2, 3));
+        assert_ne!(TermColor::Rgb(1, 2, 3), TermColor::Rgb(1, 2, 4));
+    }
+
+    #[test]
+    fn test_sgr_bold_italic_underline() {
+        let mut p = make_performer();
+        let mut parser = Parser::new();
+        feed(&mut p, &mut parser, "\x1b[1;3;4;7mA");
+        assert!(p.grid[0][0].attr.bold);
+        assert!(p.grid[0][0].attr.italic);
+        assert!(p.grid[0][0].attr.underline);
+        assert!(p.grid[0][0].attr.reverse);
+    }
+
+    #[test]
+    fn test_cursor_save_restore() {
+        let mut p = make_performer();
+        let mut parser = Parser::new();
+        feed(&mut p, &mut parser, "\x1b[10;20H\x1b7\x1b[5;5H\x1b8");
+        assert_eq!(p.cursor_row, 9);
+        assert_eq!(p.cursor_col, 19);
+    }
+
+    #[test]
+    fn test_reverse_index_at_top() {
+        let mut p = TermPerformer::new(3, 5);
+        let mut parser = Parser::new();
+        p.cursor_row = 0;
+        feed(&mut p, &mut parser, "\x1bM");
+        // Should scroll down, cursor stays at top
+        assert_eq!(p.cursor_row, 0);
+    }
+
+    #[test]
+    fn test_scroll_region() {
+        let mut p = TermPerformer::new(5, 5);
+        let mut parser = Parser::new();
+        feed(&mut p, &mut parser, "\x1b[2;4r\x1b[5;5Hx\x1bD");
+        // Cursor at row 4 (0-indexed), scroll region 1..3
+        assert_eq!(p.cursor_row, 4);
+    }
+
+    #[test]
+    fn test_erase_display() {
+        let mut p = make_performer();
+        let mut parser = Parser::new();
+        feed(&mut p, &mut parser, "hello\x1b[2J");
+        // After erase display, screen should be cleared
+        assert_eq!(p.grid[0][0].ch, ' ');
+    }
+
+    #[test]
+    fn test_multiple_ansi_sequences() {
+        let mut p = make_performer();
+        let mut parser = Parser::new();
+        feed(&mut p, &mut parser, "\x1b[31mR\x1b[32mG\x1b[34mB\x1b[0mX");
+        assert_eq!(p.grid[0][0].attr.fg, TermColor::Indexed(1)); // red
+        assert_eq!(p.grid[0][1].attr.fg, TermColor::Indexed(2)); // green
+        assert_eq!(p.grid[0][2].attr.fg, TermColor::Indexed(4)); // blue
+        assert_eq!(p.grid[0][3].attr.fg, TermColor::Default); // reset
+    }
+
+    #[test]
+    fn test_wrap_long_line() {
+        let mut p = TermPerformer::new(2, 5);
+        let mut parser = Parser::new();
+        feed(&mut p, &mut parser, "abcdefghi");
+        // Should wrap to next line
+        assert_eq!(p.cursor_row, 1);
+    }
+
+    #[test]
+    fn test_term_performer_grid_dimensions() {
+        let p = make_performer();
+        assert_eq!(p.grid.len(), 24);
+        assert_eq!(p.grid[0].len(), 80);
+    }
+
+    #[test]
+    fn test_term_performer_title_set_via_osc() {
+        let mut p = make_performer();
+        let mut parser = Parser::new();
+        feed(&mut p, &mut parser, "\x1b]0;my title\x07");
+        assert_eq!(p.title, "my title");
+    }
 }

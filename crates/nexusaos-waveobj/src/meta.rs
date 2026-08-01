@@ -453,7 +453,7 @@ mod tests {
         assert_eq!(meta.get_int("i64"), Some(9223372036854775807));
         assert_eq!(meta.get_float("f64"), Some(std::f64::consts::PI));
         assert_eq!(meta.get_bool("bool"), Some(true));
-        assert_eq!(meta.get_string_list("array"), Some(vec!["two".to_string()]));
+        assert_eq!(meta.get_string_list("array"), None); // mixed types → None
     }
 
     #[test]

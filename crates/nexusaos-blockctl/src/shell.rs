@@ -179,6 +179,52 @@ mod tests {
         assert_eq!(status.status, "init");
         assert_eq!(status.conn_name, "local");
         assert_eq!(status.block_id, "blk1");
+        assert_eq!(status.exit_code, None);
+    }
+
+    #[test]
+    fn test_controller_init_with_custom_shell() {
+        let store = Arc::new(BlockFileStore::new());
+        let controller = ShellController::new("blk1".to_string(), store, Some("/bin/sh".to_string()));
+        assert_eq!(controller.conn_name(), "local");
+        let status = controller.runtime_status();
+        assert_eq!(status.status, "init");
+    }
+
+    #[tokio::test]
+    async fn test_send_input_before_start() {
+        let store = Arc::new(BlockFileStore::new());
+        let controller = ShellController::new("blk1".to_string(), store, None);
+        let result = controller.send_input(BlockInput::Data(b"hello".to_vec())).await;
+        assert!(result.is_err());
+        match result {
+            Err(ControllerError::NotRunning(id)) => assert_eq!(id, "blk1"),
+            _ => panic!("expected NotRunning error"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_stop_sets_status_done() {
+        let store = Arc::new(BlockFileStore::new());
+        let controller = ShellController::new("blk1".to_string(), store, None);
+        controller.stop(false).await.unwrap();
+        let status = controller.runtime_status();
+        assert_eq!(status.status, "done");
+    }
+
+    #[tokio::test]
+    async fn test_stop_graceful_vs_ungraceful() {
+        let store = Arc::new(BlockFileStore::new());
+        let controller = ShellController::new("blk1".to_string(), store, None);
+        controller.stop(true).await.unwrap();
+        let status = controller.runtime_status();
+        assert_eq!(status.status, "done");
+
+        let store2 = Arc::new(BlockFileStore::new());
+        let controller2 = ShellController::new("blk2".to_string(), store2, None);
+        controller2.stop(false).await.unwrap();
+        let status2 = controller2.runtime_status();
+        assert_eq!(status2.status, "done");
     }
 
     #[tokio::test]
@@ -201,5 +247,30 @@ mod tests {
 
         let status = controller.runtime_status();
         assert_eq!(status.status, "done");
+    }
+
+    #[tokio::test]
+    async fn test_start_invalid_shell_path() {
+        let store = Arc::new(BlockFileStore::new());
+        let controller = ShellController::new("blk1".to_string(), store, Some("/nonexistent/shell".to_string()));
+        let result = controller.start().await;
+        assert!(result.is_err());
+        match result {
+            Err(ControllerError::Shell(_)) => {}
+            _ => panic!("expected Shell error"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_send_input_after_stop() {
+        let store = Arc::new(BlockFileStore::new());
+        let controller = ShellController::new("blk1".to_string(), store, None);
+        controller.stop(true).await.unwrap();
+        let result = controller.send_input(BlockInput::Data(b"hello".to_vec())).await;
+        assert!(result.is_err());
+        match result {
+            Err(ControllerError::NotRunning(_)) => {}
+            _ => panic!("expected NotRunning error"),
+        }
     }
 }

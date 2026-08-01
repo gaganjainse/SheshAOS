@@ -48,6 +48,7 @@ impl RpcHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tokio::net::UnixStream;
 
     #[tokio::test]
     async fn test_process_request() {
@@ -62,5 +63,103 @@ mod tests {
         };
         let resp = handler.process_request(req).await;
         assert_eq!(resp.result.unwrap(), json!("pong"));
+    }
+
+    #[tokio::test]
+    async fn test_handler_new_constructs() {
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let _handler = RpcHandler::new(broker, store);
+    }
+
+    #[tokio::test]
+    async fn test_handler_broker_accessor_returns_same_arc() {
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let handler = RpcHandler::new(broker.clone(), store);
+        let broker_ref = handler.broker();
+        assert!(Arc::ptr_eq(broker_ref, &broker));
+    }
+
+    #[tokio::test]
+    async fn test_handler_store_accessor_returns_same_arc() {
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let handler = RpcHandler::new(broker, store.clone());
+        let store_ref = handler.store();
+        assert!(Arc::ptr_eq(store_ref, &store));
+    }
+
+    #[tokio::test]
+    async fn test_process_request_with_none_id() {
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let handler = RpcHandler::new(broker, store);
+        let req = RpcRequest {
+            jsonrpc: "2.0".into(),
+            method: "notify".into(),
+            params: None,
+            id: None,
+        };
+        let resp = handler.process_request(req).await;
+        assert!(resp.id.is_none());
+        assert_eq!(resp.result.unwrap(), json!("pong"));
+    }
+
+    #[tokio::test]
+    async fn test_process_request_preserves_id() {
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let handler = RpcHandler::new(broker, store);
+        let req = RpcRequest {
+            jsonrpc: "2.0".into(),
+            method: "echo".into(),
+            params: None,
+            id: Some("42".into()),
+        };
+        let resp = handler.process_request(req).await;
+        assert_eq!(resp.id, Some("42".into()));
+    }
+
+    #[tokio::test]
+    async fn test_process_request_different_methods() {
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let handler = RpcHandler::new(broker, store);
+
+        for method in &["ping", "health", "version", "status"] {
+            let req = RpcRequest {
+                jsonrpc: "2.0".into(),
+                method: (*method).into(),
+                params: None,
+                id: Some("1".into()),
+            };
+            let resp = handler.process_request(req).await;
+            assert_eq!(resp.jsonrpc, "2.0");
+            assert_eq!(resp.result.unwrap(), json!("pong"));
+        }
+    }
+
+    #[tokio::test]
+    async fn test_handle_connection_success() {
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let handler = RpcHandler::new(broker, store);
+
+        let (stream1, _stream2) = UnixStream::pair().unwrap();
+        let result = handler.handle_connection(stream1).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_handle_connection_does_not_panic_on_drop() {
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let handler = RpcHandler::new(broker, store);
+
+        let (stream1, _stream2) = UnixStream::pair().unwrap();
+        drop(stream1);
+        let result = handler.handle_connection(_stream2).await;
+        assert!(result.is_ok());
     }
 }

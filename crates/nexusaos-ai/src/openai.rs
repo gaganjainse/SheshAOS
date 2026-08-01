@@ -92,5 +92,34 @@ mod tests {
     fn test_provider_creation() {
         let provider = OpenAIProvider::new("http://localhost".into(), "key".into());
         assert_eq!(provider.base_url, "http://localhost");
+        assert_eq!(provider.api_key, "key");
+    }
+
+    #[test]
+    fn test_openai_url_construction() {
+        let provider = OpenAIProvider::new("http://localhost:8080".into(), "key".into());
+        // URL is constructed in stream_chat, test the format logic indirectly
+        assert!(provider.base_url.ends_with("8080"));
+    }
+
+    #[test]
+    fn test_openai_provider_clone() {
+        let provider = OpenAIProvider::new("http://localhost".into(), "key".into());
+        let cloned = provider.clone();
+        assert_eq!(provider.base_url, cloned.base_url);
+        assert_eq!(provider.api_key, cloned.api_key);
+    }
+
+    #[test]
+    fn test_openai_chat_request_fields() {
+        use crate::provider::{ChatMessage, ChatRequest};
+        let req = ChatRequest {
+            messages: vec![ChatMessage { role: "user".into(), content: "hi".into() }],
+            model: "gpt".into(),
+            max_tokens: Some(50),
+        };
+        assert_eq!(req.messages.len(), 1);
+        assert_eq!(req.messages[0].role, "user");
+        assert_eq!(req.model, "gpt");
     }
 }

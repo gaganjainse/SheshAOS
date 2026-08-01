@@ -140,4 +140,133 @@ mod tests {
         assert_eq!(event.topic, EVENT_CONFIG);
         assert_eq!(event.data, test_json);
     }
+
+    #[tokio::test]
+    async fn test_config_watcher_new_stores_path_and_broker() {
+        let temp_dir = TempDir::new().unwrap();
+        let config_path = temp_dir.path().join("config.json");
+        let broker = Broker::new(10);
+
+        let watcher = ConfigWatcher::new(config_path.clone(), broker.clone());
+        // ConfigWatcher stores the path and broker; we verify start doesn't panic
+        watcher.start();
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+
+    #[tokio::test]
+    async fn test_config_watcher_does_not_panic_on_invalid_json() {
+        let temp_dir = TempDir::new().unwrap();
+        let config_path = temp_dir.path().join("bad.json");
+        std::fs::write(&config_path, "not valid json {{{").unwrap();
+
+        let broker = Broker::new(10);
+        let watcher = ConfigWatcher::new(config_path.clone(), broker.clone());
+        watcher.start();
+
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        // Modify file with invalid JSON - watcher should log error but not panic
+        let mut file = std::fs::File::create(&config_path).unwrap();
+        file.write_all(b"also invalid").unwrap();
+        file.sync_all().unwrap();
+
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    }
+
+    #[tokio::test]
+    async fn test_config_watcher_multiple_subscribers() {
+        let temp_dir = TempDir::new().unwrap();
+        let config_path = temp_dir.path().join("settings.json");
+        std::fs::File::create(&config_path).unwrap();
+
+        let broker = Broker::new(10);
+        
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: EVENT_CONFIG.to_string(),
+            scopes: vec![],
+        });
+        broker.subscribe("route2", SubscriptionRequest {
+            topic: EVENT_CONFIG.to_string(),
+            scopes: vec![],
+        });
+        
+        let mut subscriber = broker.receiver();
+
+        let watcher = ConfigWatcher::new(config_path.clone(), broker.clone());
+        watcher.start();
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        let test_json = json!({"key": "value"});
+        let mut file = std::fs::File::create(&config_path).unwrap();
+        file.write_all(serde_json::to_string(&test_json).unwrap().as_bytes()).unwrap();
+        file.sync_all().unwrap();
+
+        let mut routes = Vec::new();
+        for _ in 0..2 {
+            let (r, ev) = timeout(Duration::from_secs(1), subscriber.recv())
+                .await
+                .expect("Timeout")
+                .expect("Channel closed");
+            routes.push(r);
+            assert_eq!(ev.data, test_json);
+        }
+        routes.sort();
+        assert_eq!(routes, vec!["route1", "route2"]);
+    }
+
+    #[tokio::test]
+    async fn test_config_watcher_without_subscribers() {
+        let temp_dir = TempDir::new().unwrap();
+        let config_path = temp_dir.path().join("settings.json");
+        std::fs::File::create(&config_path).unwrap();
+
+        let broker = Broker::new(10);
+        let watcher = ConfigWatcher::new(config_path.clone(), broker.clone());
+        watcher.start();
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        let test_json = json!({"key": "value"});
+        let mut file = std::fs::File::create(&config_path).unwrap();
+        file.write_all(serde_json::to_string(&test_json).unwrap().as_bytes()).unwrap();
+        file.sync_all().unwrap();
+
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        // Should not panic even with no subscribers
+    }
+
+    #[tokio::test]
+    async fn test_config_watcher_nested_path() {
+        let temp_dir = TempDir::new().unwrap();
+        let config_path = temp_dir.path().join("nested/config/settings.json");
+        std::fs::create_dir_all(config_path.parent().unwrap()).unwrap();
+        std::fs::File::create(&config_path).unwrap();
+
+        let broker = Broker::new(10);
+        broker.subscribe("test_route", SubscriptionRequest {
+            topic: EVENT_CONFIG.to_string(),
+            scopes: vec![],
+        });
+        
+        let mut subscriber = broker.receiver();
+
+        let watcher = ConfigWatcher::new(config_path.clone(), broker.clone());
+        watcher.start();
+
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        let test_json = json!({"nested": true});
+        let mut file = std::fs::File::create(&config_path).unwrap();
+        file.write_all(serde_json::to_string(&test_json).unwrap().as_bytes()).unwrap();
+        file.sync_all().unwrap();
+
+        let (route, event) = timeout(Duration::from_secs(1), subscriber.recv())
+            .await
+            .expect("Timeout")
+            .expect("Channel closed");
+
+        assert_eq!(route, "test_route");
+        assert_eq!(event.data, test_json);
+    }
 }

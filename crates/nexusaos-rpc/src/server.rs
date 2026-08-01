@@ -45,4 +45,54 @@ mod tests {
         let server = RpcServer::new(handler, PathBuf::from("/tmp/test_server.sock"));
         assert_eq!(server.socket_path.to_str().unwrap(), "/tmp/test_server.sock");
     }
+
+    #[tokio::test]
+    async fn test_server_new_with_relative_path() {
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let handler = Arc::new(RpcHandler::new(broker, store));
+        let server = RpcServer::new(handler, PathBuf::from("relative/path.sock"));
+        assert_eq!(server.socket_path, PathBuf::from("relative/path.sock"));
+    }
+
+    #[tokio::test]
+    async fn test_server_new_with_empty_path() {
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let handler = Arc::new(RpcHandler::new(broker, store));
+        let server = RpcServer::new(handler, PathBuf::from(""));
+        assert_eq!(server.socket_path, PathBuf::from(""));
+    }
+
+    #[tokio::test]
+    async fn test_server_socket_path_stored_correctly() {
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let handler = Arc::new(RpcHandler::new(broker, store));
+        let path = PathBuf::from("/var/run/nexusaos/rpc.sock");
+        let server = RpcServer::new(handler, path.clone());
+        assert_eq!(server.socket_path, path);
+    }
+
+    #[tokio::test]
+    async fn test_server_run_creates_listener() {
+        use tempfile::TempDir;
+        let temp_dir = TempDir::new().unwrap();
+        let socket_path = temp_dir.path().join("test.sock");
+
+        let broker = Broker::new(10);
+        let store = Arc::new(WaveStore::open_in_memory().unwrap());
+        let handler = Arc::new(RpcHandler::new(broker, store));
+        let server = RpcServer::new(handler, socket_path.clone());
+
+        let server_handle = tokio::spawn(async move {
+            let result = server.run().await;
+            result
+        });
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+
+        server_handle.abort();
+        let _ = tokio::fs::remove_file(&socket_path).await;
+    }
 }

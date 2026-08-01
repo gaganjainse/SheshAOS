@@ -217,11 +217,78 @@ fn bench_terminal_rendering(c: &mut Criterion) {
     group.finish();
 }
 
+/// Benchmark snapshot / projection rebuild performance
+fn bench_snapshot_projection(c: &mut Criterion) {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let temp_dir = TempDir::new().unwrap();
+    let events_dir = temp_dir.path().join("events");
+    std::fs::create_dir_all(&events_dir).unwrap();
+    let store = Arc::new(rt.block_on(EventStore::open(events_dir)).unwrap());
+
+    let mut group = c.benchmark_group("snapshot_projection");
+
+    // Pre-populate with events
+    rt.block_on(async {
+        use nexusaos_kernel::{events::{Event, EventKind, EventPayload}, task::TaskId};
+        use uuid::Uuid;
+        for i in 0..100u64 {
+            let mut event = Event::new(
+                TaskId(Uuid::now_v7()),
+                EventKind::TaskCreated,
+                EventPayload::TaskCreated { request: serde_json::json!({ "i": i }) },
+                "test".to_string(),
+            );
+            store.append(&mut event).await.unwrap();
+        }
+    });
+
+    group.bench_function("replay_100_events", |b| {
+        b.iter(|| {
+            rt.block_on(async {
+                let projection = nexusaos_kernel::runtime::replay::ReplayEngine::replay(&store).await.unwrap();
+                black_box(projection);
+            });
+        });
+    });
+
+    group.finish();
+}
+
+/// Benchmark tool broker routing throughput
+fn bench_tool_broker_throughput(c: &mut Criterion) {
+    let mut group = c.benchmark_group("tool_broker");
+
+    let broker = ToolBroker::new(Arc::new(PolicyEngine::new(vec![], TrustTier::Autonomous)));
+
+    group.bench_function("publish_and_match", |b| {
+        b.iter(|| {
+            let event = nexusaos_wps::events::WaveEvent::new(
+                "bench_topic",
+                vec!["scope".to_string()],
+                serde_json::json!({ "data": "x" }),
+                true,
+            );
+            broker.publish(event);
+            let routes = broker.get_matching_routes(&nexusaos_wps::events::WaveEvent::new(
+                "bench_topic",
+                vec!["scope".to_string()],
+                serde_json::json!({}),
+                false,
+            ));
+            black_box(routes.len());
+        });
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_terminal_parsing,
     bench_kernel_task_submission,
     bench_event_store,
-    bench_terminal_rendering
+    bench_terminal_rendering,
+    bench_snapshot_projection,
+    bench_tool_broker_throughput
 );
 criterion_main!(benches);

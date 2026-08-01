@@ -45,4 +45,35 @@ mod tests {
         let broker = Broker::new(10);
         let _ = ConnectionManager::new(broker);
     }
+
+    #[test]
+    fn test_connection_manager_new_default_config() {
+        let broker = Broker::new(10);
+        let manager = ConnectionManager::new(broker);
+        assert!(Arc::strong_count(&manager.config) >= 1);
+    }
+
+    #[tokio::test]
+    async fn test_connection_manager_connect_unreachable_host() {
+        let broker = Broker::new(10);
+        let manager = ConnectionManager::new(broker);
+        let result = manager.connect("user", "127.0.0.1", 1).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_connection_manager_connect_invalid_host() {
+        let broker = Broker::new(10);
+        let manager = ConnectionManager::new(broker);
+        let result = manager.connect("user", "invalid-host-that-does-not-exist.example", 22).await;
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_connection_manager_multiple_instances() {
+        let broker1 = Broker::new(10);
+        let broker2 = Broker::new(10);
+        let _m1 = ConnectionManager::new(broker1);
+        let _m2 = ConnectionManager::new(broker2);
+    }
 }

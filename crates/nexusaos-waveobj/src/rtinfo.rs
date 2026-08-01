@@ -673,8 +673,11 @@ mod tests {
         let info = ObjRTInfo {
             block_id: "b1".to_string(),
             shell_proc_status: Some(STATUS_RUNNING.to_string()),
+            shell_proc_conn_name: Some("conn-1".to_string()),
             shell_proc_exit_code: Some(0),
             tsunami_port: Some(8080),
+            wave_ai_status: Some("idle".to_string()),
+            builder_status: Some("success".to_string()),
             extra,
         };
 

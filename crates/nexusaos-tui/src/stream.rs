@@ -21,4 +21,22 @@ mod tests {
         TokenStreamer::push_token("");
         assert!(true);
     }
+
+    #[test]
+    fn test_push_token_single_char() {
+        TokenStreamer::push_token("a");
+        // Should not panic
+    }
+
+    #[test]
+    fn test_push_token_multi_char() {
+        TokenStreamer::push_token("hello world");
+        // Should not panic
+    }
+
+    #[test]
+    fn test_push_token_unicode() {
+        TokenStreamer::push_token("ñø∂");
+        // Should not panic
+    }
 }

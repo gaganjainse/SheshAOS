@@ -111,7 +111,7 @@ impl WaveObj for Client {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Window {
     pub oid: Uuid,
     pub version: i64,
@@ -146,7 +146,7 @@ impl WaveObj for Window {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Workspace {
     pub oid: Uuid,
     pub version: i64,
@@ -182,7 +182,7 @@ impl WaveObj for Workspace {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Tab {
     pub oid: Uuid,
     pub version: i64,
@@ -223,7 +223,7 @@ impl Tab {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LayoutState {
     pub oid: Uuid,
     pub version: i64,
@@ -243,7 +243,7 @@ pub struct LayoutState {
 
 impl WaveObj for LayoutState {
     fn otype() -> &'static str {
-        "layoutstate"
+        "layout"
     }
     fn oid(&self) -> &Uuid {
         &self.oid
@@ -262,7 +262,7 @@ impl WaveObj for LayoutState {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Block {
     pub oid: Uuid,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -300,7 +300,7 @@ impl WaveObj for Block {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Job {
     pub oid: Uuid,
     pub version: i64,
@@ -661,7 +661,7 @@ mod tests {
 
     #[test]
     fn test_layoutstate_otype() {
-        assert_eq!(LayoutState::otype(), "layoutstate");
+        assert_eq!(LayoutState::otype(), "layout");
     }
 
     #[test]
@@ -1030,7 +1030,7 @@ mod tests {
         assert_eq!(ls.meta().get_string("key"), Some("val".to_string()));
 
         let oref = ls.oref();
-        assert_eq!(oref.otype, "layoutstate");
+        assert_eq!(oref.otype, "layout");
         assert_eq!(oref.oid, oid);
     }
 
