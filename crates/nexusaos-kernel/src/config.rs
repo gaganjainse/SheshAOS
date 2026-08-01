@@ -606,6 +606,12 @@ max_vram_mb = 5632
 max_context_tokens = 65536
 max_queue_depth = 32
 min_disk_free_gb = 5
+[policy]
+confirm_destructive = true
+confirm_writes = true
+confirm_git_commits = true
+confirm_terminal = true
+dedup_window_secs = 5
 [context]
 simple_question = 8192
 code_edit = 16384

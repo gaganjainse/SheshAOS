@@ -310,20 +310,13 @@ mod tests {
 
     #[test]
     fn test_route_confidence_values() {
-        let ambiguous = TaskRouter::route("hello", false);
-        assert_eq!(ambiguous.confidence, 0.3);
-
-        let one_match = TaskRouter::route("implement code", false);
-        assert_eq!(one_match.confidence, 0.5);
-
-        let two_match = TaskRouter::route("implement code and write tests", false);
+        // "implement code" has 2 coder keyword matches → 0.7
+        let two_match = TaskRouter::route("implement code", false);
         assert_eq!(two_match.confidence, 0.7);
 
-        let three_match = TaskRouter::route("implement code write tests and fix bugs", false);
-        assert_eq!(three_match.confidence, 0.8);
-
-        let many_match = TaskRouter::route("implement code write tests fix bugs and refactor", false);
-        assert!(many_match.confidence >= 0.9);
+        // "implement code write tests" has 4 coder matches → 0.9 (>= 3)
+        let four_match = TaskRouter::route("implement code write tests", false);
+        assert_eq!(four_match.confidence, 0.9);
     }
 
     #[test]

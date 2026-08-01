@@ -95,16 +95,167 @@ mod tests {
     }
 
     #[test]
-    fn test_file_event_data_serde() {
+    fn test_wave_event_new_with_string_topic() {
+        let topic = String::from("my_topic");
+        let ev = WaveEvent::new(topic.clone(), vec![], json!(null));
+        assert_eq!(ev.topic, topic);
+        assert_eq!(ev.persist, 0);
+        assert!(!ev.event_id.is_nil());
+        assert!(ev.timestamp <= Utc::now());
+    }
+
+    #[test]
+    fn test_wave_event_new_with_multiple_scopes() {
+        let scopes = vec!["scope1".into(), "scope2".into(), "scope3".into()];
+        let ev = WaveEvent::new("topic", scopes.clone(), json!({}));
+        assert_eq!(ev.scopes, scopes);
+    }
+
+    #[test]
+    fn test_wave_event_global_creates_empty_scopes() {
+        let ev = WaveEvent::global("topic", json!({"key": "value"}));
+        assert!(ev.scopes.is_empty());
+        assert_eq!(ev.topic, "topic");
+        assert_eq!(ev.data["key"], "value");
+        assert_eq!(ev.persist, 0);
+    }
+
+    #[test]
+    fn test_wave_event_with_persist_zero() {
+        let ev = WaveEvent::new("topic", vec![], json!(1)).with_persist(0);
+        assert_eq!(ev.persist, 0);
+    }
+
+    #[test]
+    fn test_wave_event_with_persist_max_u32() {
+        let ev = WaveEvent::new("topic", vec![], json!(1)).with_persist(u32::MAX);
+        assert_eq!(ev.persist, u32::MAX);
+    }
+
+    #[test]
+    fn test_wave_event_with_persist_chaining() {
+        let ev = WaveEvent::new("topic", vec![], json!(1))
+            .with_persist(1)
+            .with_persist(2)
+            .with_persist(3);
+        assert_eq!(ev.persist, 3);
+    }
+
+    #[test]
+    fn test_wave_event_serde_roundtrip() {
+        let ev = WaveEvent::new("test", vec!["scope1".to_string()], json!({"nested": {"a": 1}}))
+            .with_persist(42);
+        let json_str = serde_json::to_string(&ev).unwrap();
+        let decoded: WaveEvent = serde_json::from_str(&json_str).unwrap();
+        assert_eq!(decoded.topic, ev.topic);
+        assert_eq!(decoded.scopes, ev.scopes);
+        assert_eq!(decoded.data, ev.data);
+        assert_eq!(decoded.persist, 42);
+        assert_eq!(decoded.event_id, ev.event_id);
+    }
+
+    #[test]
+    fn test_wave_event_event_id_is_unique() {
+        let ev1 = WaveEvent::new("topic", vec![], json!(1));
+        let ev2 = WaveEvent::new("topic", vec![], json!(1));
+        assert_ne!(ev1.event_id, ev2.event_id);
+    }
+
+    #[test]
+    fn test_wave_event_timestamps_close() {
+        let ev1 = WaveEvent::new("topic", vec![], json!(1));
+        let ev2 = WaveEvent::new("topic", vec![], json!(1));
+        assert!(ev2.timestamp >= ev1.timestamp);
+    }
+
+    #[test]
+    fn test_file_event_data_with_none_data64() {
         let d = FileEventData {
             zone_id: "z1".to_string(),
             file_name: "f1".to_string(),
             file_op: FILE_OP_APPEND.to_string(),
-            data64: Some("dGVzdA==".to_string()),
+            data64: None,
         };
         let s = serde_json::to_string(&d).unwrap();
-        assert!(s.contains("dGVzdA=="));
+        assert!(!s.contains("data64"));
         let d2: FileEventData = serde_json::from_str(&s).unwrap();
-        assert_eq!(d2.data64.unwrap(), "dGVzdA==");
+        assert!(d2.data64.is_none());
+    }
+
+    #[test]
+    fn test_file_event_data_all_operations() {
+        for op in [FILE_OP_APPEND, FILE_OP_TRUNCATE, FILE_OP_INVALIDATE] {
+            let d = FileEventData {
+                zone_id: "z1".to_string(),
+                file_name: "f1".to_string(),
+                file_op: op.to_string(),
+                data64: None,
+            };
+            assert_eq!(d.file_op, op);
+            let s = serde_json::to_string(&d).unwrap();
+            let d2: FileEventData = serde_json::from_str(&s).unwrap();
+            assert_eq!(d2.file_op, op);
+        }
+    }
+
+    #[test]
+    fn test_file_event_data_serde_with_all_fields() {
+        let d = FileEventData {
+            zone_id: "zone".to_string(),
+            file_name: "file.txt".to_string(),
+            file_op: FILE_OP_TRUNCATE.to_string(),
+            data64: Some("SGVsbG8=".to_string()),
+        };
+        let s = serde_json::to_string(&d).unwrap();
+        let d2: FileEventData = serde_json::from_str(&s).unwrap();
+        assert_eq!(d2.zone_id, "zone");
+        assert_eq!(d2.file_name, "file.txt");
+        assert_eq!(d2.file_op, FILE_OP_TRUNCATE);
+        assert_eq!(d2.data64.unwrap(), "SGVsbG8=");
+    }
+
+    #[test]
+    fn test_subscription_request_construction() {
+        let req = SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["scope1".to_string(), "scope2".to_string()],
+        };
+        assert_eq!(req.topic, "test");
+        assert_eq!(req.scopes.len(), 2);
+    }
+
+    #[test]
+    fn test_subscription_request_empty_scopes() {
+        let req = SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        };
+        assert!(req.scopes.is_empty());
+    }
+
+    #[test]
+    fn test_file_event_data_clone() {
+        let d = FileEventData {
+            zone_id: "z".to_string(),
+            file_name: "f".to_string(),
+            file_op: FILE_OP_APPEND.to_string(),
+            data64: Some("data".to_string()),
+        };
+        let d2 = d.clone();
+        assert_eq!(d.zone_id, d2.zone_id);
+        assert_eq!(d.file_name, d2.file_name);
+        assert_eq!(d.file_op, d2.file_op);
+        assert_eq!(d.data64, d2.data64);
+    }
+
+    #[test]
+    fn test_wave_event_clone() {
+        let ev = WaveEvent::new("t", vec!["s".to_string()], json!(1)).with_persist(10);
+        let ev2 = ev.clone();
+        assert_eq!(ev.topic, ev2.topic);
+        assert_eq!(ev.scopes, ev2.scopes);
+        assert_eq!(ev.data, ev2.data);
+        assert_eq!(ev.persist, ev2.persist);
+        assert_eq!(ev.event_id, ev2.event_id);
     }
 }

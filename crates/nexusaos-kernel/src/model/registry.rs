@@ -172,8 +172,14 @@ mod tests {
 
         let results = registry.health_check_all().await;
         assert_eq!(results.len(), 2);
-        assert!(results.get(&ModelRole::Planner).cloned().unwrap().unwrap());
-        assert!(results.get(&ModelRole::Coder).cloned().unwrap().unwrap());
+        match results.get(&ModelRole::Planner) {
+            Some(Ok(true)) => {}
+            _ => panic!("Expected planner to be healthy"),
+        }
+        match results.get(&ModelRole::Coder) {
+            Some(Ok(true)) => {}
+            _ => panic!("Expected coder to be healthy"),
+        }
     }
 
     #[tokio::test]
@@ -198,8 +204,14 @@ mod tests {
 
         let results = registry.health_check_all().await;
         assert_eq!(results.len(), 2);
-        assert!(results.get(&ModelRole::Planner).cloned().unwrap().is_ok());
-        assert!(results.get(&ModelRole::Reviewer).cloned().unwrap().is_err());
+        match results.get(&ModelRole::Planner) {
+            Some(Ok(_)) => {}
+            _ => panic!("Expected planner to be ok"),
+        }
+        match results.get(&ModelRole::Reviewer) {
+            Some(Err(_)) => {}
+            _ => panic!("Expected reviewer to be err"),
+        }
     }
 
     #[test]

@@ -359,6 +359,7 @@ pub fn otype_to_table(otype: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn test_client_roundtrip() {

@@ -785,7 +785,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, policy, Arc::new(registry), broker).await.unwrap();
+        let kernel = Kernel::new(store, policy, registry, broker).await.unwrap();
 
         let id = kernel.submit_task(TaskInput::Text("do something".into())).await.unwrap();
         let result = kernel.execute_task(&id).await;
@@ -811,7 +811,7 @@ mod tests {
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
         let kernel = Kernel::new(store.clone(), policy, registry, broker).await.unwrap();
 
-        let id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
+        let _id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
 
         let events = store.get_all_events().await.unwrap();
         // Should have at least TaskCreated and TaskClassified events
@@ -836,7 +836,7 @@ mod tests {
         let mut registry = ProviderRegistry::new();
         registry.register(Box::new(MockProvider {
             role: crate::state::ModelRole::Planner,
-            content: "Here is the plan. No code needed.".into(),
+            content: "Here is the architectural plan. No implementation required.".into(),
         }));
 
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
@@ -845,7 +845,7 @@ mod tests {
         let id = kernel.submit_task(TaskInput::Text("plan something".into())).await.unwrap();
         let outcome = kernel.execute_task(&id).await.unwrap();
         assert!(outcome.success);
-        assert!(outcome.output.unwrap().contains("Here is the plan."));
+        assert!(outcome.output.unwrap().contains("architectural plan"));
 
         let state = kernel.task_state(&id).await.unwrap();
         assert_eq!(state, TaskState::Completed);

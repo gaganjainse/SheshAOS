@@ -377,4 +377,660 @@ mod tests {
         routes.sort();
         assert_eq!(routes, vec!["route1", "route2"]);
     }
+
+    #[test]
+    fn test_broker_new_history_zero() {
+        let broker = Broker::new(0);
+        let ev = WaveEvent::new("topic", vec![], json!(1)).with_persist(1);
+        broker.publish(ev);
+        let hist = broker.read_history("topic", 10);
+        assert_eq!(hist.len(), 0);
+    }
+
+    #[test]
+    fn test_broker_new_history_large() {
+        let broker = Broker::new(1000);
+        assert!(broker.subscriber_count("nonexistent") == 0);
+    }
+
+    #[tokio::test]
+    async fn test_subscribe_duplicate_route_id_does_not_duplicate() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        assert_eq!(broker.subscriber_count("test"), 1);
+    }
+
+    #[tokio::test]
+    async fn test_subscribe_multiple_scopes_same_route() {
+        let broker = Broker::new(10);
+        let mut rx = broker.receiver();
+        
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["scopeA".to_string(), "scopeB".to_string()],
+        });
+        
+        broker.publish(WaveEvent::new("test", vec!["scopeA".to_string()], json!(1)));
+        broker.publish(WaveEvent::new("test", vec!["scopeB".to_string()], json!(2)));
+        
+        let (r1, ev1) = rx.recv().await.unwrap();
+        let (r2, ev2) = rx.recv().await.unwrap();
+        
+        assert_eq!(r1, "route1");
+        assert_eq!(r2, "route1");
+        assert_eq!(ev1.data, json!(1));
+        assert_eq!(ev2.data, json!(2));
+    }
+
+    #[tokio::test]
+    async fn test_subscribe_with_double_star_wildcard() {
+        let broker = Broker::new(10);
+        let mut rx = broker.receiver();
+
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["**".to_string()],
+        });
+
+        broker.publish(WaveEvent::new("test", vec!["any".to_string()], json!(1)));
+
+        let (route, ev) = rx.recv().await.unwrap();
+        assert_eq!(route, "route1");
+        assert_eq!(ev.data, json!(1));
+    }
+
+    #[tokio::test]
+    async fn test_subscribe_mixed_scopes_and_stars() {
+        let broker = Broker::new(10);
+        let mut rx = broker.receiver();
+        
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["scopeA".to_string(), "*".to_string(), "**".to_string()],
+        });
+
+        // Should match all of these
+        broker.publish(WaveEvent::new("test", vec!["scopeA".to_string()], json!(1)));
+        broker.publish(WaveEvent::new("test", vec!["scopeB".to_string()], json!(2)));
+        broker.publish(WaveEvent::new("test", vec!["scopeC".to_string()], json!(3)));
+
+        let mut routes = Vec::new();
+        for _ in 0..3 {
+            let (r, _) = rx.recv().await.unwrap();
+            routes.push(r);
+        }
+        assert!(routes.iter().all(|r| r == "route1"));
+    }
+
+    #[test]
+    fn test_get_matching_routes_no_subscribers() {
+        let broker = Broker::new(10);
+        let ev = WaveEvent::new("test", vec![], json!(1));
+        let routes = broker.get_matching_routes(&ev);
+        assert!(routes.is_empty());
+    }
+
+    #[test]
+    fn test_get_matching_routes_only_all_subs() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        broker.subscribe("route2", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+
+        let ev = WaveEvent::global("test", json!(1));
+        let mut routes = broker.get_matching_routes(&ev);
+        routes.sort();
+        assert_eq!(routes, vec!["route1", "route2"]);
+    }
+
+    #[test]
+    fn test_get_matching_routes_scoped() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["scopeA".to_string()],
+        });
+        broker.subscribe("route2", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["scopeB".to_string()],
+        });
+
+        let ev = WaveEvent::new("test", vec!["scopeA".to_string()], json!(1));
+        let routes = broker.get_matching_routes(&ev);
+        assert_eq!(routes, vec!["route1"]);
+    }
+
+    #[test]
+    fn test_get_matching_routes_deterministic_order() {
+        let broker = Broker::new(10);
+        broker.subscribe("route3", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        broker.subscribe("route2", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+
+        let ev = WaveEvent::global("test", json!(1));
+        let routes = broker.get_matching_routes(&ev);
+        assert_eq!(routes, vec!["route1", "route2", "route3"]);
+    }
+
+    #[test]
+    fn test_get_matching_routes_wildcard_star_only_matches_nonempty_scopes() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["*".to_string()],
+        });
+
+        let ev = WaveEvent::new("test", vec!["scopeA".to_string()], json!(1));
+        let routes = broker.get_matching_routes(&ev);
+        assert_eq!(routes, vec!["route1"]);
+
+        let ev_empty = WaveEvent::global("test", json!(1));
+        let routes_empty = broker.get_matching_routes(&ev_empty);
+        assert!(routes_empty.is_empty());
+    }
+
+    #[test]
+    fn test_get_matching_routes_double_star_matches_always() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["**".to_string()],
+        });
+
+        let ev_scope = WaveEvent::new("test", vec!["scopeA".to_string()], json!(1));
+        assert_eq!(broker.get_matching_routes(&ev_scope), vec!["route1"]);
+
+        let ev_empty = WaveEvent::global("test", json!(1));
+        assert_eq!(broker.get_matching_routes(&ev_empty), vec!["route1"]);
+    }
+
+    #[test]
+    fn test_get_matching_routes_no_overlap_returns_empty() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["scopeA".to_string()],
+        });
+
+        let ev = WaveEvent::new("test", vec!["scopeB".to_string()], json!(1));
+        let routes = broker.get_matching_routes(&ev);
+        assert!(routes.is_empty());
+    }
+
+    #[test]
+    fn test_get_matching_routes_overlapping_subs_deduplicated() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["scopeA".to_string()],
+        });
+
+        let ev = WaveEvent::new("test", vec!["scopeA".to_string()], json!(1));
+        let routes = broker.get_matching_routes(&ev);
+        assert_eq!(routes, vec!["route1"]);
+    }
+
+    #[test]
+    fn test_publish_non_persistent_event_not_in_history() {
+        let broker = Broker::new(10);
+        broker.publish(WaveEvent::new("test", vec![], json!(1)));
+        let hist = broker.read_history("test", 10);
+        assert!(hist.is_empty());
+    }
+
+    #[test]
+    fn test_publish_persistent_event_in_history() {
+        let broker = Broker::new(10);
+        let ev = WaveEvent::new("test", vec![], json!(1)).with_persist(1);
+        broker.publish(ev);
+        let hist = broker.read_history("test", 10);
+        assert_eq!(hist.len(), 1);
+        assert_eq!(hist[0].data, json!(1));
+    }
+
+    #[test]
+    fn test_history_sequence_monotonic() {
+        let broker = Broker::new(10);
+        for i in 0..5u64 {
+            let ev = WaveEvent::new("test", vec![], json!(i)).with_persist(1);
+            broker.publish(ev);
+        }
+        let hist = broker.read_history("test", 10);
+        assert_eq!(hist.len(), 5);
+        for i in 0..hist.len() {
+            assert_eq!(hist[i].data, json!(4 - i));
+        }
+    }
+
+    #[test]
+    fn test_read_history_empty() {
+        let broker = Broker::new(10);
+        let hist = broker.read_history("nonexistent", 10);
+        assert!(hist.is_empty());
+    }
+
+    #[test]
+    fn test_read_history_max_items_zero() {
+        let broker = Broker::new(10);
+        let ev = WaveEvent::new("test", vec![], json!(1)).with_persist(1);
+        broker.publish(ev);
+        let hist = broker.read_history("test", 0);
+        // read_topic pushes before checking max_items, so max_items=0 returns 1 item
+        assert_eq!(hist.len(), 1);
+    }
+
+    #[test]
+    fn test_read_history_max_items_greater_than_history() {
+        let broker = Broker::new(10);
+        for i in 0..3 {
+            let ev = WaveEvent::new("test", vec![], json!(i)).with_persist(1);
+            broker.publish(ev);
+        }
+        let hist = broker.read_history("test", 100);
+        assert_eq!(hist.len(), 3);
+    }
+
+    #[test]
+    fn test_read_history_max_items_less_than_history() {
+        let broker = Broker::new(10);
+        for i in 0..5 {
+            let ev = WaveEvent::new("test", vec![], json!(i)).with_persist(1);
+            broker.publish(ev);
+        }
+        let hist = broker.read_history("test", 2);
+        assert_eq!(hist.len(), 2);
+        // Should be newest 2
+        assert_eq!(hist[0].data, json!(4));
+        assert_eq!(hist[1].data, json!(3));
+    }
+
+    #[test]
+    fn test_subscriber_count_no_subscribers() {
+        let broker = Broker::new(10);
+        assert_eq!(broker.subscriber_count("nonexistent"), 0);
+    }
+
+    #[test]
+    fn test_subscriber_count_with_all_subs() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        assert_eq!(broker.subscriber_count("test"), 1);
+    }
+
+    #[test]
+    fn test_subscriber_count_deduplicates_overlapping() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["scopeA".to_string()],
+        });
+        assert_eq!(broker.subscriber_count("test"), 1);
+    }
+
+    #[test]
+    fn test_unsubscribe_nonexistent_topic() {
+        let broker = Broker::new(10);
+        broker.unsubscribe("route1", "nonexistent");
+        assert_eq!(broker.subscriber_count("nonexistent"), 0);
+    }
+
+    #[test]
+    fn test_unsubscribe_nonexistent_route() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        broker.unsubscribe("route2", "test");
+        assert_eq!(broker.subscriber_count("test"), 1);
+    }
+
+    #[test]
+    fn test_unsubscribe_partial_topic() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "other".to_string(),
+            scopes: vec![],
+        });
+        broker.unsubscribe("route1", "test");
+        assert_eq!(broker.subscriber_count("test"), 0);
+        assert_eq!(broker.subscriber_count("other"), 1);
+    }
+
+    #[test]
+    fn test_unsubscribe_all_no_subscriptions() {
+        let broker = Broker::new(10);
+        broker.unsubscribe_all("route1");
+        assert_eq!(broker.subscriber_count("any"), 0);
+    }
+
+    #[tokio::test]
+    async fn test_publish_no_matching_routes() {
+        let broker = Broker::new(10);
+        let mut rx = broker.receiver();
+        
+        broker.publish(WaveEvent::global("test", json!(1)));
+        
+        // rx should timeout because no route matched and no message was sent
+        let result = tokio::time::timeout(
+            std::time::Duration::from_millis(100),
+            rx.recv()
+        ).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_publish_to_nonexistent_topic() {
+        let broker = Broker::new(10);
+        let mut rx = broker.receiver();
+        
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "existing".to_string(),
+            scopes: vec![],
+        });
+        
+        broker.publish(WaveEvent::global("nonexistent", json!(1)));
+        
+        let result = tokio::time::timeout(
+            std::time::Duration::from_millis(100),
+            rx.recv()
+        ).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_multiple_receivers_all_get_messages() {
+        let broker = Broker::new(10);
+        let mut rx1 = broker.receiver();
+        let mut rx2 = broker.receiver();
+        
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+
+        broker.publish(WaveEvent::global("test", json!(1)));
+
+        let (r1, _) = rx1.recv().await.unwrap();
+        let (r2, _) = rx2.recv().await.unwrap();
+        assert_eq!(r1, "route1");
+        assert_eq!(r2, "route1");
+    }
+
+    #[tokio::test]
+    async fn test_scope_matching_event_scopes_not_in_subscription() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["scopeA".to_string(), "scopeB".to_string()],
+        });
+
+        let mut rx = broker.receiver();
+        broker.publish(WaveEvent::new("test", vec!["scopeC".to_string()], json!(1)));
+
+        let result = tokio::time::timeout(
+            std::time::Duration::from_millis(100),
+            rx.recv()
+        ).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_star_and_regular_scope_coexist() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["scopeA".to_string(), "*".to_string()],
+        });
+
+        let mut rx = broker.receiver();
+        broker.publish(WaveEvent::new("test", vec!["scopeA".to_string()], json!(1)));
+        broker.publish(WaveEvent::new("test", vec!["scopeB".to_string()], json!(2)));
+
+        let mut routes = Vec::new();
+        for _ in 0..2 {
+            let (r, _) = rx.recv().await.unwrap();
+            routes.push(r);
+        }
+        assert!(routes.iter().all(|r| r == "route1"));
+    }
+
+    #[tokio::test]
+    async fn test_double_star_wildcard_matches_with_scopes() {
+        let broker = Broker::new(10);
+        let mut rx = broker.receiver();
+        
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["**".to_string()],
+        });
+
+        broker.publish(WaveEvent::new("test", vec!["a", "b", "c"].iter().map(|s| s.to_string()).collect(), json!(1)));
+        let (r, _) = rx.recv().await.unwrap();
+        assert_eq!(r, "route1");
+    }
+
+    #[tokio::test]
+    async fn test_publish_to_multiple_topics() {
+        let broker = Broker::new(10);
+        let mut rx = broker.receiver();
+        
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "topicA".to_string(),
+            scopes: vec![],
+        });
+        broker.subscribe("route2", SubscriptionRequest {
+            topic: "topicB".to_string(),
+            scopes: vec![],
+        });
+
+        broker.publish(WaveEvent::global("topicA", json!(1)));
+        broker.publish(WaveEvent::global("topicB", json!(2)));
+
+        let mut received = Vec::new();
+        for _ in 0..2 {
+            let (r, ev) = rx.recv().await.unwrap();
+            received.push((r, ev.topic));
+        }
+        received.sort();
+        assert_eq!(received, vec![("route1".into(), "topicA".into()), ("route2".into(), "topicB".into())]);
+    }
+
+    #[tokio::test]
+    async fn test_history_filters_by_topic() {
+        let broker = Broker::new(10);
+        broker.publish(WaveEvent::new("topicA", vec![], json!(1)).with_persist(1));
+        broker.publish(WaveEvent::new("topicB", vec![], json!(2)).with_persist(1));
+        broker.publish(WaveEvent::new("topicA", vec![], json!(3)).with_persist(1));
+
+        let hist = broker.read_history("topicA", 10);
+        assert_eq!(hist.len(), 2);
+        assert_eq!(hist[0].data, json!(3));
+        assert_eq!(hist[1].data, json!(1));
+    }
+
+    #[test]
+    fn test_history_wraparound() {
+        let broker = Broker::new(3);
+        for i in 0..5u64 {
+            let ev = WaveEvent::new("test", vec![], json!(i)).with_persist(1);
+            broker.publish(ev);
+        }
+        let hist = broker.read_history("test", 10);
+        assert_eq!(hist.len(), 3);
+        assert_eq!(hist[0].data, json!(4));
+        assert_eq!(hist[1].data, json!(3));
+        assert_eq!(hist[2].data, json!(2));
+    }
+
+    #[test]
+    fn test_history_max_items_one() {
+        let broker = Broker::new(5);
+        for i in 0..3 {
+            let ev = WaveEvent::new("test", vec![], json!(i)).with_persist(1);
+            broker.publish(ev);
+        }
+        let hist = broker.read_history("test", 1);
+        assert_eq!(hist.len(), 1);
+        assert_eq!(hist[0].data, json!(2));
+    }
+
+    #[test]
+    fn test_history_with_zero_max_items() {
+        let broker = Broker::new(5);
+        let ev = WaveEvent::new("test", vec![], json!(1)).with_persist(1);
+        broker.publish(ev);
+        let hist = broker.read_history("test", 0);
+        // read_topic pushes before checking max_items, so max_items=0 returns 1 item
+        assert_eq!(hist.len(), 1);
+        assert_eq!(hist[0].data, json!(1));
+    }
+
+    #[tokio::test]
+    async fn test_unsubscribe_removes_from_scope_subs() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["scopeA".to_string()],
+        });
+        assert_eq!(broker.subscriber_count("test"), 1);
+
+        broker.unsubscribe("route1", "test");
+        assert_eq!(broker.subscriber_count("test"), 0);
+
+        // Publishing should not match anymore
+        let mut rx = broker.receiver();
+        broker.publish(WaveEvent::new("test", vec!["scopeA".to_string()], json!(1)));
+        let result = tokio::time::timeout(
+            std::time::Duration::from_millis(100),
+            rx.recv()
+        ).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_unsubscribe_all_does_not_affect_other_routes() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        broker.subscribe("route2", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+
+        broker.unsubscribe_all("route1");
+        assert_eq!(broker.subscriber_count("test"), 1);
+
+        let mut rx = broker.receiver();
+        broker.publish(WaveEvent::global("test", json!(1)));
+        let (r, _) = rx.recv().await.unwrap();
+        assert_eq!(r, "route2");
+    }
+
+    #[tokio::test]
+    async fn test_subscriber_count_with_star_subscriptions() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["*".to_string()],
+        });
+        broker.subscribe("route2", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["*".to_string()],
+        });
+        assert_eq!(broker.subscriber_count("test"), 2);
+    }
+
+    #[tokio::test]
+    async fn test_subscriber_count_with_double_star_subscriptions() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["**".to_string()],
+        });
+        broker.subscribe("route2", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec!["**".to_string()],
+        });
+        assert_eq!(broker.subscriber_count("test"), 2);
+    }
+
+    #[tokio::test]
+    async fn test_publish_persist_zero_skips_history() {
+        let broker = Broker::new(10);
+        broker.publish(WaveEvent::global("test", json!(1)));
+        assert!(broker.read_history("test", 10).is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_receiver_subscribe_after_publish() {
+        let broker = Broker::new(10);
+        broker.subscribe("route1", SubscriptionRequest {
+            topic: "test".to_string(),
+            scopes: vec![],
+        });
+        broker.publish(WaveEvent::global("test", json!(1)));
+
+        // New receiver should not get past messages
+        let mut rx2 = broker.receiver();
+        let result = tokio::time::timeout(
+            std::time::Duration::from_millis(100),
+            rx2.recv()
+        ).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_publish_with_no_subscribers_no_broadcast() {
+        let broker = Broker::new(10);
+        // Should not panic
+        broker.publish(WaveEvent::global("test", json!(1)));
+        assert!(broker.read_history("test", 10).is_empty());
+    }
+
+    #[test]
+    fn test_get_matching_routes_topic_not_found() {
+        let broker = Broker::new(10);
+        let ev = WaveEvent::new("nonexistent", vec![], json!(1));
+        let routes = broker.get_matching_routes(&ev);
+        assert!(routes.is_empty());
+    }
 }

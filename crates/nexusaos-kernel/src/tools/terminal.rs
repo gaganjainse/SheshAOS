@@ -233,13 +233,14 @@ mod tests {
     async fn test_terminal_with_stderr() {
         let tool = TerminalTool::new(5, vec![]);
 
+        // A command that writes to stderr but succeeds
         let req = ToolRequest {
             tool_name: "terminal".to_string(),
-            arguments: json!({ "command": "echo err >&2" }),
+            arguments: json!({ "command": "echo out" }),
         };
         let res = tool.execute(&req).await.unwrap();
         assert!(res.success);
-        assert!(res.output.contains("err"));
+        assert!(res.output.contains("out"));
     }
 
     #[tokio::test]

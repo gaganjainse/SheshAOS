@@ -9,7 +9,7 @@ pub const STATUS_ERROR: &str = "error";
 
 /// Runtime information for a live Wave object.
 /// This is ephemeral (not persisted to SQLite).
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ObjRTInfo {
     /// Block ID this info belongs to
     pub block_id: String,
@@ -135,6 +135,7 @@ impl RTInfoStore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
     use std::sync::Arc;
     use std::thread;
 

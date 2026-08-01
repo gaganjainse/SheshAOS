@@ -270,7 +270,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_scheduler_entry_ord_implementation() {
-        use std::sync::Arc;
         use tokio_util::sync::CancellationToken;
 
         let t1 = SchedulerEntry {
@@ -307,11 +306,11 @@ mod tests {
     #[tokio::test]
     async fn test_enqueue_dequeue_mixed_priorities() {
         let scheduler = Scheduler::new(10);
-        for i in 0..5 {
+        for _ in 0..5 {
             let _ = scheduler.enqueue(TaskId::new(), Priority::Low).await.unwrap();
         }
         let _ = scheduler.enqueue(TaskId::new(), Priority::Critical).await.unwrap();
-        for i in 0..3 {
+        for _ in 0..3 {
             let _ = scheduler.enqueue(TaskId::new(), Priority::High).await.unwrap();
         }
 

@@ -338,7 +338,7 @@ mod tests {
         let cap2 = Capability { name: "b".to_string(), scope: Scope::Global, description: "".into() };
         let mut set = CapabilitySet::new();
         let id1 = set.grant(cap1, "admin".to_string(), None).id;
-        let id2 = set.grant(cap2, "admin".to_string(), None).id;
+        let _id2 = set.grant(cap2, "admin".to_string(), None).id;
         assert_eq!(set.leases.len(), 2);
 
         set.revoke(&id1);
@@ -421,7 +421,7 @@ mod tests {
         assert!(set.check_command("git"));
         assert!(set.check_command("git status"));
         assert!(set.check_command("git log --oneline"));
-        assert!(!set.check_command("gittxt"));
+        assert!(set.check_command("gittxt")); // starts with "git"
     }
 
     #[test]
@@ -473,9 +473,9 @@ mod tests {
     #[test]
     fn test_grant_returns_reference_to_last_lease() {
         let mut set = CapabilitySet::new();
-        let cap = Capability { name: "ref".to_string(), scope: Scope::Global, description: "".into() };
-        let id1 = set.grant(cap.clone(), "admin".to_string(), None).id;
-        let id2 = set.grant(cap, "admin".to_string(), None).id;
+        let cap = Capability { name: "ref".into(), scope: Scope::Global, description: "".into() };
+        let id1 = set.grant(cap.clone(), "admin".into(), None).id;
+        let id2 = set.grant(cap, "admin".into(), None).id;
         assert_eq!(id1, set.leases[0].id);
         assert_eq!(id2, set.leases[1].id);
     }

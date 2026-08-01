@@ -353,9 +353,9 @@ mod tests {
     #[test]
     fn test_matches_pattern_prefix_only() {
         let engine = PolicyEngine::new(vec![], TrustTier::Autonomous);
-        assert!(engine.matches_pattern("fs.read_", "fs.read_file"));
-        assert!(engine.matches_pattern("fs.read_", "fs.read_dir"));
-        assert!(!engine.matches_pattern("fs.read_", "fs.write_file"));
+        assert!(engine.matches_pattern("fs.read_*", "fs.read_file"));
+        assert!(engine.matches_pattern("fs.read_*", "fs.read_dir"));
+        assert!(!engine.matches_pattern("fs.read_*", "fs.write_file"));
     }
 
     #[test]

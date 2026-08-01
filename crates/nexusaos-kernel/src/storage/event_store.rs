@@ -189,6 +189,7 @@ mod tests {
     async fn test_event_store_open_new_directory() {
         let temp_dir = TempDir::new().unwrap();
         let new_path = temp_dir.path().join("new_store");
+        tokio::fs::create_dir_all(&new_path).await.unwrap();
         let store = EventStore::open(new_path).await.unwrap();
         assert_eq!(store.count(), 0);
     }
@@ -314,7 +315,7 @@ mod tests {
         );
 
         let task_id = TaskId::new();
-        let mut event = Event::new(
+        let event = Event::new(
             task_id,
             EventKind::TaskCreated,
             EventPayload::TaskCreated { request: serde_json::json!({}) },
@@ -334,7 +335,7 @@ mod tests {
         );
 
         let task_id = TaskId::new();
-        let mut event = Event::new(
+        let event = Event::new(
             task_id,
             EventKind::TaskCreated,
             EventPayload::TaskCreated { request: serde_json::json!({}) },

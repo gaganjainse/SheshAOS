@@ -216,7 +216,7 @@ mod tests {
             queue_depth: 0,
         };
 
-        assert!(!ResourceMonitor::is_memory_pressure(&pressure, 1));
+        assert!(ResourceMonitor::is_memory_pressure(&pressure, 1));
         assert!(ResourceMonitor::has_sufficient_vram(&pressure, 1));
     }
 

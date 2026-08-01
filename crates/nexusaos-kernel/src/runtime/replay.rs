@@ -87,7 +87,6 @@ mod tests {
     use async_trait::async_trait;
 
     use super::*;
-    use crate::task::Priority;
 
     struct MockEventStore {
         events: Mutex<Vec<Event>>,
@@ -184,12 +183,17 @@ mod tests {
 
     #[tokio::test]
     async fn test_replay_multiple_tasks() {
+        use crate::task::{TaskInput, TaskRequest};
+
         let store = MockEventStore::new();
         let t1 = TaskId::new();
         let t2 = TaskId::new();
 
-        let e1 = Event::new(t1, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "k".into());
-        let e2 = Event::new(t2, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "k".into());
+        let req1 = TaskRequest::new(TaskInput::Text("task1".into()));
+        let req2 = TaskRequest::new(TaskInput::Text("task2".into()));
+
+        let e1 = Event::new(t1, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::to_value(&req1).unwrap() }, "k".into());
+        let e2 = Event::new(t2, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::to_value(&req2).unwrap() }, "k".into());
         let e3 = Event::new(t1, EventKind::TaskStateChanged, EventPayload::StateChanged { from: "Received".into(), to: "Classified".into() }, "k".into());
 
         store.append(e1).await.unwrap();
@@ -220,10 +224,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_replay_unknown_state_skipped() {
+        use crate::task::{TaskInput, TaskRequest};
+
         let store = MockEventStore::new();
         let task_id = TaskId::new();
 
-        let e1 = Event::new(task_id, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "k".into());
+        let req = TaskRequest::new(TaskInput::Text("test".into()));
+        let e1 = Event::new(task_id, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::to_value(&req).unwrap() }, "k".into());
         let e2 = Event::new(task_id, EventKind::TaskStateChanged, EventPayload::StateChanged { from: "Received".into(), to: "UnknownState".into() }, "k".into());
 
         store.append(e1).await.unwrap();
@@ -237,10 +244,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_replay_state_history_preserved() {
+        use crate::task::{TaskInput, TaskRequest};
+
         let store = MockEventStore::new();
         let task_id = TaskId::new();
 
-        let mut e1 = Event::new(task_id, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "k".into());
+        let req = TaskRequest::new(TaskInput::Text("test".into()));
+        let mut e1 = Event::new(task_id, EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::to_value(&req).unwrap() }, "k".into());
         e1.sequence = crate::events::SequenceNumber(1);
         let mut e2 = Event::new(task_id, EventKind::TaskStateChanged, EventPayload::StateChanged { from: "Received".into(), to: "Classified".into() }, "k".into());
         e2.sequence = crate::events::SequenceNumber(2);

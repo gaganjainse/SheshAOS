@@ -295,7 +295,7 @@ mod tests {
         original.set("key", "value");
         original.set("num", 42);
 
-        let cloned = original.clone();
+        let mut cloned = original.clone();
         assert_eq!(original, cloned);
 
         // Mutating clone should not affect original

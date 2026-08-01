@@ -209,8 +209,8 @@ mod tests {
 
     #[test]
     fn test_claude_provider_client_built() {
-        let provider = ClaudeProvider::new("key".into(), "model".into(), ModelRole::Coder);
-        // The client is built in new(), just verify it exists (not panicking means success)
+        let _provider = ClaudeProvider::new("key".into(), "model".into(), ModelRole::Coder);
+        // The client is built in new(), just verify it doesn't panic
         assert!(true);
     }
 }
