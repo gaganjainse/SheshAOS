@@ -35,12 +35,53 @@ impl RpcHandler {
     }
 
     /// Handle a single Unix socket connection.
-    /// Reads JSON-RPC requests and writes responses.
-    pub async fn handle_connection(&self, _stream: UnixStream) -> Result<(), std::io::Error> {
-        // Verify broker and store are accessible
-        let _broker = &self.broker;
-        let _store = &self.store;
-        // Placeholder: in a real implementation, this would read/write JSON-RPC frames
+    /// Reads JSON-RPC 2.0 frames and writes responses.
+    pub async fn handle_connection(&self, stream: UnixStream) -> Result<(), std::io::Error> {
+        use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+
+        let (reader, mut writer) = tokio::io::split(stream);
+        let mut reader = BufReader::new(reader);
+        let mut line = String::new();
+
+        loop {
+            line.clear();
+            let bytes_read = reader.read_line(&mut line).await?;
+            if bytes_read == 0 {
+                // Connection closed
+                break;
+            }
+
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+
+            let req: RpcRequest = match serde_json::from_str(trimmed) {
+                Ok(r) => r,
+                Err(e) => {
+                    let resp = RpcResponse {
+                        jsonrpc: "2.0".into(),
+                        result: None,
+                        error: Some(crate::message::RpcError {
+                            code: -32700,
+                            message: format!("Parse error: {}", e),
+                        }),
+                        id: None,
+                    };
+                    let resp_json = serde_json::to_string(&resp).unwrap_or_default();
+                    let _ = writer.write_all(resp_json.as_bytes()).await;
+                    let _ = writer.write_all(b"\n").await;
+                    continue;
+                }
+            };
+
+            let resp = self.process_request(req).await;
+            let resp_json = serde_json::to_string(&resp).unwrap_or_default();
+            writer.write_all(resp_json.as_bytes()).await?;
+            writer.write_all(b"\n").await?;
+            writer.flush().await?;
+        }
+
         Ok(())
     }
 }

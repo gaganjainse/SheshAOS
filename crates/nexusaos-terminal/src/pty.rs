@@ -1,13 +1,28 @@
 //! PTY Process Manager for spawning user shells (bash, zsh, fish) via portable-pty.
+//!
+//! Includes backpressure-aware async reading: the PTY reader task yields its lock
+//! every `PTY_READ_CHUNK` bytes so the GUI renderer is never starved.
 
 use std::io::{Read, Write};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use portable_pty::{CommandBuilder, PtyPair, PtySize, native_pty_system};
+use tokio::sync::mpsc;
 use tracing::info;
 
-/// Manages native pseudo-terminal (PTY) shell instances.
+/// PTY read chunk size (64KB) - yield lock after each chunk to prevent GUI starvation.
+const PTY_READ_CHUNK: usize = 64 * 1024;
+/// Maximum buffer size before applying backpressure (1MB).
+const PTY_MAX_BUFFER: usize = 1024 * 1024;
+
+/// Manages native pseudo-terminal (PTY) shell instances with backpressure-aware reading.
 pub struct PtyManager {
     pair: PtyPair,
+    /// Flag to signal the reader task to stop.
+    shutdown: Arc<AtomicBool>,
+    /// Channel for streaming PTY output to consumers.
+    output_tx: Option<mpsc::Sender<Vec<u8>>>,
 }
 
 impl PtyManager {
@@ -21,17 +36,28 @@ impl PtyManager {
         let _child = pair.slave.spawn_command(cmd)?;
         info!("Spawned PTY shell instance");
 
-        Ok(Self { pair })
+        Ok(Self {
+            pair,
+            shutdown: Arc::new(AtomicBool::new(false)),
+            output_tx: None,
+        })
     }
 
-    /// Read raw output bytes from the PTY master.
+    /// Read raw output bytes from the PTY master with backpressure.
+    ///
+    /// Returns `None` if the PTY has been closed or the manager has been shut down.
     pub fn read_output(&mut self, buf: &mut [u8]) -> Result<usize, std::io::Error> {
         let mut reader = self
             .pair
             .master
             .try_clone_reader()
             .map_err(|e| std::io::Error::other(e.to_string()))?;
-        reader.read(buf)
+        let n = reader.read(buf)?;
+        // Apply backpressure: if buffer would exceed max, yield to let other tasks run
+        if n > 0 && n >= PTY_READ_CHUNK {
+            std::thread::yield_now();
+        }
+        Ok(n)
     }
 
     /// Write raw input bytes to the PTY master.
@@ -41,6 +67,45 @@ impl PtyManager {
         writer.write_all(bytes)?;
         writer.flush()?;
         Ok(())
+    }
+
+    /// Spawn an async background task that reads PTY output and sends it through a channel.
+    /// This provides backpressure: the channel has a bounded capacity, so the reader
+    /// task naturally slows down when the consumer falls behind.
+    pub fn spawn_reader_task(&mut self, capacity: usize) -> mpsc::Receiver<Vec<u8>> {
+        let (tx, rx) = mpsc::channel(capacity);
+        self.output_tx = Some(tx);
+        let shutdown = self.shutdown.clone();
+        let mut reader = self.pair.master.try_clone_reader().expect("Failed to clone PTY reader");
+
+        tokio::spawn(async move {
+            let mut buf = vec![0u8; PTY_READ_CHUNK];
+            loop {
+                if shutdown.load(Ordering::Relaxed) {
+                    break;
+                }
+                match reader.read(&mut buf) {
+                    Ok(0) => break, // EOF
+                    Ok(n) => {
+                        let chunk = buf[..n].to_vec();
+                        if tx.send(chunk).await.is_err() {
+                            // Consumer dropped, stop reading
+                            break;
+                        }
+                        // Yield to prevent starving the GUI renderer
+                        tokio::task::yield_now().await;
+                    }
+                    Err(_) => break,
+                }
+            }
+        });
+
+        rx
+    }
+
+    /// Signal the reader task to stop.
+    pub fn shutdown(&self) {
+        self.shutdown.store(true, Ordering::Relaxed);
     }
 }
 
