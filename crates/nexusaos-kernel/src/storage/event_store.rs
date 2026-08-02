@@ -1,17 +1,14 @@
 use std::{
     collections::HashMap,
     path::PathBuf,
-    sync::{
-        RwLock,
-        atomic::{AtomicU64, Ordering},
-    },
+    sync::atomic::{AtomicU64, Ordering},
 };
 
 use async_trait::async_trait;
 use tokio::{
     fs::{File, OpenOptions},
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
-    sync::Mutex,
+    sync::{Mutex, RwLock},
 };
 
 use crate::{
@@ -37,6 +34,9 @@ pub trait EventStore: Send + Sync {
 
     /// Get all events for a specific task in chronological order.
     async fn get_task_events(&self, task_id: &TaskId) -> Result<Vec<Event>, NexusError>;
+
+    /// Read events since a given sequence number.
+    async fn read_since(&self, sequence: u64) -> Result<Vec<Event>, NexusError>;
 }
 
 /// Append-only event store backed by JSONL files.
@@ -87,18 +87,16 @@ impl JsonlEventStore {
 
     /// Append an event. Assigns sequence number, writes JSON line, fsyncs.
     pub async fn append(&self, event: &mut Event) -> Result<(), StorageError> {
-        {
-            let idx = self.index.read().unwrap_or_else(|e| e.into_inner());
-            if idx.contains_key(&event.id) {
-                return Err(StorageError::DuplicateEvent { id: event.id.to_string() });
-            }
-        }
-
         let seq = self.next_sequence.fetch_add(1, Ordering::SeqCst);
         event.sequence = SequenceNumber(seq);
 
         let mut json = serde_json::to_string(event)?;
         json.push('\n');
+
+        let mut idx = self.index.write().await;
+        if idx.contains_key(&event.id) {
+            return Err(StorageError::DuplicateEvent { id: event.id.to_string() });
+        }
 
         let mut writer = self.writer.lock().await;
 
@@ -106,9 +104,9 @@ impl JsonlEventStore {
         let offset = metadata.len();
 
         writer.write_all(json.as_bytes()).await?;
-        writer.flush().await?; // fsync can be added later
+        writer.flush().await?;
+        writer.sync_all().await?;
 
-        let mut idx = self.index.write().unwrap_or_else(|e| e.into_inner());
         idx.insert(event.id, offset);
 
         Ok(())
@@ -144,9 +142,9 @@ impl JsonlEventStore {
         Ok(events.into_iter().filter(|e| e.sequence.0 >= sequence).collect())
     }
 
-    /// Get total event count.
-    pub fn count(&self) -> u64 {
-        self.index.read().unwrap_or_else(|e| e.into_inner()).len() as u64
+/// Get total event count.
+    pub async fn count(&self) -> u64 {
+        self.index.read().await.len() as u64
     }
 }
 
@@ -165,6 +163,10 @@ impl crate::storage::EventStore for JsonlEventStore {
         task_id: &TaskId,
     ) -> Result<Vec<Event>, crate::error::NexusError> {
         Self::read_for_task(self, task_id).await.map_err(crate::error::NexusError::Storage)
+    }
+
+    async fn read_since(&self, sequence: u64) -> Result<Vec<Event>, crate::error::NexusError> {
+        Self::read_since(self, sequence).await.map_err(crate::error::NexusError::Storage)
     }
 }
 
@@ -191,7 +193,7 @@ mod tests {
 
         store.append(&mut event1).await.unwrap();
 
-        assert_eq!(store.count(), 1);
+        assert_eq!(store.count().await, 1);
         assert_eq!(event1.sequence.0, 1);
 
         let events = store.read_all().await.unwrap();
@@ -211,7 +213,7 @@ mod tests {
         let new_path = temp_dir.path().join("new_store");
         tokio::fs::create_dir_all(&new_path).await.unwrap();
         let store = JsonlEventStore::open(new_path).await.unwrap();
-        assert_eq!(store.count(), 0);
+        assert_eq!(store.count().await, 0);
     }
 
     #[tokio::test]
@@ -298,7 +300,7 @@ mod tests {
             store.append(&mut event).await.unwrap();
         }
 
-        assert_eq!(store.count(), 10);
+        assert_eq!(store.count().await, 10);
         let all = store.read_all().await.unwrap();
         assert_eq!(all.len(), 10);
     }
@@ -317,12 +319,12 @@ mod tests {
                 "test".to_string(),
             );
             store.append(&mut event).await.unwrap();
-            assert_eq!(store.count(), 1);
+            assert_eq!(store.count().await, 1);
         }
 
         // Reopen the store
         let store2 = JsonlEventStore::open(path).await.unwrap();
-        assert_eq!(store2.count(), 1);
+        assert_eq!(store2.count().await, 1);
         let events = store2.read_all().await.unwrap();
         assert_eq!(events.len(), 1);
     }
@@ -377,6 +379,6 @@ mod tests {
         tokio::fs::write(&file_path, "not json at all\n").await.unwrap();
 
         let store = JsonlEventStore::open(path).await.unwrap();
-        assert_eq!(store.count(), 0);
+        assert_eq!(store.count().await, 0);
     }
 }

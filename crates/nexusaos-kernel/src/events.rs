@@ -9,6 +9,8 @@ use uuid::Uuid;
 
 use crate::task::TaskId;
 
+pub const MAX_TOOL_OUTPUT_SIZE: usize = 1_048_576;
+
 /// Unique event identifier (UUIDv7)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct EventId(pub Uuid);

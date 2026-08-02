@@ -26,7 +26,7 @@ impl SnapshotStore {
         Self { path }
     }
 
-    /// Save a snapshot to the filesystem.
+    /// Save a snapshot to the filesystem using atomic writes.
     pub async fn save(&self, snapshot: &Snapshot) -> Result<(), StorageError> {
         if !self.path.exists() {
             fs::create_dir_all(&self.path).await?;
@@ -34,9 +34,11 @@ impl SnapshotStore {
 
         let filename = format!("snapshot_{}.json", snapshot.created_at.timestamp());
         let file_path = self.path.join(filename);
+        let temp_path = file_path.with_extension("json.tmp");
 
         let json = serde_json::to_string_pretty(snapshot)?;
-        fs::write(file_path, json).await?;
+        fs::write(&temp_path, json).await?;
+        fs::rename(&temp_path, &file_path).await?;
 
         Ok(())
     }

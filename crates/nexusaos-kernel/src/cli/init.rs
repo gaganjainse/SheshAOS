@@ -39,6 +39,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "default-planner"

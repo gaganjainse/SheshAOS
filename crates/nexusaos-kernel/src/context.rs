@@ -22,16 +22,54 @@ pub enum TaskComplexity {
 }
 
 impl TaskComplexity {
-    /// Estimate complexity from task input text length (heuristic).
-    pub fn estimate_from_input(input_len: usize, has_attachments: bool) -> Self {
+    /// Estimate complexity from task input text and content heuristics.
+    pub fn estimate_from_input(input: &str, has_attachments: bool) -> Self {
         if has_attachments {
             return TaskComplexity::Feature;
         }
-        match input_len {
-            0..=200 => TaskComplexity::Simple,
-            201..=1000 => TaskComplexity::CodeEdit,
-            1001..=5000 => TaskComplexity::Feature,
-            _ => TaskComplexity::Architecture,
+
+        let code_keywords = ["fn ", "struct ", "impl ", "class ", "def ", "function ", "async ", "pub ", "mod "];
+        let file_path_indicators = ["src/", "tests/", "lib/", "Cargo.toml", "package.json", ".rs", ".py", ".ts", ".js"];
+        let architecture_patterns = ["refactor", "redesign", "architecture", "migrate", "rewrite", "system design"];
+        let requirement_keywords = ["require", "must ", "should ", "implement", "feature", "bug", "fix ", "issue ", "ticket"];
+        let error_patterns = ["error:", "panic:", "traceback", "exception:", "failed to", "fatal:"];
+
+        let input_lower = input.to_lowercase();
+
+        let has_code = code_keywords.iter().any(|kw| input_lower.contains(kw));
+        let has_file_paths = file_path_indicators.iter().any(|ind| input.contains(ind));
+        let has_architecture = architecture_patterns.iter().any(|pat| input_lower.contains(pat));
+        let has_requirements = requirement_keywords.iter().any(|kw| input_lower.contains(kw));
+        let has_errors = error_patterns.iter().any(|pat| input_lower.contains(pat));
+
+        // Count distinct file references
+        let file_count = file_path_indicators.iter().filter(|ind| input.contains(**ind)).count();
+        let multiple_files = file_count >= 2;
+
+        // Count lines — more lines suggests more content to process
+        let line_count = input.lines().count();
+
+        let input_len = input.len();
+
+        if has_architecture || input_len > 5000 || (has_code && multiple_files && line_count > 50) {
+            TaskComplexity::Architecture
+        } else if has_code && has_file_paths && has_requirements && input_len > 200 {
+            TaskComplexity::Feature
+        } else if has_code && multiple_files || (has_code && has_errors && input_len > 300) {
+            TaskComplexity::Feature
+        } else if has_code || has_file_paths {
+            match input_len {
+                0..=200 => TaskComplexity::Simple,
+                201..=1000 => TaskComplexity::CodeEdit,
+                _ => TaskComplexity::Feature,
+            }
+        } else {
+            match input_len {
+                0..=200 => TaskComplexity::Simple,
+                201..=1000 => TaskComplexity::CodeEdit,
+                1001..=5000 => TaskComplexity::Feature,
+                _ => TaskComplexity::Architecture,
+            }
         }
     }
 }
@@ -114,6 +152,23 @@ impl ContextManager {
             ));
         }
 
+        // Check VRAM pressure — halve budget if VRAM is too tight
+        if pressure.vram_available_mb < self.config.vram_headroom_mb {
+            let reduced = max_tokens / 2;
+            if reduced < self.config.simple_question {
+                return Err(ResourceError::InsufficientVram {
+                    needed_mb: self.config.vram_headroom_mb,
+                    available_mb: pressure.vram_available_mb,
+                });
+            }
+            max_tokens = reduced;
+            was_clamped = true;
+            clamp_reason = Some(format!(
+                "VRAM pressure: {} MB available, {} MB headroom required. Budget halved.",
+                pressure.vram_available_mb, self.config.vram_headroom_mb
+            ));
+        }
+
         Ok(ContextBudget { max_tokens, complexity, was_clamped, clamp_reason })
     }
 }
@@ -129,6 +184,7 @@ mod tests {
             feature_work: 32768,
             architecture: 65536,
             ram_headroom_mb: 2048,
+            vram_headroom_mb: 1024,
         }
     }
 
@@ -147,7 +203,7 @@ mod tests {
         SystemPressure {
             ram_available_mb: 1000,
             ram_total_mb: 16000,
-            vram_available_mb: 1000,
+            vram_available_mb: 2000,
             vram_total_mb: 6000,
             disk_available_gb: 100,
             queue_depth: 20,
@@ -203,40 +259,39 @@ mod tests {
 
     #[test]
     fn test_complexity_estimation() {
-        assert_eq!(TaskComplexity::estimate_from_input(50, false), TaskComplexity::Simple);
-        assert_eq!(TaskComplexity::estimate_from_input(500, false), TaskComplexity::CodeEdit);
-        assert_eq!(TaskComplexity::estimate_from_input(3000, false), TaskComplexity::Feature);
-        assert_eq!(TaskComplexity::estimate_from_input(10000, false), TaskComplexity::Architecture);
-        // Attachments bump to Feature minimum
-        assert_eq!(TaskComplexity::estimate_from_input(50, true), TaskComplexity::Feature);
+        assert_eq!(TaskComplexity::estimate_from_input("hello", false), TaskComplexity::Simple);
+        assert_eq!(TaskComplexity::estimate_from_input(&"x".repeat(500), false), TaskComplexity::CodeEdit);
+        assert_eq!(TaskComplexity::estimate_from_input(&"x".repeat(3000), false), TaskComplexity::Feature);
+        assert_eq!(TaskComplexity::estimate_from_input(&"x".repeat(10000), false), TaskComplexity::Architecture);
+        assert_eq!(TaskComplexity::estimate_from_input("short", true), TaskComplexity::Feature);
     }
 
     #[test]
     fn test_complexity_boundary_exact_200() {
-        assert_eq!(TaskComplexity::estimate_from_input(200, false), TaskComplexity::Simple);
-        assert_eq!(TaskComplexity::estimate_from_input(201, false), TaskComplexity::CodeEdit);
+        assert_eq!(TaskComplexity::estimate_from_input(&"x".repeat(200), false), TaskComplexity::Simple);
+        assert_eq!(TaskComplexity::estimate_from_input(&"x".repeat(201), false), TaskComplexity::CodeEdit);
     }
 
     #[test]
     fn test_complexity_boundary_exact_1000() {
-        assert_eq!(TaskComplexity::estimate_from_input(1000, false), TaskComplexity::CodeEdit);
-        assert_eq!(TaskComplexity::estimate_from_input(1001, false), TaskComplexity::Feature);
+        assert_eq!(TaskComplexity::estimate_from_input(&"x".repeat(1000), false), TaskComplexity::CodeEdit);
+        assert_eq!(TaskComplexity::estimate_from_input(&"x".repeat(1001), false), TaskComplexity::Feature);
     }
 
     #[test]
     fn test_complexity_boundary_exact_5000() {
-        assert_eq!(TaskComplexity::estimate_from_input(5000, false), TaskComplexity::Feature);
-        assert_eq!(TaskComplexity::estimate_from_input(5001, false), TaskComplexity::Architecture);
+        assert_eq!(TaskComplexity::estimate_from_input(&"x".repeat(5000), false), TaskComplexity::Feature);
+        assert_eq!(TaskComplexity::estimate_from_input(&"x".repeat(5001), false), TaskComplexity::Architecture);
     }
 
     #[test]
     fn test_complexity_zero_input_with_attachments() {
-        assert_eq!(TaskComplexity::estimate_from_input(0, true), TaskComplexity::Feature);
+        assert_eq!(TaskComplexity::estimate_from_input("", true), TaskComplexity::Feature);
     }
 
     #[test]
     fn test_complexity_zero_input_no_attachments() {
-        assert_eq!(TaskComplexity::estimate_from_input(0, false), TaskComplexity::Simple);
+        assert_eq!(TaskComplexity::estimate_from_input("", false), TaskComplexity::Simple);
     }
 
     #[test]
@@ -319,8 +374,7 @@ mod tests {
 
     #[test]
     fn test_estimate_from_input_max_usize() {
-        // Very large input should be Architecture
-        assert_eq!(TaskComplexity::estimate_from_input(usize::MAX, false), TaskComplexity::Architecture);
+        assert_eq!(TaskComplexity::estimate_from_input(&"x".repeat(10_000_000), false), TaskComplexity::Architecture);
     }
 
     #[test]

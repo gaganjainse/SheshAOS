@@ -117,6 +117,9 @@ mod tests {
                 .cloned()
                 .collect())
         }
+        async fn read_since(&self, _sequence: u64) -> Result<Vec<Event>, NexusError> {
+            Ok(self.events.lock().unwrap().clone())
+        }
     }
 
     #[tokio::test]

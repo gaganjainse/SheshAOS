@@ -4,6 +4,8 @@
 //! explicitly allowed by a policy rule or it is denied. Rules are evaluated
 //! in order; first match wins.
 
+use tracing::warn;
+
 use serde::{Deserialize, Serialize};
 
 /// The result of a policy evaluation.
@@ -142,7 +144,15 @@ impl PolicyEngine {
             if self.matches_pattern(&rule.action_pattern, action) {
                 let rule_tier = match TrustTier::from_level(rule.trust_tier) {
                     Ok(tier) => tier,
-                    Err(_) => continue,
+                    Err(_) => {
+                        warn!(
+                            rule = rule.name,
+                            trust_tier = rule.trust_tier,
+                            action = action,
+                            "Invalid trust tier in policy rule, skipping"
+                        );
+                        continue;
+                    }
                 };
                 if self.trust_tier >= rule_tier {
                     return self.parse_decision(&rule.decision, &rule.name);

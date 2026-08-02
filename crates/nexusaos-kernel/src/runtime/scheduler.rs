@@ -83,7 +83,7 @@ impl Scheduler {
         };
 
         queue.push(entry);
-        self.active_count.fetch_add(1, AtomicOrdering::SeqCst);
+        self.active_count.store(queue.len(), AtomicOrdering::SeqCst);
 
         Ok(token)
     }
@@ -92,7 +92,7 @@ impl Scheduler {
     pub async fn dequeue(&self) -> Option<SchedulerEntry> {
         let mut queue = self.queue.lock().unwrap_or_else(|e| e.into_inner());
         let entry = queue.pop()?;
-        self.active_count.fetch_sub(1, AtomicOrdering::SeqCst);
+        self.active_count.store(queue.len(), AtomicOrdering::SeqCst);
         Some(entry)
     }
 
@@ -106,20 +106,20 @@ impl Scheduler {
         let mut queue = self.queue.lock().unwrap_or_else(|e| e.into_inner());
 
         // BinaryHeap doesn't support easy removal by identity, so we rebuild it
-        let mut found = false;
         let mut new_heap = BinaryHeap::new();
+        let mut found = false;
 
         for entry in queue.drain() {
             if entry.task_id == *task_id {
                 entry.cancellation.cancel();
                 found = true;
-                self.active_count.fetch_sub(1, AtomicOrdering::SeqCst);
             } else {
                 new_heap.push(entry);
             }
         }
 
         *queue = new_heap;
+        self.active_count.store(queue.len(), AtomicOrdering::SeqCst);
         found
     }
 

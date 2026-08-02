@@ -10,7 +10,7 @@ use crate::{
     model::{openai_compat::OpenAiCompatProvider, registry::ProviderRegistry},
     policy::{PolicyEngine, PolicyRule, TrustTier},
     runtime::kernel::Kernel,
-    storage::JsonlEventStore,
+    storage::SqliteEventStore,
     task::TaskInput,
     tools::{broker::ToolBroker, filesystem::FilesystemTool, git::GitTool, terminal::TerminalTool},
 };
@@ -33,7 +33,7 @@ pub fn execute(
     rt.block_on(async {
         // 1. Initialize Event Store
         let events_dir = data_dir.join("events");
-        let store = Arc::new(JsonlEventStore::open(events_dir).await?);
+        let store = Arc::new(SqliteEventStore::open(events_dir).await?);
 
         // 2. Initialize Policy Engine
         let rules = vec![PolicyRule {
@@ -106,8 +106,9 @@ pub fn execute(
             }
         }
 
-        // Note: Interactive confirmation for tools is not currently bubbled up by Kernel::execute_task
-        // If it were, we would loop and prompt here using std::io::stdin().
+        // Note: Interactive confirmation for tools is handled by the kernel,
+        // which transitions the task to AwaitingConfirmation state. The CLI
+        // can then prompt the user and resume execution via confirm_task.
 
         Ok::<(), NexusError>(())
     })

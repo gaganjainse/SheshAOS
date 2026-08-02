@@ -39,7 +39,12 @@ impl ToolBroker {
     /// Execute a tool call with policy checks.
     /// Returns PolicyDecision if confirmation is needed, or executes if allowed.
     pub async fn execute(&self, request: &ToolRequest) -> Result<BrokerResult, ToolError> {
-        let action = format!("{}.execute", request.tool_name);
+        let action = request
+            .arguments
+            .get("action")
+            .and_then(|v| v.as_str())
+            .map(|a| format!("{}.{}", request.tool_name, a))
+            .unwrap_or_else(|| format!("{}.execute", request.tool_name));
         let decision = self.policy.evaluate(&action);
 
         info!(tool = %request.tool_name, action = %action, "Tool execution requested");

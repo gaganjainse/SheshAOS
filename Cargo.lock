@@ -3092,6 +3092,7 @@ dependencies = [
  "clap",
  "futures",
  "reqwest",
+ "rusqlite",
  "serde",
  "serde_json",
  "sysinfo",

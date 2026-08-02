@@ -50,6 +50,9 @@ pub enum ConfigError {
     #[error("TOML parse error: {0}")]
     Parse(#[from] toml::de::Error),
 
+    #[error("TOML serialization error: {0}")]
+    Serialize(#[from] toml::ser::Error),
+
     #[error("I/O error reading config: {0}")]
     Io(#[from] std::io::Error),
 }
@@ -60,6 +63,9 @@ pub enum ConfigError {
 pub enum StorageError {
     #[error("Event store I/O error: {0}")]
     Io(#[from] std::io::Error),
+
+    #[error("Database error: {0}")]
+    Database(#[from] rusqlite::Error),
 
     #[error("Event serialization error: {0}")]
     Serialization(#[from] serde_json::Error),

@@ -1,8 +1,10 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+use futures::StreamExt;
 use reqwest::Client;
 use serde::Deserialize;
+use tokio::time::timeout;
 
 use crate::{
     config::ModelProviderConfig,
@@ -52,9 +54,6 @@ impl OpenAiCompatProvider {
         })
     }
 
-    pub fn from_config(config: &ModelProviderConfig) -> Result<Self, ProviderError> {
-        Self::new(config)
-    }
 }
 
 #[derive(Deserialize)]
@@ -176,14 +175,27 @@ impl ModelProvider for OpenAiCompatProvider {
             return Err(ProviderError::InferenceFailed(format!("HTTP {}", resp.status())));
         }
 
-        use futures::StreamExt;
         let mut stream = resp.bytes_stream();
         let mut full_content = String::new();
         let mut buffer = String::new();
+        let mut done_received = false;
+        const STREAM_TIMEOUT: Duration = Duration::from_secs(60);
 
-        while let Some(chunk) = stream.next().await {
-            let chunk = chunk.map_err(|e| ProviderError::Http(e.to_string()))?;
-            let text = String::from_utf8_lossy(&chunk);
+        loop {
+            let chunk_result = match timeout(STREAM_TIMEOUT, stream.next()).await {
+                Ok(Some(Ok(chunk))) => chunk,
+                Ok(Some(Err(e))) => {
+                    return Err(ProviderError::Http(e.to_string()));
+                }
+                Ok(None) => {
+                    break;
+                }
+                Err(_) => {
+                    return Err(ProviderError::Http("Stream timeout".to_string()));
+                }
+            };
+
+            let text = String::from_utf8_lossy(&chunk_result);
             buffer.push_str(&text);
 
             while let Some(pos) = buffer.find('\n') {
@@ -192,6 +204,7 @@ impl ModelProvider for OpenAiCompatProvider {
 
                 if let Some(data) = line.strip_prefix("data: ") {
                     if data == "[DONE]" {
+                        done_received = true;
                         break;
                     }
                     if let Ok(val) = serde_json::from_str::<serde_json::Value>(data)
@@ -203,6 +216,35 @@ impl ModelProvider for OpenAiCompatProvider {
                     }
                 }
             }
+            
+            if done_received {
+                break;
+            }
+        }
+
+        if !done_received && !buffer.is_empty() {
+            // Handle case where stream ends without [DONE] marker
+            tracing::warn!("Stream ended without [DONE] marker, processing remaining buffer");
+            for line in buffer.lines() {
+                let line = line.trim();
+                if let Some(data) = line.strip_prefix("data: ") {
+                    if data == "[DONE]" {
+                        done_received = true;
+                        break;
+                    }
+                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(data)
+                        && let Some(token) = val["choices"][0]["delta"]["content"].as_str()
+                    {
+                        let token_str = token.to_string();
+                        full_content.push_str(&token_str);
+                        on_token(&token_str);
+                    }
+                }
+            }
+        }
+
+        if !done_received {
+            tracing::warn!("Stream completed without [DONE] marker");
         }
 
         Ok(CompletionResponse {
@@ -232,6 +274,8 @@ mod tests {
             model_id: "llama3".to_string(),
             max_context: 4096,
             supports_vision: false,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
 
         let provider = OpenAiCompatProvider::new(&config).unwrap();
@@ -249,6 +293,8 @@ mod tests {
             model_id: "test".to_string(),
             max_context: 128,
             supports_vision: false,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
 
         assert!(OpenAiCompatProvider::new(&config).is_err());
@@ -263,8 +309,10 @@ mod tests {
             model_id: "llama3".to_string(),
             max_context: 4096,
             supports_vision: false,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
-        let provider = OpenAiCompatProvider::from_config(&config).unwrap();
+        let provider = OpenAiCompatProvider::new(&config).unwrap();
         assert_eq!(provider.name(), "test");
         assert_eq!(provider.role(), ModelRole::Planner);
     }
@@ -278,6 +326,8 @@ mod tests {
             model_id: "llama3".to_string(),
             max_context: 4096,
             supports_vision: false,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
         let provider = OpenAiCompatProvider::new(&config).unwrap();
         assert_eq!(provider.base_url, "http://localhost:11434");
@@ -292,6 +342,8 @@ mod tests {
             model_id: "llama3".to_string(),
             max_context: 4096,
             supports_vision: false,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
         let provider = OpenAiCompatProvider::new(&config).unwrap();
         assert_eq!(provider.base_url, "http://localhost:11434");
@@ -306,6 +358,8 @@ mod tests {
             model_id: "llama3".to_string(),
             max_context: 4096,
             supports_vision: false,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
         let provider = OpenAiCompatProvider::new(&config).unwrap();
         assert_eq!(provider.role(), ModelRole::Planner);
@@ -320,6 +374,8 @@ mod tests {
             model_id: "llama3".to_string(),
             max_context: 4096,
             supports_vision: false,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
         let provider = OpenAiCompatProvider::new(&config).unwrap();
         assert_eq!(provider.role(), ModelRole::Coder);
@@ -334,6 +390,8 @@ mod tests {
             model_id: "llava".to_string(),
             max_context: 8192,
             supports_vision: true,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
         let provider = OpenAiCompatProvider::new(&config).unwrap();
         assert_eq!(provider.max_context(), 8192);
@@ -348,6 +406,8 @@ mod tests {
             model_id: "llava".to_string(),
             max_context: 4096,
             supports_vision: true,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
         let provider = OpenAiCompatProvider::new(&config).unwrap();
         assert!(provider.supports_vision());
@@ -362,6 +422,8 @@ mod tests {
             model_id: "llama3".to_string(),
             max_context: 4096,
             supports_vision: false,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
         let provider = OpenAiCompatProvider::new(&config).unwrap();
         assert!(!provider.supports_vision());
@@ -376,6 +438,8 @@ mod tests {
             model_id: "llama3".to_string(),
             max_context: 4096,
             supports_vision: false,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
         let provider = OpenAiCompatProvider::new(&config).unwrap();
         assert_eq!(provider.name(), "my-provider");
@@ -390,6 +454,8 @@ mod tests {
             model_id: "llama3-70b".to_string(),
             max_context: 4096,
             supports_vision: false,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
         let provider = OpenAiCompatProvider::new(&config).unwrap();
         assert_eq!(provider.model_id, "llama3-70b");
@@ -404,6 +470,8 @@ mod tests {
             model_id: "llama3".to_string(),
             max_context: 4096,
             supports_vision: false,
+            api_key: "".into(),
+            provider_kind: "openai".into(),
         };
         let provider = OpenAiCompatProvider::new(&config).unwrap();
         // Verify the provider was constructed successfully with a client
@@ -421,6 +489,8 @@ mod tests {
                 model_id: "model".to_string(),
                 max_context: 4096,
                 supports_vision: false,
+                api_key: String::new(),
+                provider_kind: "openai".to_string(),
             };
             let provider = OpenAiCompatProvider::new(&config).unwrap();
             assert_eq!(provider.role(), expected);

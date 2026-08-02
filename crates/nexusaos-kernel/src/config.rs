@@ -3,6 +3,7 @@
 //! Configuration is loaded from TOML files and provides all tunable parameters
 //! for the kernel, model providers, tools, resource limits, and policies.
 
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -107,6 +108,9 @@ pub struct ContextConfig {
 
     /// RAM headroom required before allowing inference (MB).
     pub ram_headroom_mb: u64,
+
+    /// VRAM headroom required before allowing inference (MB).
+    pub vram_headroom_mb: u64,
 }
 
 /// Configuration for a single model provider.
@@ -130,6 +134,48 @@ pub struct ModelProviderConfig {
     /// Whether this provider supports vision/image input.
     #[serde(default)]
     pub supports_vision: bool,
+
+    /// API key for providers that require authentication (e.g., Anthropic).
+    #[serde(default)]
+    pub api_key: String,
+
+/// Provider backend kind: openai, anthropic, etc.
+    #[serde(default = "default_provider_kind")]
+    pub provider_kind: String,
+}
+
+impl ModelProviderConfig {
+    /// Create a model provider from the configuration.
+    ///
+    /// Returns `Ok(OpenAiCompatProvider)` for OpenAI-compatible providers
+    /// or appropriate provider implementations.
+    pub fn into_provider(&self) -> Result<Box<dyn crate::model::provider::ModelProvider>, crate::error::ProviderError> {
+        match self.provider_kind.as_str() {
+            "anthropic" | "claude" => {
+                let role = match self.role.to_lowercase().as_str() {
+                    "planner" => crate::state::ModelRole::Planner,
+                    "coder" => crate::state::ModelRole::Coder,
+                    "vision" => crate::state::ModelRole::Vision,
+                    "reviewer" => crate::state::ModelRole::Reviewer,
+                    _ => {
+                        // This should be unreachable after config validation
+                        return Err(crate::error::ProviderError::NoProviderForRole {
+                            role: self.role.clone(),
+                        });
+                    }
+                };
+                Ok(Box::new(crate::model::claude::ClaudeProvider::new(
+                    self.api_key.clone(),
+                    self.model_id.clone(),
+                    role,
+                )))
+            }
+            _ => {
+                let provider = crate::model::openai_compat::OpenAiCompatProvider::new(self)?;
+                Ok(Box::new(provider))
+            }
+        }
+    }
 }
 
 /// Tool configuration.
@@ -254,6 +300,10 @@ fn default_drain_timeout() -> u64 {
     10
 }
 
+fn default_provider_kind() -> String {
+    "openai".to_string()
+}
+
 impl AppConfig {
     /// Load configuration from a TOML file.
     pub fn load(path: &str) -> Result<Self, ConfigError> {
@@ -291,6 +341,41 @@ impl AppConfig {
         if self.resource_limits.max_context_tokens == 0 {
             return Err(ConfigError::Invalid {
                 message: "max_context_tokens must be > 0".to_string(),
+            });
+        }
+
+        // Validate provider roles
+        let valid_roles = ["planner", "coder", "vision", "reviewer"];
+        let mut seen_names = HashSet::new();
+        let mut has_planner = false;
+
+        for provider in &self.model_providers {
+            // Check for duplicate provider names
+            if !seen_names.insert(&provider.name) {
+                return Err(ConfigError::Invalid {
+                    message: format!("Duplicate provider name: {}", provider.name),
+                });
+            }
+
+            // Validate role
+            let role_lower = provider.role.to_lowercase();
+            if !valid_roles.contains(&role_lower.as_str()) {
+                return Err(ConfigError::Invalid {
+                    message: format!(
+                        "Invalid role '{}' for provider '{}'. Valid roles: planner, coder, vision, reviewer",
+                        provider.role, provider.name
+                    ),
+                });
+            }
+
+            if role_lower == "planner" {
+                has_planner = true;
+            }
+        }
+
+        if !has_planner {
+            return Err(ConfigError::Invalid {
+                message: "At least one provider with role 'planner' must be configured".to_string(),
             });
         }
 
@@ -351,6 +436,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "test-planner"
@@ -389,6 +475,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 "#;
         let result = AppConfig::parse_toml(toml);
         assert!(result.is_err());
@@ -443,6 +530,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "test"
@@ -475,6 +563,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "test"
@@ -544,6 +633,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "planner"
@@ -583,6 +673,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "test"
@@ -618,6 +709,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "test"
@@ -652,6 +744,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "test"
@@ -682,6 +775,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "test"
@@ -718,6 +812,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "test"
@@ -771,6 +866,7 @@ code_edit = 8192
 feature_work = 16384
 architecture = 32768
 ram_headroom_mb = 1024
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "test"
@@ -805,6 +901,7 @@ code_edit = 16384
 feature_work = 32768
 architecture = 65536
 ram_headroom_mb = 2048
+vram_headroom_mb = 1024
 
 [[model_providers]]
 name = "test"

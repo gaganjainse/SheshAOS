@@ -1,10 +1,13 @@
 use std::collections::HashMap;
+use std::sync::Arc;
+
+use tracing::warn;
 
 use crate::{error::ProviderError, model::provider::ModelProvider, state::ModelRole};
 
 /// Registry of available model providers, indexed by role.
 pub struct ProviderRegistry {
-    providers: HashMap<ModelRole, Box<dyn ModelProvider>>,
+    providers: HashMap<ModelRole, Arc<dyn ModelProvider>>,
 }
 
 impl ProviderRegistry {
@@ -14,6 +17,7 @@ impl ProviderRegistry {
 
     /// Register a provider for a role.
     pub fn register(&mut self, provider: Box<dyn ModelProvider>) {
+        let provider: Arc<dyn ModelProvider> = Arc::from(provider);
         self.providers.insert(provider.role(), provider);
     }
 
@@ -22,12 +26,39 @@ impl ProviderRegistry {
         self.providers.get(role).map(|p| p.as_ref())
     }
 
-    /// Check health of all registered providers.
+    /// Check health of all registered providers, isolating panics via `tokio::task::spawn`
+    /// so a misbehaving provider can't crash the whole health pass.
     pub async fn health_check_all(&self) -> HashMap<ModelRole, Result<bool, ProviderError>> {
         let mut results = HashMap::new();
         for (role, provider) in &self.providers {
-            let result = provider.health_check().await;
-            results.insert(*role, result);
+            let provider = Arc::clone(provider);
+            let name = provider.name().to_string();
+            let result = tokio::task::spawn(async move { provider.health_check().await }).await;
+            match result {
+                Ok(Ok(healthy)) => {
+                    results.insert(*role, Ok(healthy));
+                }
+                Ok(Err(e)) => {
+                    results.insert(*role, Err(e));
+                }
+                Err(join_err) => {
+                    let panic_payload = join_err.into_panic();
+                    let reason = panic_payload
+                        .downcast_ref::<&str>()
+                        .map(|s| s.to_string())
+                        .or_else(|| panic_payload.downcast_ref::<String>().map(|s| s.to_string()))
+                        .unwrap_or_else(|| "task panicked".to_string());
+                    let reason = format!("task panicked: {}", reason);
+                    warn!(provider = %name, %reason, "provider health check panicked");
+                    results.insert(
+                        *role,
+                        Err(ProviderError::HealthCheckFailed {
+                            name,
+                            reason,
+                        }),
+                    );
+                }
+            }
         }
         results
     }

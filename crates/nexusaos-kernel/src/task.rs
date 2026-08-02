@@ -88,6 +88,8 @@ pub struct TaskOutcome {
     pub output: Option<String>,
     pub error: Option<String>,
     pub completed_at: DateTime<Utc>,
+    /// If true, the task requires user confirmation before proceeding
+    pub requires_confirmation: bool,
 }
 
 #[cfg(test)]
@@ -288,6 +290,7 @@ mod tests {
             output: Some("done".into()),
             error: None,
             completed_at: Utc::now(),
+            requires_confirmation: false,
         };
         assert!(outcome.success);
         assert_eq!(outcome.output, Some("done".into()));
@@ -303,6 +306,7 @@ mod tests {
             output: None,
             error: Some("boom".into()),
             completed_at: Utc::now(),
+            requires_confirmation: false,
         };
         assert!(!outcome.success);
         assert!(outcome.output.is_none());
@@ -318,6 +322,7 @@ mod tests {
             output: Some("result".into()),
             error: None,
             completed_at: Utc::now(),
+            requires_confirmation: false,
         };
         let json = serde_json::to_string(&outcome).unwrap();
         let back: TaskOutcome = serde_json::from_str(&json).unwrap();

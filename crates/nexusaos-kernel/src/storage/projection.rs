@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use chrono::Utc;
-
 use crate::{
     events::{Event, EventPayload},
     state::{TaskRecord, TaskState},
@@ -116,6 +114,7 @@ impl Default for TaskProjection {
 mod tests {
     use super::*;
     use crate::events::{Event, EventKind, EventPayload};
+    use chrono::Utc;
 
     #[test]
     fn test_projection_rebuild() {

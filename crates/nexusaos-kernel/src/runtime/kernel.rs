@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use chrono::Utc;
 use tokio::sync::RwLock;
 
@@ -244,14 +243,33 @@ impl Kernel {
         let mut final_output = plan_resp.content;
 
         if requires_coder {
-            self.transition_task(task_id, TaskState::Executing).await?;
+            let coder = self.provider_registry.get(&crate::state::ModelRole::Coder);
 
-            let coder =
-                self.provider_registry.get(&crate::state::ModelRole::Coder).ok_or_else(|| {
-                    NexusError::Provider(crate::error::ProviderError::Unavailable {
-                        name: "Coder".into(),
-                    })
-                })?;
+            if coder.is_none() {
+                let err_msg = "Coder provider not available".to_string();
+                self.emit_event(Event::new(
+                    *task_id,
+                    EventKind::Error,
+                    EventPayload::ErrorEvent {
+                        message: err_msg.clone(),
+                        details: None,
+                    },
+                    "kernel".to_string(),
+                ))
+                .await?;
+                self.transition_task(task_id, TaskState::Failed).await?;
+                return Ok(crate::task::TaskOutcome {
+                    task_id: *task_id,
+                    success: false,
+                    output: Some(final_output),
+                    error: Some(err_msg),
+                    completed_at: Utc::now(),
+                    requires_confirmation: false,
+                });
+            }
+
+            let coder = coder.unwrap();
+            self.transition_task(task_id, TaskState::Executing).await?;
 
             let code_req = CompletionRequest::new(
                 vec![
@@ -272,7 +290,31 @@ impl Kernel {
 
             self.emit_model_requested(*task_id, "Coder", coder.max_context()).await?;
 
-            let code_resp = coder.complete(code_req).await.map_err(NexusError::Provider)?;
+            let code_resp = match coder.complete(code_req).await {
+                Ok(resp) => resp,
+                Err(e) => {
+                    let err_msg = format!("Coder failed: {}", e);
+                    self.emit_event(Event::new(
+                        *task_id,
+                        EventKind::Error,
+                        EventPayload::ErrorEvent {
+                            message: err_msg.clone(),
+                            details: None,
+                        },
+                        "kernel".to_string(),
+                    ))
+                    .await?;
+                    self.transition_task(task_id, TaskState::Failed).await?;
+                    return Ok(crate::task::TaskOutcome {
+                        task_id: *task_id,
+                        success: false,
+                        output: Some(final_output),
+                        error: Some(err_msg),
+                        completed_at: Utc::now(),
+                        requires_confirmation: false,
+                    });
+                }
+            };
 
             self.emit_model_responded(*task_id, "Coder", code_resp.completion_tokens.unwrap_or(0), &code_resp.content).await?;
 
@@ -299,13 +341,39 @@ impl Kernel {
 
 self.emit_model_requested(*task_id, "Reviewer", reviewer.max_context()).await?;
 
-                let rev_resp = reviewer.complete(rev_req).await.map_err(NexusError::Provider)?;
+                let rev_resp = match reviewer.complete(rev_req).await {
+                    Ok(resp) => resp,
+                    Err(e) => {
+                        let err_msg = format!("Reviewer failed: {}", e);
+                        self.emit_event(Event::new(
+                            *task_id,
+                            EventKind::Error,
+                            EventPayload::ErrorEvent {
+                                message: err_msg.clone(),
+                                details: None,
+                            },
+                            "kernel".to_string(),
+                        ))
+                        .await?;
+                        self.transition_task(task_id, TaskState::Failed).await?;
+                        return Ok(crate::task::TaskOutcome {
+                            task_id: *task_id,
+                            success: false,
+                            output: Some(final_output.clone()),
+                            error: Some(err_msg),
+                            completed_at: Utc::now(),
+                            requires_confirmation: false,
+                        });
+                    }
+                };
 
 self.emit_model_responded(*task_id, "Reviewer", rev_resp.completion_tokens.unwrap_or(0), &rev_resp.content).await?;
 
                 final_output = format!("{}\nReview: {}", final_output, rev_resp.content);
             }
         }
+
+        let mut requires_confirmation = false;
 
         if let Some(tool_name) = final_output.strip_prefix("TOOL:").map(|s| s.trim()).filter(|s| !s.is_empty()) {
             let tool_req = crate::tools::executor::ToolRequest {
@@ -323,11 +391,27 @@ self.emit_model_responded(*task_id, "Reviewer", rev_resp.completion_tokens.unwra
                 }
                 Ok(crate::tools::broker::BrokerResult::RequiresConfirmation(reason)) => {
                     self.emit_tool_result(*task_id, EventKind::ToolFailed, tool_name, false, &format!("Requires confirmation: {}", reason)).await?;
+                    requires_confirmation = true;
                 }
                 Err(e) => {
                     self.emit_tool_result(*task_id, EventKind::ToolFailed, tool_name, false, &e.to_string()).await?;
                 }
             }
+        }
+
+        if requires_confirmation {
+            let current_state = self.task_state(task_id).await?;
+            if current_state == TaskState::Planned {
+                self.transition_task(task_id, TaskState::AwaitingConfirmation).await?;
+            }
+            return Ok(crate::task::TaskOutcome {
+                task_id: *task_id,
+                success: false,
+                output: Some(final_output),
+                error: Some("Requires confirmation".to_string()),
+                completed_at: Utc::now(),
+                requires_confirmation: true,
+            });
         }
 
         let current_state = self.task_state(task_id).await?;
@@ -342,6 +426,7 @@ self.emit_model_responded(*task_id, "Reviewer", rev_resp.completion_tokens.unwra
             output: Some(final_output),
             error: None,
             completed_at: Utc::now(),
+            requires_confirmation: false,
         })
     }
 
@@ -415,13 +500,25 @@ self.emit_model_responded(*task_id, "Reviewer", rev_resp.completion_tokens.unwra
         success: bool,
         output: &str,
     ) -> Result<(), NexusError> {
+        let max_size = crate::events::MAX_TOOL_OUTPUT_SIZE;
+        let truncated = if output.len() > max_size {
+            // Try to truncate at a newline boundary to preserve line structure
+            let cut_point = &output[..max_size];
+            if let Some(last_newline) = cut_point.rfind('\n') {
+                &output[..last_newline + 1]
+            } else {
+                cut_point
+            }
+        } else {
+            output
+        };
         self.emit_event(Event::new(
             task_id,
             kind,
             EventPayload::ToolResult {
                 tool_name: tool_name.to_string(),
                 success,
-                output: output.to_string(),
+                output: truncated.to_string(),
             },
             "kernel".to_string(),
         ))
@@ -512,6 +609,9 @@ mod tests {
                 .filter(|e| e.task_id == Some(*task_id))
                 .cloned()
                 .collect())
+        }
+        async fn read_since(&self, _sequence: u64) -> Result<Vec<Event>, NexusError> {
+            Ok(self.events.lock().unwrap().clone())
         }
     }
 
@@ -791,7 +891,7 @@ mod tests {
         }));
 
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), Arc::new(registry), broker).await.unwrap();
+        let kernel = Kernel::new(store.clone(), Arc::new(policy), Arc::new(registry), broker).await.unwrap();
 
         let id = kernel.submit_task(TaskInput::Text("plan something".into())).await.unwrap();
         let outcome = kernel.execute_task(&id).await.unwrap();
@@ -800,6 +900,17 @@ mod tests {
 
         let state = kernel.task_state(&id).await.unwrap();
         assert_eq!(state, TaskState::Completed);
+
+        // Verify reviewer was skipped: no ModelRequest events for "Reviewer"
+        let events = store.get_all_events().await.unwrap();
+        let reviewer_events: Vec<_> = events.iter().filter(|e| {
+            if let EventPayload::ModelRequest { role, .. } = &e.payload {
+                role == "Reviewer"
+            } else {
+                false
+            }
+        }).collect();
+        assert!(reviewer_events.is_empty(), "Reviewer should be skipped when only planner is registered");
     }
 
     #[tokio::test]

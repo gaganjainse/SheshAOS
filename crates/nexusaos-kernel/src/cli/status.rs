@@ -6,7 +6,7 @@ use crate::{
     config::AppConfig,
     error::NexusError,
     resource::ResourceMonitor,
-    storage::{EventStore, JsonlEventStore, TaskProjection},
+    storage::{SqliteEventStore, TaskProjection},
 };
 
 /// Run the status command: display kernel state and resource pressure.
@@ -29,7 +29,7 @@ pub fn run(config_path: &str) -> Result<(), NexusError> {
     })?;
     rt.block_on(async {
         let events_dir = data_dir.join("events");
-        match JsonlEventStore::open(events_dir).await {
+        match SqliteEventStore::open(events_dir).await {
             Ok(store) => match store.read_all().await {
                 Ok(events) => {
                     println!("\n  Event Log:      {} events", events.len());
