@@ -34,8 +34,7 @@ impl SqliteEventStore {
         })
         .await
         .map_err(|e| {
-            NexusError::Storage(StorageError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
+            NexusError::Storage(StorageError::Io(std::io::Error::other(
                 e.to_string(),
             )))
         })??;
@@ -51,7 +50,7 @@ impl SqliteEventStore {
             let conn = conn.lock().unwrap();
             let mut stmt = conn
                 .prepare("SELECT data FROM events ORDER BY sequence ASC")
-                .map_err(|e| StorageError::Database(e.into()))?;
+                .map_err(StorageError::Database)?;
             let rows = stmt
                 .query_map([], |row| {
                     let data: String = row.get(0)?;
@@ -59,13 +58,12 @@ impl SqliteEventStore {
                         rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
                     })
                 })
-                .map_err(|e| StorageError::Database(e.into()))?;
+                .map_err(StorageError::Database)?;
             rows.collect::<Result<Vec<_>, _>>()
-                .map_err(|e| StorageError::Database(e.into()))
+                .map_err(StorageError::Database)
         })
         .await
-        .map_err(|e| StorageError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        .map_err(|e| StorageError::Io(std::io::Error::other(
             e.to_string(),
         )))?
     }
@@ -78,7 +76,7 @@ impl SqliteEventStore {
             let conn = conn.lock().unwrap();
             let mut stmt = conn
                 .prepare("SELECT data FROM events WHERE task_id = ?1 ORDER BY sequence ASC")
-                .map_err(|e| StorageError::Database(e.into()))?;
+                .map_err(StorageError::Database)?;
             let rows = stmt
                 .query_map([&task_id_str], |row| {
                     let data: String = row.get(0)?;
@@ -86,13 +84,12 @@ impl SqliteEventStore {
                         rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
                     })
                 })
-                .map_err(|e| StorageError::Database(e.into()))?;
+                .map_err(StorageError::Database)?;
             rows.collect::<Result<Vec<_>, _>>()
-                .map_err(|e| StorageError::Database(e.into()))
+                .map_err(StorageError::Database)
         })
         .await
-        .map_err(|e| StorageError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        .map_err(|e| StorageError::Io(std::io::Error::other(
             e.to_string(),
         )))?
     }
@@ -104,7 +101,7 @@ impl SqliteEventStore {
             let conn = conn.lock().unwrap();
             let mut stmt = conn
                 .prepare("SELECT data FROM events WHERE sequence >= ?1 ORDER BY sequence ASC")
-                .map_err(|e| StorageError::Database(e.into()))?;
+                .map_err(StorageError::Database)?;
             let rows = stmt
                 .query_map([&sequence], |row| {
                     let data: String = row.get(0)?;
@@ -112,13 +109,12 @@ impl SqliteEventStore {
                         rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
                     })
                 })
-                .map_err(|e| StorageError::Database(e.into()))?;
+                .map_err(StorageError::Database)?;
             rows.collect::<Result<Vec<_>, _>>()
-                .map_err(|e| StorageError::Database(e.into()))
+                .map_err(StorageError::Database)
         })
         .await
-        .map_err(|e| StorageError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        .map_err(|e| StorageError::Io(std::io::Error::other(
             e.to_string(),
         )))?
     }
@@ -130,13 +126,12 @@ impl SqliteEventStore {
             let conn = conn.lock().unwrap();
             let mut stmt = conn
                 .prepare("SELECT COUNT(*) FROM events")
-                .map_err(|e| StorageError::Database(e.into()))?;
-            let count: i64 = stmt.query_row([], |row| row.get(0)).map_err(|e| StorageError::Database(e.into()))?;
+                .map_err(StorageError::Database)?;
+            let count: i64 = stmt.query_row([], |row| row.get(0)).map_err(StorageError::Database)?;
             Ok(count as u64)
         })
         .await
-        .map_err(|e| StorageError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        .map_err(|e| StorageError::Io(std::io::Error::other(
             e.to_string(),
         )))?
     }
@@ -150,7 +145,7 @@ impl EventStore for SqliteEventStore {
         tokio::task::spawn_blocking(move || {
             let conn = conn.lock().unwrap();
             conn.execute(
-                "INSERT OR REPLACE INTO events (id, task_id, sequence, data) VALUES (?1, ?2, ?3, ?4)",
+                "INSERT INTO events (id, task_id, sequence, data) VALUES (?1, ?2, ?3, ?4)",
                 (
                     event.id.0.to_string(),
                     event.task_id.map(|id| id.0.to_string()),
@@ -158,12 +153,11 @@ impl EventStore for SqliteEventStore {
                     data,
                 ),
             )
-            .map_err(|e| NexusError::Storage(StorageError::Database(e.into())))?;
+            .map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
             Ok(())
         })
         .await
-        .map_err(|e| NexusError::Storage(StorageError::Io(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        .map_err(|e| NexusError::Storage(StorageError::Io(std::io::Error::other(
             e.to_string(),
         ))))?
     }
