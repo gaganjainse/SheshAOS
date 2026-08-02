@@ -121,11 +121,10 @@ impl NexusApp {
                         match chunk {
                             Ok(text) => {
                                 // Append to the last assistant message
-                                if let Some(last) = self.ai_messages.last_mut()
-                                    && last.role == "assistant"
-                                    && last.is_streaming
-                                {
-                                    last.content.push_str(&text);
+                                if let Some(last) = self.ai_messages.last_mut() {
+                                    if last.role == "assistant" && last.is_streaming {
+                                        last.content.push_str(&text);
+                                    }
                                 }
                             }
                             Err(_) => {
@@ -138,11 +137,11 @@ impl NexusApp {
                     if stream_ended {
                         *stream_guard = None;
                         // Mark last message as not streaming
-                        if let Some(last) = self.ai_messages.last_mut()
-                            && last.role == "assistant"
-                        {
-                            last.is_streaming = false;
-                        }
+                        if let Some(last) = self.ai_messages.last_mut() {
+                                    if last.role == "assistant" {
+                                        last.is_streaming = false;
+                                    }
+                                }
                     }
                 }
                 Task::none()

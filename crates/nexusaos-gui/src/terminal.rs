@@ -492,12 +492,13 @@ impl Perform for TermPerformer {
             return;
         }
         let cmd = std::str::from_utf8(params[0]).unwrap_or("");
-        if matches!(cmd, "0" | "1" | "2")
-            && let Some(title) = params
+        if matches!(cmd, "0" | "1" | "2") {
+            if let Some(title) = params
                 .get(1)
                 .and_then(|b| std::str::from_utf8(b).ok())
-        {
-            self.title = title.to_string();
+            {
+                self.title = title.to_string();
+            }
         }
     }
 
@@ -655,11 +656,11 @@ impl TerminalState {
     }
 
     fn write_to_pty(&self, data: &[u8]) {
-        if let Some(ref w) = self.writer
-            && let Ok(mut writer) = w.lock()
-        {
-            let _ = writer.write_all(data);
-            let _ = writer.flush();
+        if let Some(ref w) = self.writer {
+            if let Ok(mut writer) = w.lock() {
+                let _ = writer.write_all(data);
+                let _ = writer.flush();
+            }
         }
     }
 
@@ -711,15 +712,15 @@ impl TerminalState {
                         let ctrl = (ch.to_ascii_lowercase() as u8) & 0x1F;
                         self.write_to_pty(&[ctrl]);
                     }
-                } else if modifiers.alt()
-                    && let Some(ch) = c.chars().next()
-                {
-                    // Alt+key → ESC prefix
-                    let mut buf = [0u8; 4];
-                    let s = ch.encode_utf8(&mut buf);
-                    let mut seq = vec![b'\x1b'];
-                    seq.extend_from_slice(s.as_bytes());
-                    self.write_to_pty(&seq);
+                } else if modifiers.alt() {
+                    if let Some(ch) = c.chars().next() {
+                        // Alt+key → ESC prefix
+                        let mut buf = [0u8; 4];
+                        let s = ch.encode_utf8(&mut buf);
+                        let mut seq = vec![b'\x1b'];
+                        seq.extend_from_slice(s.as_bytes());
+                        self.write_to_pty(&seq);
+                    }
                 }
             }
             _ => {}

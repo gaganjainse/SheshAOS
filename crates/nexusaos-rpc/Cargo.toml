@@ -1,7 +1,7 @@
 [package]
 name = "nexusaos-rpc"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 description = "Local IPC / RPC mechanisms for external tool control"
 
 [dependencies]

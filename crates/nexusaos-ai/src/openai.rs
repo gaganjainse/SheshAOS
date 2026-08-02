@@ -64,13 +64,16 @@ impl ModelProvider for OpenAIProvider {
                             if data == "[DONE]" {
                                 continue;
                             }
-                            if let Ok(val) = serde_json::from_str::<Value>(data)
-                                && let Some(choices) = val.get("choices")
-                                && let Some(first_choice) = choices.get(0)
-                                && let Some(delta) = first_choice.get("delta")
-                                && let Some(content) = delta.get("content").and_then(|c| c.as_str())
-                            {
-                                output.push_str(content);
+                            if let Ok(val) = serde_json::from_str::<Value>(data) {
+                                if let Some(choices) = val.get("choices") {
+                                    if let Some(first_choice) = choices.get(0) {
+                                        if let Some(delta) = first_choice.get("delta") {
+                                            if let Some(content) = delta.get("content").and_then(|c| c.as_str()) {
+                                                output.push_str(content);
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

@@ -171,11 +171,11 @@ impl Broker {
             }
         }
 
-        if !event.scopes.is_empty()
-            && let Some(routes) = topic_subs.star_subs.get("*")
-        {
-            for r in routes {
-                matched.insert(r.clone());
+        if !event.scopes.is_empty() {
+            if let Some(routes) = topic_subs.star_subs.get("*") {
+                for r in routes {
+                    matched.insert(r.clone());
+                }
             }
         }
         

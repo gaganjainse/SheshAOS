@@ -134,41 +134,60 @@ impl ContextManager {
         }
 
         // Check memory pressure — refuse if RAM is too tight
-        if pressure.ram_available_mb < self.config.ram_headroom_mb {
-            // Under memory pressure: halve the budget
-            let reduced = max_tokens / 2;
-            if reduced < self.config.simple_question {
-                return Err(ResourceError::InsufficientRam {
-                    needed_mb: self.config.ram_headroom_mb,
-                    available_mb: pressure.ram_available_mb,
-                });
-            }
-            max_tokens = reduced;
-            was_clamped = true;
-            clamp_reason = Some(format!(
-                "RAM pressure: {} MB available, {} MB headroom required. Budget halved.",
-                pressure.ram_available_mb, self.config.ram_headroom_mb
-            ));
-        }
+        self.check_pressure(
+            pressure.ram_available_mb,
+            self.config.ram_headroom_mb,
+            &mut max_tokens,
+            &mut was_clamped,
+            &mut clamp_reason,
+            "RAM",
+            |needed, available| ResourceError::InsufficientRam {
+                needed_mb: needed,
+                available_mb: available,
+            },
+        )?;
 
         // Check VRAM pressure — halve budget if VRAM is too tight
-        if pressure.vram_available_mb < self.config.vram_headroom_mb {
-            let reduced = max_tokens / 2;
-            if reduced < self.config.simple_question {
-                return Err(ResourceError::InsufficientVram {
-                    needed_mb: self.config.vram_headroom_mb,
-                    available_mb: pressure.vram_available_mb,
-                });
-            }
-            max_tokens = reduced;
-            was_clamped = true;
-            clamp_reason = Some(format!(
-                "VRAM pressure: {} MB available, {} MB headroom required. Budget halved.",
-                pressure.vram_available_mb, self.config.vram_headroom_mb
-            ));
-        }
+        self.check_pressure(
+            pressure.vram_available_mb,
+            self.config.vram_headroom_mb,
+            &mut max_tokens,
+            &mut was_clamped,
+            &mut clamp_reason,
+            "VRAM",
+            |needed, available| ResourceError::InsufficientVram {
+                needed_mb: needed,
+                available_mb: available,
+            },
+        )?;
 
         Ok(ContextBudget { max_tokens, complexity, was_clamped, clamp_reason })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn check_pressure(
+        &self,
+        available_mb: u64,
+        headroom_mb: u64,
+        max_tokens: &mut usize,
+        was_clamped: &mut bool,
+        clamp_reason: &mut Option<String>,
+        label: &str,
+        make_error: impl FnOnce(u64, u64) -> ResourceError,
+    ) -> Result<(), ResourceError> {
+        if available_mb < headroom_mb {
+            let reduced = *max_tokens / 2;
+            if reduced < self.config.simple_question {
+                return Err(make_error(headroom_mb, available_mb));
+            }
+            *max_tokens = reduced;
+            *was_clamped = true;
+            *clamp_reason = Some(format!(
+                "{} pressure: {} MB available, {} MB headroom required. Budget halved.",
+                label, available_mb, headroom_mb
+            ));
+        }
+        Ok(())
     }
 }
 
