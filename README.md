@@ -1,4 +1,10 @@
-# 🦀 NexusAOS
+---
+title: NexusAOS
+description: Governance-first, event-sourced AI operating environment for Ubuntu Linux
+lang: en
+---
+
+## 🦀 NexusAOS
 
 ![Rust](https://img.shields.io/badge/Rust-2024-important?style=for-the-badge&logo=rust)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
@@ -8,19 +14,28 @@
 ![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/Tests-1000%2B-success?style=for-the-badge)
 
-**🏛️ Governance-first, event-sourced AI operating environment for Ubuntu Linux.**
+**🏛️ Governance-first, event-sourced AI operating environment
+for Ubuntu Linux.**
 
-[📖 Docs](.kilo/plans/architecture.md) • [🤝 Contributing](CONTRIBUTING.md) • [🔒 Security](SECURITY.md) • [📝 Changelog](CHANGELOG.md) • [💬 Discussions](https://github.com/nexusaos/NexusAOS/discussions)
+[📖 Docs](.kilo/plans/architecture.md)  
+[🤝 Contributing](CONTRIBUTING.md)  
+[🔒 Security](SECURITY.md)  
+[📝 Changelog](CHANGELOG.md)  
+[💬 Discussions](https://github.com/nexusaos/NexusAOS/discussions)
 
 ---
 
 ## 📋 About
 
-**NexusAOS** is a production-ready, open-source AI operating environment that combines local LLM inference, terminal emulation, SSH multiplexing, and governance-first task execution into a unified Rust system.
+**NexusAOS** is a production-ready, open-source AI operating
+environment that combines local LLM inference, terminal
+emulation, SSH multiplexing, and governance-first task
+execution into a unified Rust system.
 
 ### 🎯 Mission
 
 To provide a **governance-first AI platform** where:
+
 - Models propose actions; the kernel validates and records
 - Every state change is append-only and auditable
 - Destructive operations require explicit policy approval
@@ -30,7 +45,7 @@ To provide a **governance-first AI platform** where:
 ### 📊 Project Stats
 
 | Metric | Value |
-|--------|-------|
+| ------- | ------- |
 | 🦀 **Language** | Rust 2024 |
 | 📦 **Crates** | 12 workspace crates |
 | 🧪 **Tests** | 981 passing |
@@ -43,7 +58,7 @@ To provide a **governance-first AI platform** where:
 ### 🌟 What Makes NexusAOS Different
 
 | Traditional AI Tools | NexusAOS |
-|---------------------|----------|
+| ------------------- | -------- |
 | Cloud-dependent | 💻 **Local-first** — works offline |
 | No oversight | 🛡️ **Governance-first** — kernel validates everything |
 | Mutable state | 📝 **Event-sourced** — append-only audit trail |
@@ -130,7 +145,7 @@ cargo build --release
 ### 🧪 Quality Metrics
 
 | Check | Status |
-|-------|--------|
+| ----- | ------ |
 | ✅ Compilation | 0 errors, 0 warnings |
 | ✅ Lints | 0 clippy warnings |
 | ✅ Tests | 981 passing |
@@ -141,7 +156,7 @@ cargo build --release
 ### 📚 Documentation
 
 | Document | Purpose |
-|----------|---------|
+| --------- | -------- |
 | [📖 Architecture](.kilo/plans/architecture.md) | System diagrams and data flows |
 | [🤝 Contributing](CONTRIBUTING.md) | Development workflow |
 | [🔒 Security](SECURITY.md) | Vulnerability reporting |
@@ -155,33 +170,17 @@ cargo build --release
 
 ---
 
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Hardware Target](#hardware-target)
-- [Model Stack](#model-stack)
-- [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [Benchmarks](#benchmarks)
-- [Testing](#testing)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
-
----
-
 ## 🎯 Overview
 
-NexusAOS is a **microkernel-like system** that routes tasks to specialist local AI models (planner, coder, vision), enforces policy on every action, and keeps an **append-only audit trail** of every state change.
+NexusAOS is a **microkernel-like system** that routes tasks to
+specialist local AI models (planner, coder, vision), enforces
+policy on every action, and keeps an **append-only audit trail**
+of every state change.
 
 ### Why NexusAOS?
 
 | Problem | Solution |
-|---------|----------|
+| -------- | -------- |
 | 🤖 AI models operate without oversight | ✅ **Governance-first**: Kernel validates every action |
 | 📝 State changes are lost or mutable | ✅ **Event sourcing**: Append-only audit trail |
 | 🔌 Cloud-dependent AI tools | ✅ **Local-first**: Works offline, no cloud dependencies |
@@ -203,30 +202,35 @@ graph LR
 ## ✨ Key Features
 
 ### 🧠 AI Chat Engine
+
 - **Streaming responses** from OpenAI-compatible and Anthropic endpoints
 - **Real-time token streaming** directly into TUI/GUI
 - **Multi-modal support** with vision capabilities
 - **Session management** with full conversation history
 
 ### 🖥️ Terminal Emulation
+
 - **Native PTY management** with backpressure-aware reading
 - **Zig VT100 parser** for zero-allocation ANSI parsing
 - **Split-pane layouts** with dynamic tile management
 - **AI-assisted terminal** with inline code suggestions
 
 ### 🔐 Security & Governance
+
 - **Policy engine** with trust tiers and capability-based security
 - **Approval modals** for destructive operations
 - **Append-only event store** with cryptographic integrity
 - **SSH multiplexing** with connection monitoring
 
 ### 🌐 Remote Management
+
 - **Native SSH client** via `russh`
 - **Connection health monitoring**
 - **Remote PTY shell tunneling**
 - **Config watcher** with live reload
 
 ### 🎨 User Interfaces
+
 - **TUI**: Ratatui-based terminal interface
 - **GUI**: Iced-based native desktop GUI
 - **CLI**: Full-featured command-line interface
@@ -346,7 +350,7 @@ graph TD
 ### Core Technologies
 
 | Category | Technology | Purpose |
-|----------|-----------|---------|
+| -------- | ---------- | ------- |
 | **Language** | Rust 2024 | Core implementation |
 | **Async Runtime** | Tokio | Async execution |
 | **Serialization** | Serde / JSON | Data interchange |
@@ -363,7 +367,7 @@ graph TD
 ### External Integrations
 
 | Integration | Type | Purpose |
-|-------------|------|---------|
+| ---------- | ---- | ------- |
 | OpenAI-compatible APIs | HTTP/SSE | LLM streaming |
 | Anthropic API | HTTP/SSE | Claude models |
 | SSH servers | Network | Remote execution |
@@ -375,7 +379,7 @@ graph TD
 ## 🖥️ Hardware Target
 
 | Component | Specification |
-|-----------|--------------|
+| ---------- | ------------- |
 | **CPU** | Intel i7-14700HX |
 | **GPU** | NVIDIA RTX 4050 (6 GB VRAM) |
 | **Memory** | 16 GB RAM |
@@ -387,14 +391,14 @@ graph TD
 ## 🤖 Model Stack
 
 | Role | Model | Quantization | Use Case |
-|------|-------|--------------|----------|
+| ----- | ------ | ------------ | -------- |
 | 📋 **Planner** | Gemma 4 12B Agentic Fable | Q4_K_M | Architecture, planning, review |
 | 💻 **Coder** | Qwen3-Coder 30B-A3B | Q4_K_M | Implementation, debugging, tests |
 | 👁️ **Vision** | Qwen3.5 9B | Q4_K_M | Screenshots, diagrams, documents |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start Guide
 
 ### Prerequisites
 
@@ -449,7 +453,7 @@ cargo bench --workspace
 
 ## 📁 Project Structure
 
-```
+```text
 NexusAOS/
 ├── .github/                    # GitHub Actions, templates, dependabot
 │   ├── workflows/             # CI/CD pipelines
@@ -494,7 +498,7 @@ NexusAOS/
 ### Test Coverage
 
 | Crate | Tests | Coverage |
-|-------|-------|----------|
+| ----- | ----- | -------- |
 | nexusaos-kernel | 396 | 100% public API |
 | nexusaos-waveobj | 204 | 100% public API |
 | nexusaos-wps | 71 | 100% public API |
@@ -539,7 +543,7 @@ cargo bench -p nexusaos-kernel bench_kernel_task_submission
 ```
 
 | Benchmark | Description |
-|-----------|-------------|
+| --------- | ----------- |
 | `bench_terminal_parsing` | VT100 parser throughput |
 | `bench_kernel_task_submission` | Task submission latency |
 | `bench_event_store` | Event append/read throughput |
@@ -549,7 +553,7 @@ cargo bench -p nexusaos-kernel bench_kernel_task_submission
 
 ---
 
-## 📚 Documentation
+## 📚 Docs
 
 - **📖 Architecture**: `.kilo/plans/architecture.md` — Complete system diagrams
 - **🤝 Contributing**: `CONTRIBUTING.md` — Development workflow
@@ -561,7 +565,8 @@ cargo bench -p nexusaos-kernel bench_kernel_task_submission
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md)
+for detailed guidelines.
 
 ### Quick Contribution Checklist
 
@@ -574,7 +579,9 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 
 ### Code of Conduct
 
-This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold a welcoming and inclusive environment.
+This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md).
+By participating, you agree to uphold a welcoming and inclusive
+environment.
 
 ### License
 
@@ -593,12 +600,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-<p align="center">
-  <b>Built with ❤️ by the NexusAOS Team</b>
-</p>
+### Built with ❤️ by the NexusAOS Team
 
-<p align="center">
-  <a href="https://github.com/nexusaos/NexusAOS">GitHub</a> •
-  <a href="https://github.com/nexusaos/NexusAOS/issues">Issues</a> •
-  <a href="https://github.com/nexusaos/NexusAOS/discussions">Discussions</a>
-</p>
+[GitHub](https://github.com/nexusaos/NexusAOS) • [Issues](https://github.com/nexusaos/NexusAOS/issues) • [Discussions](https://github.com/nexusaos/NexusAOS/discussions)
