@@ -1,49 +1,48 @@
 # Kernel Decomposition and Fix Plan
 
-## Remaining Issues (9 total)
+## Remaining Issues (11 total)
+
+### Critical Priority
+
+1. **Critical #1**: Wrap `SqliteEventStore` rusqlite calls in `tokio::task::spawn_blocking`
+   - Current code uses `std::sync::Mutex` directly, blocking the async runtime
+   - Change `conn` field from `std::sync::Mutex<rusqlite::Connection>` to `rusqlite::Connection`
+   - Wrap every rusqlite call in `tokio::task::spawn_blocking(move || { ... })`
+
+2. **Critical #2**: Change `INSERT OR REPLACE INTO events` → `INSERT INTO events`
+   - Silent overwrites can mask bugs in event ordering
+   - Change line 106 in `sqlite_event_store.rs`
+
+3. **Critical #3**: Change `edition = "2024"` → `edition = "2021"` in `Cargo.toml`
+   - Rust edition 2024 is not supported by the toolchain
 
 ### High Priority
 
-1. **High #5**: Extract duplicated error-handling in `execute_task` (kernel.rs)
-   - The coder failure block (lines ~270-289) and reviewer failure block (lines ~367-388) are duplicated
-   - Extract into a helper method `emit_failure_and_return` (already exists, but the duplicated blocks still exist inline)
-   - Replace the inline duplicated blocks with calls to the helper
+4. **High #7**: Simplify `query_intel_vram()` to return `(0, 0)`
+   - Complex parsing of `intel_gpu_top` output is unreliable
+   - Replace function body with `fn query_intel_vram() -> (u64, u64) { (0, 0) }`
 
-2. **High #6**: Validate tool arguments in `ToolRequest` (kernel.rs)
-   - Currently uses `serde_json::json!({})` for all tool arguments
-   - Need to validate that the tool name is not empty and arguments are valid JSON
+5. **High #8**: Remove deprecated `wmic` Windows block from `query_disk_space()`
+   - `wmic` is deprecated on Windows; use `sysinfo::Disks` only
+   - Remove the `#[cfg(target_os = "windows")]` block
+
+6. **High #9**: Remove `event_store` TODO comments
+   - Search for TODO comments in sqlite_event_store.rs and remove them
 
 ### Medium Priority
 
-3. **Medium #10**: Fix `TaskInput::Multi` to preserve semantic structure
-   - Currently joins all parts with newline, destroying structure
-   - Should use a separator that preserves semantic boundaries (e.g., `"\n---\n"`)
+7. **Medium #12**: Change `health_check_all` to use `catch_unwind` instead of `tokio::task::spawn`
+   - `tokio::task::spawn` can panic the runtime if a provider misbehaves
+   - Use `futures::future::catch_unwind` for isolation
 
-4. **Medium #11**: Add error recovery for partial failures in `execute_task`
-   - If planner succeeds but coder fails, task is left in inconsistent `Executing` state
-   - Need to transition task to `Failed` state when partial failure occurs
+8. **Medium #14**: Collapse identical if blocks in `context.rs`
+   - Find and collapse duplicated match/arm patterns
 
-5. **Medium #13**: Extract SSE parsing logic in `openai_compat.rs` into `parse_sse_buffer` function
-   - The SSE parsing logic (lines ~225-236 and post-loop buffer drain) should be extracted into a standalone function
+9. **Medium #15**: Collapse if blocks in `resource.rs`
+   - Find and collapse duplicated match/arm patterns
 
-### Low Priority
+10. **Medium #16**: Remove `#[allow(unreachable_patterns)]` from `state.rs`
+    - The `_ => vec![]` catch-all makes this attribute unnecessary
 
-6. **Low #18**: Add `SqliteEventStore` unit tests
-   - Add tests for `read_for_task`, `read_since`, and `count` methods
-
-7. **Low #19**: Make `MAX_TOOL_OUTPUT_SIZE` configurable in `AppConfig`
-   - Currently hardcoded as `pub const MAX_TOOL_OUTPUT_SIZE: usize = 1_048_576`
-   - Should be a field in `ResourceLimitsConfig` with a default value
-
-8. **Low #20**: Clean up `anyhow` usage
-   - Check for unnecessary `anyhow` dependencies or usage patterns
-
-## Implementation Order
-1. High #5 (extract error handling) - kernel.rs
-2. High #6 (validate tool args) - kernel.rs
-3. Medium #10 (TaskInput::Multi separator) - task.rs
-4. Medium #11 (partial failure recovery) - kernel.rs
-5. Medium #13 (extract SSE parsing) - openai_compat.rs
-6. Low #18 (SqliteEventStore tests) - sqlite_event_store.rs
-7. Low #19 (MAX_TOOL_OUTPUT_SIZE configurable) - config.rs, events.rs, kernel.rs
-8. Low #20 (clean up anyhow) - error.rs, Cargo.toml
+11. **Medium #17**: `Kernel::new` should take `Arc<RwLock<PolicyEngine>>` directly
+    - Currently takes `Arc<PolicyEngine>` and wraps in a new RwLock internally

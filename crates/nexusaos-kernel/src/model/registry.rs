@@ -1,6 +1,8 @@
 use std::collections::HashMap;
+use std::panic::AssertUnwindSafe;
 use std::sync::Arc;
 
+use futures::FutureExt;
 use tracing::warn;
 
 use crate::{error::ProviderError, model::provider::ModelProvider, state::ModelRole};
@@ -26,14 +28,14 @@ impl ProviderRegistry {
         self.providers.get(role).map(|p| p.as_ref())
     }
 
-    /// Check health of all registered providers, isolating panics via `tokio::task::spawn`
+    /// Check health of all registered providers, isolating panics via `FutureExt::catch_unwind`
     /// so a misbehaving provider can't crash the whole health pass.
     pub async fn health_check_all(&self) -> HashMap<ModelRole, Result<bool, ProviderError>> {
         let mut results = HashMap::new();
         for (role, provider) in &self.providers {
             let provider = Arc::clone(provider);
             let name = provider.name().to_string();
-            let result = tokio::task::spawn(async move { provider.health_check().await }).await;
+            let result = AssertUnwindSafe(provider.health_check()).catch_unwind().await;
             match result {
                 Ok(Ok(healthy)) => {
                     results.insert(*role, Ok(healthy));
@@ -41,8 +43,7 @@ impl ProviderRegistry {
                 Ok(Err(e)) => {
                     results.insert(*role, Err(e));
                 }
-                Err(join_err) => {
-                    let panic_payload = join_err.into_panic();
+                Err(panic_payload) => {
                     let reason = panic_payload
                         .downcast_ref::<&str>()
                         .map(|s| s.to_string())

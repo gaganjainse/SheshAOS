@@ -102,12 +102,12 @@ fn parse_sse_buffer(
                 done_received = true;
                 break;
             }
-            if let Ok(val) = serde_json::from_str::<serde_json::Value>(data)
-                && let Some(token) = val["choices"][0]["delta"]["content"].as_str()
-            {
-                let token_str = token.to_string();
-                full_content.push_str(&token_str);
-                on_token(&token_str);
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(data) {
+                if let Some(token) = val["choices"][0]["delta"]["content"].as_str() {
+                    let token_str = token.to_string();
+                    full_content.push_str(&token_str);
+                    on_token(&token_str);
+                }
             }
         }
     }

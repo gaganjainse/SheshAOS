@@ -32,7 +32,7 @@ impl Kernel {
     /// Create a new kernel with the given components.
     pub async fn new(
         event_store: Arc<dyn EventStore>,
-        policy: Arc<PolicyEngine>,
+        policy: Arc<RwLock<PolicyEngine>>,
         provider_registry: Arc<ProviderRegistry>,
         tool_broker: Arc<ToolBroker>,
         max_tool_output_size: usize,
@@ -40,7 +40,7 @@ impl Kernel {
         let kernel = Self {
             event_store,
             projection: Arc::new(RwLock::new(TaskProjection::new())),
-            policy: Arc::new(RwLock::new((*policy).clone())),
+            policy,
             provider_registry,
             tool_broker,
             max_tool_output_size,
@@ -632,7 +632,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
         let state = kernel.task_state(&id).await.unwrap();
@@ -645,7 +645,7 @@ mod tests {
         let policy = PolicyEngine::deny_all();
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let result = kernel.submit_task(TaskInput::Text("test".into())).await;
         assert!(matches!(result, Err(NexusError::Policy(_))));
@@ -664,7 +664,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
         kernel.transition_task(&id, TaskState::Planned).await.unwrap();
@@ -684,7 +684,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
         // Classified -> Completed is invalid
@@ -719,7 +719,7 @@ mod tests {
         }));
 
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), Arc::new(registry), broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), Arc::new(registry), broker, 1_048_576).await.unwrap();
 
         let id = kernel.submit_task(TaskInput::Text("fix this".into())).await.unwrap();
 
@@ -747,7 +747,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let fake_id = TaskId::new();
         let result = kernel.task_state(&fake_id).await;
@@ -771,7 +771,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let id1 = kernel.submit_task(TaskInput::Text("task1".into())).await.unwrap();
         let id2 = kernel.submit_task(TaskInput::Text("task2".into())).await.unwrap();
@@ -798,7 +798,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         assert_eq!(kernel.task_count().await, 0);
         kernel.submit_task(TaskInput::Text("t1".into())).await.unwrap();
@@ -820,7 +820,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let fake_id = TaskId::new();
         let result = kernel.transition_task(&fake_id, TaskState::Planned).await;
@@ -840,7 +840,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let id = kernel.submit_task(TaskInput::Text("do something".into())).await.unwrap();
         let result = kernel.execute_task(&id).await;
@@ -864,7 +864,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store.clone(), Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store.clone(), Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let _id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
 
@@ -895,7 +895,7 @@ mod tests {
         }));
 
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store.clone(), Arc::new(policy), Arc::new(registry), broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store.clone(), Arc::new(RwLock::new(policy)), Arc::new(registry), broker, 1_048_576).await.unwrap();
 
         let id = kernel.submit_task(TaskInput::Text("plan something".into())).await.unwrap();
         let outcome = kernel.execute_task(&id).await.unwrap();
@@ -923,7 +923,7 @@ mod tests {
         let policy = PolicyEngine::deny_all();
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
         assert_eq!(kernel.task_count().await, 0);
     }
 
@@ -940,7 +940,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
         assert_eq!(kernel.task_state(&id).await.unwrap(), TaskState::Classified);
@@ -975,7 +975,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let id = kernel.submit_task(TaskInput::Vision {
             text: "describe this image".into(),
@@ -997,7 +997,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let input = TaskInput::Multi {
             parts: vec![
@@ -1022,7 +1022,7 @@ mod tests {
         let policy = PolicyEngine::new(vec![rule], TrustTier::Autonomous);
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-        let kernel = Kernel::new(store.clone(), Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store.clone(), Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
 
         let id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
 

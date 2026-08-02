@@ -53,22 +53,21 @@ impl TaskComplexity {
 
         if has_architecture || input_len > 5000 || (has_code && multiple_files && line_count > 50) {
             TaskComplexity::Architecture
-        } else if has_code && has_file_paths && has_requirements && input_len > 200 {
+        } else if (has_code && has_file_paths && has_requirements && input_len > 200)
+            || (has_code && multiple_files)
+            || (has_code && has_errors && input_len > 300)
+        {
             TaskComplexity::Feature
-        } else if has_code && multiple_files || (has_code && has_errors && input_len > 300) {
-            TaskComplexity::Feature
-        } else if has_code || has_file_paths {
-            match input_len {
-                0..=200 => TaskComplexity::Simple,
-                201..=1000 => TaskComplexity::CodeEdit,
-                _ => TaskComplexity::Feature,
-            }
         } else {
             match input_len {
                 0..=200 => TaskComplexity::Simple,
                 201..=1000 => TaskComplexity::CodeEdit,
                 1001..=5000 => TaskComplexity::Feature,
-                _ => TaskComplexity::Architecture,
+                _ => if has_code || has_file_paths {
+                    TaskComplexity::Feature
+                } else {
+                    TaskComplexity::Architecture
+                },
             }
         }
     }

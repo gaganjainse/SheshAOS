@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use tokio::sync::RwLock;
 use tracing::info;
 
 use crate::{
@@ -74,7 +75,7 @@ pub fn execute(
         let broker = Arc::new(broker);
 
         // 5. Initialize Kernel
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, config.resource_limits.max_tool_output_size).await?;
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, config.resource_limits.max_tool_output_size).await?;
 
         // 6. Submit Task
         println!("Submitting task: {}", task);

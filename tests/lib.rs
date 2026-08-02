@@ -11,8 +11,10 @@ pub mod test_utils {
         policy::{PolicyEngine, PolicyRule, TrustTier},
         tools::broker::ToolBroker,
     };
-    use std::sync::Arc;
-    use tempfile::TempDir;
+use std::sync::Arc;
+
+use tokio::sync::RwLock;
+use tempfile::TempDir;
 
     /// Create a test kernel with default configuration
     pub async fn create_test_kernel() -> (Kernel, TempDir) {
@@ -34,7 +36,7 @@ pub mod test_utils {
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
         
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
         
         (kernel, temp_dir)
     }

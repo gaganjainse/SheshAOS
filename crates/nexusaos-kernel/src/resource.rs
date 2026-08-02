@@ -57,113 +57,73 @@ impl ResourceMonitor {
         }
     }
 
-    /// Query GPU VRAM via multiple vendor tools (nvidia-smi, rocm-smi, intel_gpu_top).
+    /// Query GPU VRAM via multiple vendor tools (nvidia-smi, rocm-smi).
     ///
     /// Returns (available_mb, total_mb). Returns (0, 0) if no GPU tools are available.
     fn query_gpu_vram() -> (u64, u64) {
-        // Try NVIDIA first
-        let nvidia = Self::query_nvidia_vram();
-        if nvidia != (0, 0) {
-            return nvidia;
+        for query in [Self::query_nvidia_vram(), Self::query_amd_vram()] {
+            if query != (0, 0) {
+                return query;
+            }
         }
-
-        // Try AMD (ROCm)
-        let amd = Self::query_amd_vram();
-        if amd != (0, 0) {
-            return amd;
-        }
-
-        // Try Intel
-        let intel = Self::query_intel_vram();
-        if intel != (0, 0) {
-            return intel;
-        }
-
         (0, 0)
+    }
+
+    /// Run a GPU VRAM query command and parse the result.
+    fn run_vram_query<F>(command: &mut std::process::Command, parse: F) -> (u64, u64)
+    where
+        F: FnOnce(&str) -> (u64, u64),
+    {
+        match command.output() {
+            Ok(output) if output.status.success() => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                parse(&stdout)
+            }
+            _ => (0, 0),
+        }
     }
 
     /// Query NVIDIA GPU VRAM via nvidia-smi.
     fn query_nvidia_vram() -> (u64, u64) {
-        let output = std::process::Command::new("nvidia-smi")
-            .args(["--query-gpu=memory.used,memory.total", "--format=csv,noheader,nounits"])
-            .output();
-
-        match output {
-            Ok(output) if output.status.success() => {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                if let Some(line) = stdout.lines().next() {
-                    let parts: Vec<&str> = line.split(',').map(|s| s.trim()).collect();
-                    if parts.len() == 2 {
-                        let used: u64 = parts[0].parse().unwrap_or(0);
-                        let total: u64 = parts[1].parse().unwrap_or(0);
-                        return (total.saturating_sub(used), total);
-                    }
+        let mut command = std::process::Command::new("nvidia-smi");
+        command.args(["--query-gpu=memory.used,memory.total", "--format=csv,noheader,nounits"]);
+        Self::run_vram_query(&mut command, |stdout| {
+            if let Some(line) = stdout.lines().next() {
+                let parts: Vec<&str> = line.split(',').map(|s| s.trim()).collect();
+                if parts.len() == 2 {
+                    let used: u64 = parts[0].parse().unwrap_or(0);
+                    let total: u64 = parts[1].parse().unwrap_or(0);
+                    return (total.saturating_sub(used), total);
                 }
-                (0, 0)
             }
-            _ => (0, 0),
-        }
+            (0, 0)
+        })
     }
 
     /// Query AMD GPU VRAM via rocm-smi.
     fn query_amd_vram() -> (u64, u64) {
-        let output = std::process::Command::new("rocm-smi")
-            .args(["--showmeminfo", "vram"])
-            .output();
-
-        match output {
-            Ok(output) if output.status.success() => {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                // Parse "Total Memory (MB): X" and "Used Memory (MB): Y"
-                let mut total_mb = 0u64;
-                let mut used_mb = 0u64;
-                for line in stdout.lines() {
-                    let line_lower = line.to_lowercase();
-                    if line_lower.contains("total memory") && line_lower.contains("vram") {
-                        if let Some(num) = line.split(':').nth(1) {
-                            total_mb = num.trim().parse().unwrap_or(0);
-                        }
-                    } else if line_lower.contains("used memory") && line_lower.contains("vram") {
-                        if let Some(num) = line.split(':').nth(1) {
-                            used_mb = num.trim().parse().unwrap_or(0);
-                        }
+        let mut command = std::process::Command::new("rocm-smi");
+        command.args(["--showmeminfo", "vram"]);
+        Self::run_vram_query(&mut command, |stdout| {
+            let mut total_mb = 0u64;
+            let mut used_mb = 0u64;
+            for line in stdout.lines() {
+                let line_lower = line.to_lowercase();
+                if line_lower.contains("total memory") && line_lower.contains("vram") {
+                    if let Some(num) = line.split(':').nth(1) {
+                        total_mb = num.trim().parse().unwrap_or(0);
+                    }
+                } else if line_lower.contains("used memory") && line_lower.contains("vram") {
+                    if let Some(num) = line.split(':').nth(1) {
+                        used_mb = num.trim().parse().unwrap_or(0);
                     }
                 }
-                if total_mb > 0 {
-                    return (total_mb.saturating_sub(used_mb), total_mb);
-                }
-                (0, 0)
             }
-            _ => (0, 0),
-        }
-    }
-
-    /// Query Intel GPU VRAM via intel_gpu_top.
-    fn query_intel_vram() -> (u64, u64) {
-        let output = std::process::Command::new("intel_gpu_top")
-            .args(["-s"])
-            .output();
-
-        match output {
-            Ok(output) if output.status.success() => {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                // intel_gpu_top -s outputs frequency data, not VRAM directly
-                // Intel GPUs use shared system memory, so we return 0 for dedicated VRAM
-                // but can estimate based on reported device memory if available
-                for line in stdout.lines() {
-                    if line.contains("device_memory") || line.contains("Memory") {
-                        // Parse memory info if available
-                        if let Some(num) = line.split(':').nth(1) {
-                            if let Ok(total) = num.trim().parse::<u64>() {
-                                return (total / 2, total); // Assume half available
-                            }
-                        }
-                    }
-                }
-                (0, 0)
+            if total_mb > 0 {
+                return (total_mb.saturating_sub(used_mb), total_mb);
             }
-            _ => (0, 0),
-        }
+            (0, 0)
+        })
     }
 
     /// Query available disk space on the root filesystem (cross-platform).
@@ -204,30 +164,6 @@ impl ResourceMonitor {
                         if parts.len() >= 4 {
                             return parts[3].parse().unwrap_or(0);
                         }
-                    }
-                }
-            }
-        }
-
-        #[cfg(target_os = "windows")]
-        {
-            let output = std::process::Command::new("wmic")
-                .args(["logicaldisk", "where", "DeviceID='C:'", "get", "Size,FreeSpace", "/format:list"])
-                .output();
-            if let Ok(output) = output {
-                if output.status.success() {
-                    let stdout = String::from_utf8_lossy(&output.stdout);
-                    let mut free = 0u64;
-                    let mut total = 0u64;
-                    for line in stdout.lines() {
-                        if line.starts_with("FreeSpace=") {
-                            free = line.split('=').nth(1).unwrap_or("0").parse().unwrap_or(0);
-                        } else if line.starts_with("Size=") {
-                            total = line.split('=').nth(1).unwrap_or("0").parse().unwrap_or(0);
-                        }
-                    }
-                    if total > 0 {
-                        return free / (1024 * 1024 * 1024);
                     }
                 }
             }

@@ -14,6 +14,8 @@ use nexusaos_kernel::{
 use std::sync::Arc;
 use tempfile::TempDir;
 
+use tokio::sync::RwLock;
+
 /// Benchmark terminal parsing
 fn bench_terminal_parsing(c: &mut Criterion) {
     let mut group = c.benchmark_group("terminal_parsing");
@@ -91,7 +93,7 @@ fn bench_kernel_task_submission(c: &mut Criterion) {
     let registry = Arc::new(ProviderRegistry::new());
     let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
     
-    let kernel = rt.block_on(Kernel::new(store, policy, registry, broker, 1_048_576)).unwrap();
+    let kernel = rt.block_on(Kernel::new(store, Arc::new(RwLock::new(policy)), registry, broker, 1_048_576)).unwrap();
     
     let mut group = c.benchmark_group("kernel_task_submission");
     

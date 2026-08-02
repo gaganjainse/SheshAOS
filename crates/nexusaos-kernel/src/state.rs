@@ -38,7 +38,6 @@ impl TaskState {
     }
 
     /// Returns the valid states this state can transition into.
-    #[allow(unreachable_patterns)]
     pub fn valid_transitions(&self) -> Vec<TaskState> {
         match self {
             Self::Received => vec![Self::Classified],
@@ -51,7 +50,6 @@ impl TaskState {
             Self::Completed => vec![Self::Archived],
             Self::RolledBack => vec![Self::Archived],
             Self::Archived => vec![],
-            _ => vec![],
         }
     }
 

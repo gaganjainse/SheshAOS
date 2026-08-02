@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use crate::{
     error::{NexusError, StorageError},
@@ -9,89 +10,135 @@ use crate::{
 
 /// SQLite-backed event store.
 pub struct SqliteEventStore {
-    conn: std::sync::Mutex<rusqlite::Connection>,
+    conn: Arc<std::sync::Mutex<rusqlite::Connection>>,
 }
 
 impl SqliteEventStore {
     /// Open or create a SQLite event store at the given path.
     pub async fn open(path: PathBuf) -> Result<Self, NexusError> {
         let db_path = path.join("events.db");
-        let conn = rusqlite::Connection::open(db_path).map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS events (
-                id TEXT PRIMARY KEY,
-                task_id TEXT,
-                sequence INTEGER,
-                data TEXT NOT NULL
-            )",
-            (),
-        )
-        .map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
-        Ok(Self { conn: std::sync::Mutex::new(conn) })
+        let conn = tokio::task::spawn_blocking(move || {
+            let conn = rusqlite::Connection::open(db_path)
+                .map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS events (
+                    id TEXT PRIMARY KEY,
+                    task_id TEXT,
+                    sequence INTEGER,
+                    data TEXT NOT NULL
+                )",
+                (),
+            )
+            .map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
+            Ok::<_, NexusError>(conn)
+        })
+        .await
+        .map_err(|e| {
+            NexusError::Storage(StorageError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                e.to_string(),
+            )))
+        })??;
+        Ok(Self {
+            conn: Arc::new(std::sync::Mutex::new(conn)),
+        })
     }
 
     /// Read all events in sequence order.
     pub async fn read_all(&self) -> Result<Vec<Event>, StorageError> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT data FROM events ORDER BY sequence ASC")
-            .map_err(|e| StorageError::Database(e.into()))?;
-        let rows = stmt
-            .query_map([], |row| {
-                let data: String = row.get(0)?;
-                serde_json::from_str(&data).map_err(|e| {
-                    rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
+        let conn = self.conn.clone();
+        tokio::task::spawn_blocking(move || {
+            let conn = conn.lock().unwrap();
+            let mut stmt = conn
+                .prepare("SELECT data FROM events ORDER BY sequence ASC")
+                .map_err(|e| StorageError::Database(e.into()))?;
+            let rows = stmt
+                .query_map([], |row| {
+                    let data: String = row.get(0)?;
+                    serde_json::from_str(&data).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
+                    })
                 })
-            })
-            .map_err(|e| StorageError::Database(e.into()))?;
-        rows.collect::<Result<Vec<_>, _>>()
-            .map_err(|e| StorageError::Database(e.into()))
+                .map_err(|e| StorageError::Database(e.into()))?;
+            rows.collect::<Result<Vec<_>, _>>()
+                .map_err(|e| StorageError::Database(e.into()))
+        })
+        .await
+        .map_err(|e| StorageError::Io(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        )))?
     }
 
     /// Read events for a specific task.
     pub async fn read_for_task(&self, task_id: &crate::task::TaskId) -> Result<Vec<Event>, StorageError> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT data FROM events WHERE task_id = ?1 ORDER BY sequence ASC")
-            .map_err(|e| StorageError::Database(e.into()))?;
-        let rows = stmt
-            .query_map([&task_id.0.to_string()], |row| {
-                let data: String = row.get(0)?;
-                serde_json::from_str(&data).map_err(|e| {
-                    rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
+        let conn = self.conn.clone();
+        let task_id_str = task_id.0.to_string();
+        tokio::task::spawn_blocking(move || {
+            let conn = conn.lock().unwrap();
+            let mut stmt = conn
+                .prepare("SELECT data FROM events WHERE task_id = ?1 ORDER BY sequence ASC")
+                .map_err(|e| StorageError::Database(e.into()))?;
+            let rows = stmt
+                .query_map([&task_id_str], |row| {
+                    let data: String = row.get(0)?;
+                    serde_json::from_str(&data).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
+                    })
                 })
-            })
-            .map_err(|e| StorageError::Database(e.into()))?;
-        rows.collect::<Result<Vec<_>, _>>()
-            .map_err(|e| StorageError::Database(e.into()))
+                .map_err(|e| StorageError::Database(e.into()))?;
+            rows.collect::<Result<Vec<_>, _>>()
+                .map_err(|e| StorageError::Database(e.into()))
+        })
+        .await
+        .map_err(|e| StorageError::Io(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        )))?
     }
 
     /// Read events since a given sequence number.
     pub async fn read_since(&self, sequence: u64) -> Result<Vec<Event>, StorageError> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT data FROM events WHERE sequence >= ?1 ORDER BY sequence ASC")
-            .map_err(|e| StorageError::Database(e.into()))?;
-        let rows = stmt
-            .query_map([&sequence], |row| {
-                let data: String = row.get(0)?;
-                serde_json::from_str(&data).map_err(|e| {
-                    rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
+        let conn = self.conn.clone();
+        tokio::task::spawn_blocking(move || {
+            let conn = conn.lock().unwrap();
+            let mut stmt = conn
+                .prepare("SELECT data FROM events WHERE sequence >= ?1 ORDER BY sequence ASC")
+                .map_err(|e| StorageError::Database(e.into()))?;
+            let rows = stmt
+                .query_map([&sequence], |row| {
+                    let data: String = row.get(0)?;
+                    serde_json::from_str(&data).map_err(|e| {
+                        rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
+                    })
                 })
-            })
-            .map_err(|e| StorageError::Database(e.into()))?;
-        rows.collect::<Result<Vec<_>, _>>()
-            .map_err(|e| StorageError::Database(e.into()))
+                .map_err(|e| StorageError::Database(e.into()))?;
+            rows.collect::<Result<Vec<_>, _>>()
+                .map_err(|e| StorageError::Database(e.into()))
+        })
+        .await
+        .map_err(|e| StorageError::Io(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        )))?
     }
 
     /// Get total event count.
     pub async fn count(&self) -> Result<u64, StorageError> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT COUNT(*) FROM events")
-            .map_err(|e| StorageError::Database(e.into()))?;
-        let count: i64 = stmt.query_row([], |row| row.get(0)).map_err(|e| StorageError::Database(e.into()))?;
-        Ok(count as u64)
+        let conn = self.conn.clone();
+        tokio::task::spawn_blocking(move || {
+            let conn = conn.lock().unwrap();
+            let mut stmt = conn
+                .prepare("SELECT COUNT(*) FROM events")
+                .map_err(|e| StorageError::Database(e.into()))?;
+            let count: i64 = stmt.query_row([], |row| row.get(0)).map_err(|e| StorageError::Database(e.into()))?;
+            Ok(count as u64)
+        })
+        .await
+        .map_err(|e| StorageError::Io(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        )))?
     }
 }
 
@@ -99,10 +146,10 @@ impl SqliteEventStore {
 impl EventStore for SqliteEventStore {
     async fn append(&self, event: Event) -> Result<(), NexusError> {
         let data = serde_json::to_string(&event).map_err(NexusError::Serde)?;
-        self.conn
-            .lock()
-            .unwrap()
-            .execute(
+        let conn = self.conn.clone();
+        tokio::task::spawn_blocking(move || {
+            let conn = conn.lock().unwrap();
+            conn.execute(
                 "INSERT OR REPLACE INTO events (id, task_id, sequence, data) VALUES (?1, ?2, ?3, ?4)",
                 (
                     event.id.0.to_string(),
@@ -112,7 +159,13 @@ impl EventStore for SqliteEventStore {
                 ),
             )
             .map_err(|e| NexusError::Storage(StorageError::Database(e.into())))?;
-        Ok(())
+            Ok(())
+        })
+        .await
+        .map_err(|e| NexusError::Storage(StorageError::Io(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            e.to_string(),
+        ))))?
     }
 
     async fn get_all_events(&self) -> Result<Vec<Event>, NexusError> {

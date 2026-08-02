@@ -1,6 +1,8 @@
 use std::process::Command;
 use tempfile::TempDir;
 
+use tokio::sync::RwLock;
+
 /// Integration test for full CLI → Kernel → Tools flow
 #[tokio::test]
 async fn test_full_cli_kernel_tools_flow() {
@@ -124,10 +126,10 @@ async fn test_task_submission_and_event_persistence() {
     
     let registry = Arc::new(ProviderRegistry::new());
 let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-     
-     let kernel = Kernel::new(store.clone(), policy, registry, broker, 1_048_576).await.unwrap();
-     
-     // Submit a task
+      
+      let kernel = Kernel::new(store.clone(), Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
+      
+      // Submit a task
     let task_id = kernel.submit_task(TaskInput::Text("test task".to_string())).await.unwrap();
     
     // Verify event was persisted
@@ -170,10 +172,10 @@ async fn test_kernel_state_transitions() {
     
     let registry = Arc::new(ProviderRegistry::new());
 let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
-     
-     let kernel = Kernel::new(store.clone(), policy, registry, broker, 1_048_576).await.unwrap();
-     
-     // Submit task
+      
+      let kernel = Kernel::new(store.clone(), Arc::new(RwLock::new(policy)), registry, broker, 1_048_576).await.unwrap();
+      
+      // Submit task
     let task_id = kernel.submit_task(TaskInput::Text("test".to_string())).await.unwrap();
     
     // Execute task (will fail without LLM but should transition states)
