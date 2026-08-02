@@ -7,6 +7,7 @@ use std::{
     },
 };
 
+use async_trait::async_trait;
 use tokio::{
     fs::{File, OpenOptions},
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -14,24 +15,43 @@ use tokio::{
 };
 
 use crate::{
-    error::StorageError,
+    error::{NexusError, StorageError},
     events::{Event, EventId, SequenceNumber},
     task::TaskId,
 };
+
+/// Trait for append-only event stores.
+///
+/// Implementations must guarantee:
+/// - `append` is atomic with respect to `get_all_events`
+/// - Events are stored in monotonically increasing sequence order
+/// - `get_all_events` returns events in chronological order
+/// - `get_task_events` returns events for a single task in chronological order
+#[async_trait]
+pub trait EventStore: Send + Sync {
+    /// Append a new event to the store.
+    async fn append(&self, event: Event) -> Result<(), NexusError>;
+
+    /// Get all events in chronological order.
+    async fn get_all_events(&self) -> Result<Vec<Event>, NexusError>;
+
+    /// Get all events for a specific task in chronological order.
+    async fn get_task_events(&self, task_id: &TaskId) -> Result<Vec<Event>, NexusError>;
+}
 
 /// Append-only event store backed by JSONL files.
 ///
 /// Events are written as one JSON object per line to `events.jsonl`.
 /// An in-memory index maps EventId -> byte offset for fast lookup.
 /// SequenceNumber is monotonically increasing, assigned at append time.
-pub struct EventStore {
+pub struct JsonlEventStore {
     path: PathBuf,
     index: RwLock<HashMap<EventId, u64>>,
     next_sequence: AtomicU64,
     writer: Mutex<File>,
 }
 
-impl EventStore {
+impl JsonlEventStore {
     /// Open or create an event store at the given directory.
     pub async fn open(path: PathBuf) -> Result<Self, StorageError> {
         let file_path = path.join("events.jsonl");
@@ -131,7 +151,7 @@ impl EventStore {
 }
 
 #[async_trait::async_trait]
-impl crate::runtime::kernel::EventStore for EventStore {
+impl crate::storage::EventStore for JsonlEventStore {
     async fn append(&self, mut event: Event) -> Result<(), crate::error::NexusError> {
         Self::append(self, &mut event).await.map_err(crate::error::NexusError::Storage)
     }
@@ -159,7 +179,7 @@ mod tests {
     #[tokio::test]
     async fn test_event_store_append_and_read() {
         let temp_dir = TempDir::new().unwrap();
-        let store = EventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+        let store = JsonlEventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
 
         let task_id = TaskId::new();
         let mut event1 = Event::new(
@@ -190,14 +210,14 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let new_path = temp_dir.path().join("new_store");
         tokio::fs::create_dir_all(&new_path).await.unwrap();
-        let store = EventStore::open(new_path).await.unwrap();
+        let store = JsonlEventStore::open(new_path).await.unwrap();
         assert_eq!(store.count(), 0);
     }
 
     #[tokio::test]
     async fn test_event_store_duplicate_rejected() {
         let temp_dir = TempDir::new().unwrap();
-        let store = EventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+        let store = JsonlEventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
 
         let task_id = TaskId::new();
         let mut event = Event::new(
@@ -220,7 +240,7 @@ mod tests {
     #[tokio::test]
     async fn test_event_store_read_for_task_no_match() {
         let temp_dir = TempDir::new().unwrap();
-        let store = EventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+        let store = JsonlEventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
 
         let task_id = TaskId::new();
         let mut event = Event::new(
@@ -239,7 +259,7 @@ mod tests {
     #[tokio::test]
     async fn test_event_store_read_since() {
         let temp_dir = TempDir::new().unwrap();
-        let store = EventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+        let store = JsonlEventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
 
         let mut e1 = Event::new(TaskId::new(), EventKind::TaskCreated, EventPayload::TaskCreated { request: serde_json::json!({}) }, "test".to_string());
         e1.sequence = crate::events::SequenceNumber(1);
@@ -266,7 +286,7 @@ mod tests {
     #[tokio::test]
     async fn test_event_store_multiple_events() {
         let temp_dir = TempDir::new().unwrap();
-        let store = EventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+        let store = JsonlEventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
 
         for i in 0..10 {
             let mut event = Event::new(
@@ -289,7 +309,7 @@ mod tests {
         let path = temp_dir.path().to_path_buf();
 
         {
-            let store = EventStore::open(path.clone()).await.unwrap();
+            let store = JsonlEventStore::open(path.clone()).await.unwrap();
             let mut event = Event::new(
                 TaskId::new(),
                 EventKind::TaskCreated,
@@ -301,7 +321,7 @@ mod tests {
         }
 
         // Reopen the store
-        let store2 = EventStore::open(path).await.unwrap();
+        let store2 = JsonlEventStore::open(path).await.unwrap();
         assert_eq!(store2.count(), 1);
         let events = store2.read_all().await.unwrap();
         assert_eq!(events.len(), 1);
@@ -310,8 +330,8 @@ mod tests {
     #[tokio::test]
     async fn test_event_store_get_all_events_trait() {
         let temp_dir = TempDir::new().unwrap();
-        let store: Arc<dyn crate::runtime::kernel::EventStore> = Arc::new(
-            EventStore::open(temp_dir.path().to_path_buf()).await.unwrap()
+        let store: Arc<dyn crate::storage::EventStore> = Arc::new(
+            JsonlEventStore::open(temp_dir.path().to_path_buf()).await.unwrap()
         );
 
         let task_id = TaskId::new();
@@ -330,8 +350,8 @@ mod tests {
     #[tokio::test]
     async fn test_event_store_get_task_events_trait() {
         let temp_dir = TempDir::new().unwrap();
-        let store: Arc<dyn crate::runtime::kernel::EventStore> = Arc::new(
-            EventStore::open(temp_dir.path().to_path_buf()).await.unwrap()
+        let store: Arc<dyn crate::storage::EventStore> = Arc::new(
+            JsonlEventStore::open(temp_dir.path().to_path_buf()).await.unwrap()
         );
 
         let task_id = TaskId::new();
@@ -356,7 +376,7 @@ mod tests {
         let file_path = path.join("events.jsonl");
         tokio::fs::write(&file_path, "not json at all\n").await.unwrap();
 
-        let store = EventStore::open(path).await.unwrap();
+        let store = JsonlEventStore::open(path).await.unwrap();
         assert_eq!(store.count(), 0);
     }
 }

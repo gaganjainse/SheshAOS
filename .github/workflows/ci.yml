@@ -24,7 +24,7 @@ jobs:
       - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
 
-- name: Check for unwrap/expect in production code
+      - name: Check for unwrap/expect in production code
         run: |
           if grep -rn "\.unwrap()\|\.expect(" crates/ bin/ --include="*.rs" | grep -v "tests\|#\[cfg(test)\]\|#\[allow" | grep -v "^.*//.*unwrap\|//.*expect"; then
             echo "::error::Found unwrap/expect in production code"
@@ -53,6 +53,15 @@ jobs:
 
       - name: Run doc tests
         run: cargo test --workspace --doc
+
+      - name: Report test count
+        run: |
+          TOTAL=$(cargo test --workspace 2>&1 | grep -oP '\d+(?= passed)' | paste -sd+ | bc)
+          echo "Total tests: $TOTAL"
+          if [ "$TOTAL" -lt 900 ]; then
+            echo "::error::Test count ($TOTAL) dropped below 900. Check for accidental test deletions."
+            exit 1
+          fi
 
   build:
     name: Build

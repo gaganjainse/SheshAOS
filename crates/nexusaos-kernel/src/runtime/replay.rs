@@ -1,7 +1,7 @@
 use crate::{
     error::NexusError,
     events::{Event, EventKind, EventPayload},
-    runtime::kernel::{EventStore, TaskProjection},
+    storage::{EventStore, TaskProjection},
     state::{TaskRecord, TaskState},
     task::{TaskId, TaskRequest},
 };

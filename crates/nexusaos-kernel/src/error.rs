@@ -9,39 +9,30 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 #[non_exhaustive]
 pub enum NexusError {
-    /// Configuration loading or validation error.
     #[error("Configuration error: {0}")]
     Config(#[from] ConfigError),
 
-    /// Event store or snapshot error.
     #[error("Storage error: {0}")]
     Storage(#[from] StorageError),
 
-    /// Policy engine error.
     #[error("Policy error: {0}")]
     Policy(#[from] PolicyError),
 
-    /// Model provider error.
     #[error("Provider error: {0}")]
     Provider(#[from] ProviderError),
 
-    /// Tool execution error.
     #[error("Tool error: {0}")]
     Tool(#[from] ToolError),
 
-    /// Task lifecycle error.
     #[error("Task error: {0}")]
     Task(#[from] TaskError),
 
-    /// Resource or context budget error.
     #[error("Resource error: {0}")]
     Resource(#[from] ResourceError),
 
-    /// I/O error.
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
-    /// Serialization / deserialization error.
     #[error("Serialization error: {0}")]
     Serde(#[from] serde_json::Error),
 }

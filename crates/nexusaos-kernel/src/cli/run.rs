@@ -10,7 +10,7 @@ use crate::{
     model::{openai_compat::OpenAiCompatProvider, registry::ProviderRegistry},
     policy::{PolicyEngine, PolicyRule, TrustTier},
     runtime::kernel::Kernel,
-    storage::event_store::EventStore,
+    storage::JsonlEventStore,
     task::TaskInput,
     tools::{broker::ToolBroker, filesystem::FilesystemTool, git::GitTool, terminal::TerminalTool},
 };
@@ -33,7 +33,7 @@ pub fn execute(
     rt.block_on(async {
         // 1. Initialize Event Store
         let events_dir = data_dir.join("events");
-        let store = Arc::new(EventStore::open(events_dir).await?);
+        let store = Arc::new(JsonlEventStore::open(events_dir).await?);
 
         // 2. Initialize Policy Engine
         let rules = vec![PolicyRule {
@@ -74,7 +74,7 @@ pub fn execute(
         let broker = Arc::new(broker);
 
         // 5. Initialize Kernel
-        let kernel = Kernel::new(store, policy, registry, broker).await?;
+        let kernel = Kernel::new(store, Arc::new(policy), registry, broker).await?;
 
         // 6. Submit Task
         println!("Submitting task: {}", task);

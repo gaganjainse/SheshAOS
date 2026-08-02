@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use tracing::info;
 
-use crate::{config::AppConfig, error::NexusError, storage::EventStore, task::TaskId};
+use crate::{config::AppConfig, error::NexusError, storage::{EventStore, JsonlEventStore}, task::TaskId};
 
 /// Replay and display the event history for a given task ID.
 pub fn run(config_path: &str, task_id: &str) -> Result<(), NexusError> {
@@ -18,7 +18,7 @@ pub fn run(config_path: &str, task_id: &str) -> Result<(), NexusError> {
     })?;
     rt.block_on(async {
         let events_dir = data_dir.join("events");
-        let store = EventStore::open(events_dir).await?;
+        let store = JsonlEventStore::open(events_dir).await?;
 
         let events = if task_id == "all" {
             store.read_all().await?

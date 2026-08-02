@@ -6,7 +6,7 @@
 pub mod test_utils {
     use nexusaos_kernel::{
         runtime::kernel::Kernel,
-        storage::event_store::EventStore,
+        storage::JsonlEventStore,
         model::registry::ProviderRegistry,
         policy::{PolicyEngine, PolicyRule, TrustTier},
         tools::broker::ToolBroker,
@@ -20,7 +20,7 @@ pub mod test_utils {
         let events_dir = temp_dir.path().join("events");
         std::fs::create_dir_all(&events_dir).unwrap();
 
-        let store = Arc::new(EventStore::open(events_dir).await.unwrap());
+        let store = Arc::new(JsonlEventStore::open(events_dir).await.unwrap());
         
         let rules = vec![PolicyRule {
             name: "allow-all".to_string(),
@@ -34,7 +34,7 @@ pub mod test_utils {
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
         
-        let kernel = Kernel::new(store, policy, registry, broker).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(policy), registry, broker).await.unwrap();
         
         (kernel, temp_dir)
     }

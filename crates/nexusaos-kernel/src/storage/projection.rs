@@ -1,26 +1,17 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
 use crate::{
     events::{Event, EventPayload},
-    state::TaskState,
+    state::{TaskRecord, TaskState},
     task::TaskId,
 };
 
 /// Current-state view of all tasks, derived from events.
 pub struct TaskProjection {
-    tasks: HashMap<TaskId, ProjectedTask>,
-    last_sequence: u64,
-}
-
-#[derive(Debug, Clone)]
-pub struct ProjectedTask {
-    pub task_id: TaskId,
-    pub current_state: TaskState,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub assigned_role: Option<String>,
+    pub tasks: HashMap<TaskId, TaskRecord>,
+    pub last_sequence: u64,
 }
 
 impl TaskProjection {
@@ -34,19 +25,21 @@ impl TaskProjection {
 
         let task_id = match event.task_id {
             Some(id) => id,
-            None => return, // Ignore system events without a task
+            None => return,
         };
 
         match &event.payload {
-            EventPayload::TaskCreated { .. } => {
+            EventPayload::TaskCreated { request } => {
+                let req = serde_json::from_value::<crate::task::TaskRequest>(request.clone())
+                    .unwrap_or_else(|_| crate::task::TaskRequest::new(crate::task::TaskInput::Text("(unknown)".into())));
                 self.tasks.insert(
                     task_id,
-                    ProjectedTask {
+                    TaskRecord {
                         task_id,
+                        request: req,
                         current_state: TaskState::Received,
-                        created_at: event.timestamp,
-                        updated_at: event.timestamp,
                         assigned_role: None,
+                        state_history: vec![(TaskState::Received, event.timestamp)],
                     },
                 );
             }
@@ -68,21 +61,23 @@ impl TaskProjection {
 
                     if let Some(state) = new_state {
                         task.current_state = state;
-                        task.updated_at = event.timestamp;
+                        task.state_history.push((state, event.timestamp));
                     }
                 }
             }
             EventPayload::ModelRequest { role, .. } => {
                 if let Some(task) = self.tasks.get_mut(&task_id) {
-                    task.assigned_role = Some(role.clone());
-                    task.updated_at = event.timestamp;
+                    let role_enum = match role.as_str() {
+                        "Planner" => crate::state::ModelRole::Planner,
+                        "Coder" => crate::state::ModelRole::Coder,
+                        "Vision" => crate::state::ModelRole::Vision,
+                        "Reviewer" => crate::state::ModelRole::Reviewer,
+                        _ => crate::state::ModelRole::Planner,
+                    };
+                    task.assigned_role = Some(role_enum);
                 }
             }
-            _ => {
-                if let Some(task) = self.tasks.get_mut(&task_id) {
-                    task.updated_at = event.timestamp;
-                }
-            }
+            _ => {}
         }
     }
 
@@ -96,12 +91,12 @@ impl TaskProjection {
     }
 
     /// Get a task by ID.
-    pub fn get_task(&self, id: &TaskId) -> Option<&ProjectedTask> {
+    pub fn get_task(&self, id: &TaskId) -> Option<&TaskRecord> {
         self.tasks.get(id)
     }
 
     /// Get all tasks in a given state.
-    pub fn tasks_in_state(&self, state: &TaskState) -> Vec<&ProjectedTask> {
+    pub fn tasks_in_state(&self, state: &TaskState) -> Vec<&TaskRecord> {
         self.tasks.values().filter(|t| t.current_state == *state).collect()
     }
 
@@ -218,7 +213,7 @@ mod tests {
         proj.apply(&e2);
 
         let task = proj.get_task(&task_id).unwrap();
-        assert_eq!(task.assigned_role, Some("Coder".to_string()));
+        assert_eq!(task.assigned_role, Some(crate::state::ModelRole::Coder));
     }
 
     #[test]
@@ -325,6 +320,8 @@ mod tests {
         proj.apply(&e2);
 
         let task = proj.get_task(&task_id).unwrap();
-        assert_eq!(task.updated_at, ts2);
+        assert_eq!(task.state_history.len(), 2);
+        assert_eq!(task.state_history[1].0, TaskState::Classified);
+        assert_eq!(task.state_history[1].1, ts2);
     }
 }

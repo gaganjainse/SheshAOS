@@ -14,7 +14,6 @@ members = [
     "crates/nexusaos-tui",
     "crates/nexusaos-terminal",
     "bin/nexusaos-cli",
-    "tests",
 ]
 
 [workspace.dependencies]
@@ -25,7 +24,6 @@ serde_json = "1"
 toml = "0.8"
 clap = { version = "4", features = ["derive"] }
 thiserror = "2"
-anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 reqwest = { version = "0.12", features = ["json", "stream"] }
@@ -38,6 +36,9 @@ regex = "1"
 ratatui = "0.29"
 crossterm = { version = "0.28", features = ["event-stream"] }
 portable-pty = "0.8"
+# rusqlite uses the "bundled" feature to compile SQLite from source.
+# This ensures consistent behavior across platforms without requiring
+# system SQLite libraries. Trade-off: longer build times and larger binaries.
 rusqlite = { version = "0.32", features = ["bundled", "backup"] }
 notify = "6.1"
 

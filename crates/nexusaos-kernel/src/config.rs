@@ -274,7 +274,7 @@ impl AppConfig {
         Ok(config)
     }
 
-    /// Validate configuration values.
+    /// Validate configuration values after loading.
     fn validate(&self) -> Result<(), ConfigError> {
         if self.model_providers.is_empty() {
             return Err(ConfigError::Invalid {

@@ -87,12 +87,12 @@ fn create_deny_all_policy() -> PolicyEngine {
 #[tokio::test]
 async fn test_end_to_end_task_submission_and_state() {
     let temp_dir = TempDir::new().unwrap();
-    let event_store = Arc::new(EventStore::open(temp_dir.path().to_path_buf()).await.unwrap());
+    let event_store = Arc::new(JsonlEventStore::open(temp_dir.path().to_path_buf()).await.unwrap());
     let policy = create_allow_all_policy();
     let registry = Arc::new(ProviderRegistry::new());
     let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
 
-    let kernel = Kernel::new(event_store.clone(), policy, registry, broker).await.unwrap();
+    let kernel = Kernel::new(event_store.clone(), Arc::new(policy), registry, broker).await.unwrap();
 
     let input = TaskInput::Text("Explain the Rust ownership model".to_string());
     let task_id = kernel.submit_task(input).await.unwrap();
@@ -111,7 +111,7 @@ async fn test_durability_and_event_replay() {
 
     // 1. Scope 1: Write events to event store
     {
-        let event_store = EventStore::open(store_path.clone()).await.unwrap();
+        let event_store = JsonlEventStore::open(store_path.clone()).await.unwrap();
 
         let mut event1 = Event::new(
             task_id,
@@ -145,7 +145,7 @@ async fn test_durability_and_event_replay() {
     }
 
     // 2. Scope 2: Re-open store and replay
-    let reopened_store = EventStore::open(store_path).await.unwrap();
+    let reopened_store = JsonlEventStore::open(store_path).await.unwrap();
     let projection = ReplayEngine::replay(&reopened_store).await.unwrap();
 
     assert_eq!(projection.tasks.len(), 1);
@@ -156,12 +156,12 @@ async fn test_durability_and_event_replay() {
 #[tokio::test]
 async fn test_policy_enforcement_denied_action() {
     let temp_dir = TempDir::new().unwrap();
-    let event_store = Arc::new(EventStore::open(temp_dir.path().to_path_buf()).await.unwrap());
+    let event_store = Arc::new(JsonlEventStore::open(temp_dir.path().to_path_buf()).await.unwrap());
     let policy = create_deny_all_policy();
     let registry = Arc::new(ProviderRegistry::new());
     let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
 
-    let kernel = Kernel::new(event_store, policy, registry, broker).await.unwrap();
+    let kernel = Kernel::new(event_store, Arc::new(policy), registry, broker).await.unwrap();
 
     let input = TaskInput::Text("Dangerous command execution".to_string());
     let result = kernel.submit_task(input).await;

@@ -73,18 +73,30 @@ pub enum TrustTier {
 
 impl TrustTier {
     /// Create from a numeric tier value.
-    pub fn from_level(level: u8) -> Self {
+    ///
+    /// Returns `Err(ConfigError)` for unknown levels instead of silently defaulting.
+    pub fn from_level(level: u8) -> Result<Self, crate::error::ConfigError> {
         match level {
-            0 => TrustTier::Untrusted,
-            1 => TrustTier::Basic,
-            2 => TrustTier::Trusted,
-            3 => TrustTier::Autonomous,
-            _ => TrustTier::Untrusted, // unknown = untrusted
+            0 => Ok(TrustTier::Untrusted),
+            1 => Ok(TrustTier::Basic),
+            2 => Ok(TrustTier::Trusted),
+            3 => Ok(TrustTier::Autonomous),
+            _ => Err(crate::error::ConfigError::Invalid {
+                message: format!("Unknown trust tier level: {}", level),
+            }),
         }
     }
 }
 
-/// A policy violation record for audit purposes.
+/// Well-known action patterns used for policy evaluation.
+///
+/// Action patterns follow the format `<domain>.<action>`, e.g. `task.create`,
+/// `filesystem.read_file`. The policy engine matches these against rule
+/// `action_pattern` fields using exact match or glob suffix matching (`*`).
+pub mod actions {
+    /// Policy check for creating a new task.
+    pub const TASK_CREATE: &str = "task.create";
+}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PolicyViolation {
     /// The action that was attempted.
@@ -128,7 +140,10 @@ impl PolicyEngine {
     pub fn evaluate(&self, action: &str) -> PolicyDecision {
         for rule in &self.rules {
             if self.matches_pattern(&rule.action_pattern, action) {
-                let rule_tier = TrustTier::from_level(rule.trust_tier);
+                let rule_tier = match TrustTier::from_level(rule.trust_tier) {
+                    Ok(tier) => tier,
+                    Err(_) => continue,
+                };
                 if self.trust_tier >= rule_tier {
                     return self.parse_decision(&rule.decision, &rule.name);
                 }
@@ -467,13 +482,12 @@ mod tests {
 
     #[test]
     fn test_trust_tier_from_level_all_values() {
-        assert_eq!(TrustTier::from_level(0), TrustTier::Untrusted);
-        assert_eq!(TrustTier::from_level(1), TrustTier::Basic);
-        assert_eq!(TrustTier::from_level(2), TrustTier::Trusted);
-        assert_eq!(TrustTier::from_level(3), TrustTier::Autonomous);
-        // Unknown level defaults to Untrusted
-        assert_eq!(TrustTier::from_level(99), TrustTier::Untrusted);
-        assert_eq!(TrustTier::from_level(255), TrustTier::Untrusted);
+        assert!(matches!(TrustTier::from_level(0), Ok(TrustTier::Untrusted)));
+        assert!(matches!(TrustTier::from_level(1), Ok(TrustTier::Basic)));
+        assert!(matches!(TrustTier::from_level(2), Ok(TrustTier::Trusted)));
+        assert!(matches!(TrustTier::from_level(3), Ok(TrustTier::Autonomous)));
+        assert!(TrustTier::from_level(99).is_err());
+        assert!(TrustTier::from_level(255).is_err());
     }
 
     #[test]
