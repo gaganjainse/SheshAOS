@@ -1,0 +1,56 @@
+insights:
+  community_health:
+    enabled: true
+    include:
+      - code_of_conduct
+      - contributing_guide
+      - license
+      - readme
+      - issue_template
+      - pull_request_template
+      - security_policy
+      - codeowners
+    exclude_paths:
+      - "**/target/**"
+      - "**/.git/**"
+  code_frequency:
+    enabled: true
+    weeks: 52
+  participation:
+    enabled: true
+    owner_username: nexusaos
+  pulse:
+    enabled: true
+    metrics:
+      - open_issues
+      - closed_issues
+      - open_prs
+      - closed_prs
+      - merged_prs
+      - contributors
+  community_profile:
+    enabled: true
+    contact_links:
+      - name: Security
+        url: https://github.com/NexusAOS/NexusAOS/security/advisories/new
+      - name: Documentation
+        url: https://nexusaos.io/docs
+      - name: Discord
+        url: https://discord.gg/nexusaos
+      - name: Matrix
+        url: https://matrix.to/#/#nexusaos:matrix.org
+  traffic:
+    enabled: true
+    referrers: true
+    paths: true
+    search: true
+  code_frequency_owners:
+    enabled: true
+    groups:
+      - name: core-maintainers
+        members:
+          - "@nexusaos/maintainers"
+  contributors:
+    enabled: true
+    show_bots: false
+    anonymity: "email"

@@ -1,0 +1,91 @@
+oidc:
+  federation:
+    - provider: aws
+      audience: https://nexusaos.aws.example.com
+      subject_claim: sub
+      issuer: https://token.actions.githubusercontent.com
+      authorization_url: https://nexusaos.aws.example.com/login
+      token_url: https://nexusaos.aws.example.com/token
+    - provider: azure
+      audience: https://nexusaos.azure.example.com
+      subject_claim: sub
+      issuer: https://token.actions.githubusercontent.com
+      authorization_url: https://nexusaos.azure.example.com/login
+      token_url: https://nexusaos.azure.example.com/token
+    - provider: gcp
+      audience: https://nexusaos-gcp.example.com
+      subject_claim: sub
+      issuer: https://token.actions.githubusercontent.com
+      authorization_url: https://nexusaos-gcp.example.com/login
+      token_url: https://nexusaos-gcp.example.com/token
+  roles:
+    - name: deploy-role
+      provider: aws
+      conditions:
+        - claim: repository
+          equals: NexusAOS/NexusAOS
+        - claim: environment
+          equals: production
+        - claim: actor
+          pattern: "^nexusaos-bot$"
+      permissions:
+        - sts:AssumeRole
+      session_duration_seconds: 3600
+    - name: staging-deploy-role
+      provider: aws
+      conditions:
+        - claim: repository
+          equals: NexusAOS/NexusAOS
+        - claim: environment
+          equals: staging
+        - claim: actor
+          pattern: "^nexusaos-bot$"
+      permissions:
+        - sts:AssumeRole
+      session_duration_seconds: 3600
+    - name: azure-deploy-role
+      provider: azure
+      conditions:
+        - claim: repository
+          equals: NexusAOS/NexusAOS
+        - claim: environment
+          equals: production
+      permissions:
+        - Azure.Resources.Deploy
+      session_duration_seconds: 3600
+    - name: gcp-deploy-role
+      provider: gcp
+      conditions:
+        - claim: repository
+          equals: NexusAOS/NexusAOS
+        - claim: environment
+          equals: production
+      permissions:
+        - roles/editor
+      session_duration_seconds: 3600
+  trust_policies:
+    - issuer: https://token.actions.githubusercontent.com
+      audiences:
+        - https://nexusaos.aws.example.com
+        - https://nexusaos.azure.example.com
+        - https://nexusaos-gcp.example.com
+      condition:
+        - claim: repository
+          equals: NexusAOS/NexusAOS
+        - claim: ref
+          pattern: "^refs/heads/(main|master)$"
+    - issuer: https://token.actions.githubusercontent.com
+      audiences:
+        - https://nexusaos.aws.example.com
+        - https://nexusaos.azure.example.com
+        - https://nexusaos-gcp.example.com
+      condition:
+        - claim: repository
+          equals: NexusAOS/NexusAOS
+        - claim: environment
+          equals: staging
+  token_exchange:
+    enabled: true
+    grant_type: urn:ietf:params:oauth:grant-type:token-exchange
+    subject_token_type: urn:ietf:params:oauth:token-type:jwt
+    requested_token_type: urn:ietf:params:oauth:token-type:access_token

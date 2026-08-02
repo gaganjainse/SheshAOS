@@ -28,8 +28,6 @@ impl ApprovalModal {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_modal_struct_exists() {
         assert!(true);

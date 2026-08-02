@@ -1,0 +1,18 @@
+name: staging
+url: https://staging.nexusaos.io
+protection_rules:
+  - required_reviewers:
+      reviewers:
+        - team: developers
+      wait_after_review: 0
+  - deployment_branch_policy:
+      protected_branches: true
+      custom_branch_policies: false
+secrets:
+  - name: STAGING_DATABASE_URL
+  - name: STAGING_API_KEY
+  - name: STAGING_SENTRY_DSN
+  - name: STAGING_AWS_ACCESS_KEY_ID
+  - name: STAGING_AWS_SECRET_ACCESS_KEY
+  - name: STAGING_RUST_LOG
+  - name: STAGING_DEPLOY_TOKEN

@@ -1,0 +1,60 @@
+security:
+  vulnerability_reporting:
+    enabled: true
+    email: security@nexusaos.io
+    private_vulnerability_reporting:
+      enabled: true
+      advisory_database: https://api.github.com/security-advisories
+  security_advisories:
+    enabled: true
+    publish_automatically: false
+    auto_triage: true
+    severity_threshold: moderate
+  secret_scanning:
+    enabled: true
+    push_protection:
+      enabled: true
+      bypass_allowlist:
+        - "NEXUSAOS_PUBLIC_KEY"
+    scan_history: true
+  code_scanning:
+    enabled: true
+    default_query:
+      enabled: true
+      languages:
+        - rust
+    custom_queries:
+      - path: .github/codeql/queries
+        language: rust
+    auto_trigger:
+      push: true
+      pull_request: true
+      schedule:
+        interval: weekly
+  dependency_review:
+    enabled: true
+    ignore_prs_from_contributors: false
+  token_scanning:
+    enabled: true
+    scan_history: true
+  alerts:
+    notifications:
+      - type: email
+        recipients:
+          - security@nexusaos.io
+      - type: slack
+        channel: "#security-alerts"
+        webhook: ${SECURITY_SLACK_WEBHOOK}
+    auto_triage:
+      critical: true
+      high: true
+      medium: false
+      low: false
+  incident_response:
+    enabled: true
+    escalation_contacts:
+      - name: Security Lead
+        email: security-lead@nexusaos.io
+      - name: Infrastructure Lead
+        email: infra@nexusaos.io
+    runbook_url: https://nexusaos.io/docs/security/runbook

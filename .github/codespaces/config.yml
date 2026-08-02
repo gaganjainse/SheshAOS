@@ -1,0 +1,36 @@
+codespaces:
+  machine:
+    type: standardLinux32gb
+  features:
+    - name: ghcr.io/devcontainers/features/rust:1
+      version: latest
+    - name: ghcr.io/devcontainers/features/node:1
+      version: latest
+    - name: ghcr.io/devcontainers/features/python:3
+      version: latest
+    - name: ghcr.io/devcontainers/features/git:1
+      version: latest
+  settings:
+    editor: vscode
+    customizations:
+      vscode:
+        extensions:
+          - rust-lang.rust-analyzer
+          - ms-vscode.vscode-json
+          - editorconfig.editorconfig
+          - streetsidesoftware.code-spell-checker
+        settings:
+          rust-analyzer.cargo.features: "all"
+          rust-analyzer.procMacro.enable: true
+          rust-analyzer.checkOnSave.command: "clippy"
+          rust-analyzer.rustfmt.extraArgs:
+            - "--edition"
+            - "2021"
+          files.autoSave: "afterDelay"
+          files.autoSaveDelay: 1000
+          terminal.integrated.defaultProfile.linux: "bash"
+  post_create_command: cargo build --workspace
+  post_start_command: cargo check --workspace
+  pre_build_command: cargo fetch
+  timeout_minutes: 60
+  retention_days: 30

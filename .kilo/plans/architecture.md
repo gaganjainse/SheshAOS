@@ -744,6 +744,247 @@ TermPerformer::advance (via vte::Parser)
 
 ---
 
+## 15. GitHub Repository Configuration
+
+### 15.1 Repository Metadata
+
+```yaml
+name: NexusAOS
+description: Governance-first, event-sourced AI operating environment for Ubuntu Linux
+homepage: https://github.com/nexusaos/NexusAOS
+private: false
+has_issues: true
+has_projects: true
+has_wiki: true
+has_discussions: true
+topics:
+  - rust
+  - terminal
+  - ai
+  - governance
+  - event-sourcing
+  - microkernel
+  - tui
+  - gui
+  - ssh
+  - pty
+  - sqlite
+  - iced
+  - ratatui
+  - local-first
+  - privacy
+  - open-source
+```
+
+### 15.2 Branch Protection Ruleset
+
+```yaml
+name: Branch Protection
+target:
+  branch_name_protection: main,master
+enforcement: active
+bypass_actors: []
+rules:
+  - name: Require pull request
+    type: pull_request
+    parameters:
+      required_approving_review_count: 1
+      dismiss_stale_reviews: true
+      require_code_owner_reviews: true
+      required_review_thread_resolution: true
+  - name: Require status checks
+    type: required_status_checks
+    parameters:
+      required_status_checks:
+        - context: lint
+        - context: test
+        - context: build
+        - context: security
+      strict: true
+  - name: Require conversation resolution
+    type: required_conversation_resolution
+  - name: Require signed commits
+    type: required_signatures
+  - name: Require linear history
+    type: required_linear_history
+  - name: Restrict pushes
+    type: restrictions
+    parameters:
+      branch_name_patterns: []
+      actor_ids: []
+  - name: Allow auto-merge
+    type: allow_auto_merge
+```
+
+### 15.3 CI/CD Workflows
+
+| Workflow | File | Trigger | Purpose |
+|----------|------|---------|---------|
+| CI | `.github/workflows/ci.yml` | Push/PR | Lint, test, build, security |
+| PR Checks | `.github/workflows/pr.yml` | PR | Title, size, conflicts, breaking changes |
+| Benchmarks | `.github/workflows/bench.yml` | Push/PR | Criterion benchmarks |
+
+### 15.4 Environments
+
+| Environment | Protection | Secrets | Purpose |
+|-------------|-----------|--------|---------|
+| `production` | Maintainer review | PROD_* | Production deployments |
+| `staging` | Developer review | STAGING_* | Pre-production testing |
+
+### 15.5 Codespaces
+
+```yaml
+image: rust:latest
+features:
+  - ghcr.io/devcontainers/features/github-cli:1
+  - ghcr.io/devcontainers/features/docker-in-docker:2
+  - ghcr.io/devcontainers/features/terraform:1
+vscode:
+  extensions:
+    - rust-lang.rust-analyzer
+    - ms-vscode.cpptools
+    - github.copilot
+    - github.vscode-github-actions
+    - yzhang.markdown-all-in-one
+    - mermaidchart.vscode-mermaid-chart
+postCreateCommand: cargo build --workspace
+```
+
+### 15.6 Security & Quality
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Secret Scanning | ✅ Enabled | Detect committed secrets |
+| Code Scanning | ✅ Enabled | CodeQL analysis |
+| Dependency Review | ✅ Enabled | Review dependency changes |
+| Dependabot | ✅ Enabled | Automated dependency updates |
+| Security Advisories | ✅ Enabled | Private vulnerability reporting |
+
+### 15.7 Webhooks
+
+| Webhook | Events | Purpose |
+|---------|--------|---------|
+| CI Pipeline | push, pull_request | Trigger GitHub Actions |
+| Deployment | deployment | Notify on deployments |
+| Security | security_advisory, vulnerability_alert | Security notifications |
+| Slack Integration | * | Team notifications |
+| Discord Integration | * | Community notifications |
+
+### 15.8 OIDC Federation
+
+| Provider | Purpose |
+|----------|---------|
+| AWS | Deploy to EC2/S3 |
+| Azure | Deploy to Azure |
+| GCP | Deploy to GCP |
+
+### 15.9 Copilot Configuration
+
+```yaml
+github_copilot:
+  enabled: true
+  chat:
+    enabled: true
+    agents:
+      - name: NexusAOS Assistant
+        description: Help with NexusAOS development
+        tools:
+          - read
+          - search
+          - edit
+          - bash
+  code_completion:
+    enabled: true
+  restrictions:
+    allow_private_repos: false
+    allowed_users:
+      - org:nexusaos
+```
+
+### 15.10 Agents
+
+| Agent | Type | Purpose |
+|-------|------|---------|
+| CI Agent | GitHub Actions | Automated testing |
+| Review Agent | GitHub Actions | Code review assistance |
+| Doc Agent | GitHub Actions | Documentation updates |
+
+### 15.11 Insights & Analytics
+
+| Metric | Tracked |
+|--------|---------|
+| Community Health | Issue/PR velocity, response time |
+| Code Frequency | Commits, additions, deletions |
+| Traffic | Views, clones, unique visitors |
+| Contributors | New contributors, active contributors |
+
+### 15.12 Pages
+
+```yaml
+source:
+  branch: main
+  path: /docs
+build_type: legacy
+custom_domain: docs.nexusaos.dev
+https_enforced: true
+```
+
+### 15.13 Deploy Keys
+
+| Key | Type | Purpose |
+|-----|------|---------|
+| Production | Read-write | Deployment automation |
+| Staging | Read-only | CI/CD access |
+
+### 15.14 Secrets & Variables
+
+| Category | Variables |
+|----------|-----------|
+| **Production** | `PROD_API_KEY`, `PROD_DATABASE_URL`, `PROD_SSH_KEY` |
+| **Staging** | `STAGING_API_KEY`, `STAGING_DATABASE_URL` |
+| **CI/CD** | `CARGO_REGISTRY_TOKEN`, `COVERAGE_TOKEN` |
+| **Security** | `GPG_PRIVATE_KEY`, `SLACK_WEBHOOK` |
+
+### 15.15 GitHub Apps
+
+| App | Purpose |
+|-----|---------|
+| Dependabot | Automated dependency updates |
+| CodeQL | Security scanning |
+| Renovate | Alternative dependency bot |
+| Stale | Auto-close stale issues |
+
+---
+
+## 16. Complete Workflow Summary
+
+```mermaid
+graph TD
+    A["Developer"] --> B["Fork/Clone"]
+    B --> C["Create Branch"]
+    C --> D["Write Code"]
+    D --> E["cargo fmt/clippy/test"]
+    E --> F["Commit (Conventional)"]
+    F --> G["Push to Fork"]
+    G --> H["Open PR"]
+    H --> I["CI Checks"]
+    I --> J["Code Review"]
+    J --> K{Approved?}
+    K -->|No| L["Address Feedback"]
+    L --> D
+    K -->|Yes| M["Merge to main"]
+    M --> N["Deploy Staging"]
+    N --> O["E2E Tests"]
+    O --> P{Pass?}
+    P -->|No| Q["Rollback"]
+    Q --> M
+    P -->|Yes| R["Deploy Production"]
+    R --> S["Monitor"]
+    S --> T["Release"]
+```
+
+---
+
 *Generated: 2026-08-02*  
 *Workspace: NexusAOS*  
 *Architecture: event-sourced governance microkernel with wave-terminal object model*

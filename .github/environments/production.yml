@@ -1,0 +1,21 @@
+name: production
+url: https://nexusaos.io
+protection_rules:
+  - required_reviewers:
+      reviewers:
+        - team: maintainers
+      wait_after_review: 1
+  - deployment_branch_policy:
+      protected_branches: true
+      custom_branch_policies: false
+  - wait_timer:
+      wait_after_review: 10
+secrets:
+  - name: PRODUCTION_DATABASE_URL
+  - name: PRODUCTION_API_KEY
+  - name: PRODUCTION_TLS_CERTIFICATE
+  - name: PRODUCTION_SENTRY_DSN
+  - name: PRODUCTION_AWS_ACCESS_KEY_ID
+  - name: PRODUCTION_AWS_SECRET_ACCESS_KEY
+  - name: PRODUCTION_RUST_LOG
+  - name: PRODUCTION_DEPLOY_TOKEN

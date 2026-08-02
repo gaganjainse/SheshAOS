@@ -1,0 +1,87 @@
+webhooks:
+  - name: ci-pipeline
+    url: https://nexusaos-ci.example.com/webhooks/github
+    content_type: json
+    secret: ${CI_WEBHOOK_SECRET}
+    events:
+      - pull_request
+      - pull_request_review
+      - pull_request_review_comment
+      - push
+      - release
+      - status
+      - check_run
+      - check_suite
+    active: true
+    insecure_ssl: false
+    retry_config:
+      max_retries: 3
+      retry_delay_seconds: 5
+      retry_backoff_multiplier: 2
+    timeout_seconds: 10
+  - name: deployment-notifications
+    url: https://nexusaos-webhooks.example.com/deployments
+    content_type: json
+    secret: ${DEPLOY_WEBHOOK_SECRET}
+    events:
+      - deployment
+      - deployment_status
+      - release
+      - status
+    active: true
+    insecure_ssl: false
+    retry_config:
+      max_retries: 3
+      retry_delay_seconds: 5
+      retry_backoff_multiplier: 2
+    timeout_seconds: 10
+  - name: security-alerts
+    url: https://nexusaos-webhooks.example.com/security
+    content_type: json
+    secret: ${SECURITY_WEBHOOK_SECRET}
+    events:
+      - security_advisory
+      - secret_scanning_alert
+      - vulnerability_alert
+      - code_scanning_alert
+    active: true
+    insecure_ssl: false
+    retry_config:
+      max_retries: 5
+      retry_delay_seconds: 10
+      retry_backoff_multiplier: 2
+    timeout_seconds: 15
+  - name: slack-notifications
+    url: https://hooks.slack.com/services/${SLACK_WEBHOOK_PATH}
+    content_type: json
+    secret: ${SLACK_WEBHOOK_SECRET}
+    events:
+      - pull_request
+      - pull_request_review
+      - push
+      - release
+      - issue
+      - issue_comment
+    active: true
+    insecure_ssl: false
+    retry_config:
+      max_retries: 2
+      retry_delay_seconds: 3
+      retry_backoff_multiplier: 2
+    timeout_seconds: 10
+  - name: discord-notifications
+    url: https://discord.com/api/webhooks/${DISCORD_WEBHOOK_ID}/${DISCORD_WEBHOOK_TOKEN}
+    content_type: json
+    secret: ${DISCORD_WEBHOOK_SECRET}
+    events:
+      - push
+      - pull_request
+      - release
+      - deployment_status
+    active: true
+    insecure_ssl: false
+    retry_config:
+      max_retries: 2
+      retry_delay_seconds: 3
+      retry_backoff_multiplier: 2
+    timeout_seconds: 10

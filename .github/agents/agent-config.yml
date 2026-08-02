@@ -1,0 +1,91 @@
+agents:
+  - name: nexusaos-ci-agent
+    description: CI agent for NexusAOS
+    model: github-copilot
+    instructions: |
+      You are the CI agent for NexusAOS. You run linting, testing, and
+      build checks on pull requests and pushes to protected branches.
+      Always run the full test suite and report results clearly.
+      If any check fails, provide the error output and suggest fixes.
+    tools:
+      - type: bash
+        name: run-tests
+        description: Run the test suite
+        command: cargo test --workspace
+      - type: bash
+        name: run-lint
+        description: Run linters and formatters
+        command: cargo clippy --all-targets -- -D warnings && cargo fmt --check
+      - type: bash
+        name: run-build
+        description: Build the workspace
+        command: cargo build --workspace
+      - type: bash
+        name: run-security-audit
+        description: Run cargo audit
+        command: cargo audit
+    triggers:
+      - pull_request
+      - push
+      - workflow_dispatch
+    permissions:
+      - contents: read
+      - checks: write
+      - statuses: write
+      - pull-requests: write
+    environment: production
+  - name: nexusaos-review-agent
+    description: Code review agent for NexusAOS
+    model: github-copilot
+    instructions: |
+      You are the code review agent for NexusAOS. You review pull requests
+      for code quality, security, and adherence to project conventions.
+      Check for:
+      - Conventional commit message format
+      - Rust idioms and best practices
+      - Unnecessary unwrap/expect usage
+      - Missing documentation on public APIs
+      - Proper error handling
+      - Test coverage for new code
+    tools:
+      - type: bash
+        name: check-formatting
+        description: Check code formatting
+        command: cargo fmt --check
+      - type: bash
+        name: check-clippy
+        description: Run Clippy linter
+        command: cargo clippy --all-targets -- -D warnings
+      - type: bash
+        name: check-unsafe-code
+        description: Check for unsafe code usage
+        command: grep -rn "unsafe {" crates/ bin/ --include="*.rs" || echo "No unsafe blocks found"
+    triggers:
+      - pull_request
+    permissions:
+      - contents: read
+      - pull-requests: write
+    environment: staging
+  - name: nexusaos-doc-agent
+    description: Documentation agent for NexusAOS
+    model: github-copilot
+    instructions: |
+      You are the documentation agent for NexusAOS. You ensure that
+      documentation is complete, accurate, and up to date.
+      Check that all public APIs have documentation, that README is current,
+      and that changelog entries are present for user-facing changes.
+    tools:
+      - type: bash
+        name: check-doc-coverage
+        description: Check documentation coverage
+        command: cargo doc --document-private-items --no-deps 2>&1 | tail -20
+      - type: bash
+        name: check-changelog
+        description: Verify changelog has entry for this PR
+        command: grep -q "$(git log -1 --pretty=%s)" CHANGELOG.md || echo "Changelog entry missing"
+    triggers:
+      - pull_request
+    permissions:
+      - contents: read
+      - pull-requests: write
+    environment: staging

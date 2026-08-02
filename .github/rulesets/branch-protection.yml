@@ -1,0 +1,38 @@
+name: Branch Protection
+target: branch
+enforcement: active
+conditions:
+  ref_name:
+    include:
+      - main
+      - master
+rules:
+  - type: pull_request
+    parameters:
+      required_approving_review_count: 1
+      require_code_owner_review: true
+      dismiss_stale_reviews: true
+      require_last_code_approval: true
+      require_review_from_code_owners: true
+      required_review_thread_resolution: true
+  - type: required_status_checks
+    parameters:
+      required_status_checks:
+        - lint
+        - test
+        - build
+        - security
+      require_all_status_checks: true
+  - type: commit_author_email_pattern
+    parameters:
+      pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+  - type: non_fast_forward
+    parameters:
+      allow_force_push: false
+      allow_delete: false
+  - type: required_linear_history
+    parameters: {}
+  - type: commit_message_pattern
+    parameters:
+      pattern: "^(feat|fix|docs|style|refactor|test|chore|ci|perf|revert)(\\([^)]+\\))?: .+"
+      message: "Commit message must follow conventional commits format"

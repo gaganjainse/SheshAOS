@@ -1,0 +1,88 @@
+copilot:
+  enabled: true
+  model:
+    default: copilot
+    code_completion: copilot
+    chat: copilot
+    agent: copilot
+  settings:
+    code_completion:
+      enabled: true
+      max_suggestions: 5
+      debounce_delay: 50
+      show_ghost_text: true
+      accept_suggestion_on_tab: true
+      show_inline_suggestions: true
+      exclude_patterns:
+        - "**/target/**"
+        - "**/.git/**"
+        - "**/*.lock"
+    chat:
+      enabled: true
+      temperature: 0.2
+      max_tokens: 4096
+      context_window: 8192
+      include_open_tabs: true
+      include_terminal_output: true
+      include_diff: true
+      language: en
+    agent_mode:
+      enabled: true
+      auto_run_tests: true
+      auto_format: true
+      auto_fix: true
+      max_iterations: 10
+      allow_write: true
+      allow_execute: false
+      allowed_patterns:
+        - "**/*.rs"
+        - "**/Cargo.toml"
+        - "**/Cargo.lock"
+        - "**/*.md"
+        - "**/*.yml"
+        - "**/*.yaml"
+      denied_patterns:
+        - "**/target/**"
+        - "**/.git/**"
+        - "**/secrets/**"
+        - "**/.env*"
+  workspace:
+    trust_level: limited
+    allow_read: true
+    allow_write:
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - "**/*.md"
+      - "**/*.yml"
+      - "**/*.yaml"
+    allow_execute: false
+    allow_delete: false
+    allow_rename: true
+    allow_move: true
+  restrictions:
+    max_file_size_mb: 10
+    max_tokens_per_request: 8192
+    rate_limit_requests_per_minute: 60
+    blocked_patterns:
+      - "password"
+      - "secret"
+      - "api_key"
+      - "token"
+      - "private_key"
+  integrations:
+    vscode:
+      enabled: true
+      extension_id: github.copilot
+    github:
+      enabled: true
+      pull_request_summaries: true
+      commit_messages: true
+      issue_suggestions: true
+    cli:
+      enabled: true
+      command: copilot
+  notifications:
+    enabled: true
+    show_inline_suggestions: true
+    show_chat_notifications: true
+    sound: false

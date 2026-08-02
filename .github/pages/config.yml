@@ -1,0 +1,40 @@
+pages:
+  source:
+    branch: main
+    path: /docs
+  custom_domain: nexusaos.io
+  https:
+    enabled: true
+    force_https: true
+  build:
+    provider: static
+    static_site_generator:
+      name: Hugo
+      version: latest
+      config_file: hugo.toml
+  redirects:
+    - from: /docs/getting-started
+      to: /docs/installation
+      permanent: true
+    - from: /docs/api
+      to: /docs/reference/api
+      permanent: true
+  headers:
+    - pattern: "/**"
+      headers:
+        - key: X-Content-Type-Options
+          value: nosniff
+        - key: X-Frame-Options
+          value: DENY
+        - key: X-XSS-Protection
+          value: "1; mode=block"
+        - key: Referrer-Policy
+          value: strict-origin-when-cross-origin
+        - key: Permissions-Policy
+          value: "camera=(), microphone=(), geolocation=()"
+  excluded_paths:
+    - ".github/**"
+    - "src/**"
+    - "target/**"
+    - "**/*.rs"
+    - "**/Cargo.toml"
