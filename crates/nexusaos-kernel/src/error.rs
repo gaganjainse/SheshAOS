@@ -476,7 +476,7 @@ mod tests {
 
     #[test]
     fn test_storage_error_from_io() {
-        let io_err = std::io::Error::new(std::io::ErrorKind::Other, "disk full");
+        let io_err = std::io::Error::other("disk full");
         let storage_err: StorageError = io_err.into();
         assert!(storage_err.to_string().contains("Event store I/O error"));
     }

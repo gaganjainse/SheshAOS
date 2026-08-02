@@ -1028,6 +1028,6 @@ mod tests {
 
         // The projection should have the task with state history
         let events = store.get_task_events(&id).await.unwrap();
-        assert!(events.len() >= 1);
+        assert!(!events.is_empty());
     }
 }

@@ -312,6 +312,5 @@ mod tests {
         let pressure = ResourceMonitor::snapshot();
         assert!(pressure.ram_total_mb > 0, "total RAM should be > 0");
         assert!(pressure.ram_available_mb <= pressure.ram_total_mb, "available <= total");
-        assert!(pressure.disk_available_gb > 0 || pressure.disk_available_gb == 0, "disk is a number");
     }
 }
