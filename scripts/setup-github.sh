@@ -43,7 +43,9 @@ topics=(
 
 for topic in "${topics[@]}"; do
   echo "  + $topic"
-  gh repo edit "$REPO" --add-topic "$topic" || true
+  gh repo edit "$REPO" --add-topic "$topic" || {
+    echo "  ⚠️  Failed to add topic $topic"
+  }
 done
 
 echo ""
@@ -87,7 +89,9 @@ for label in "${labels[@]}"; do
   IFS='|' read -r name color desc <<< "$label"
   echo "  + $name"
   gh label create "$name" --repo "$REPO" --color "$color" --description "$desc" 2>/dev/null || \
-  gh label edit "$name" --repo "$REPO" --color "$color" --description "$desc" 2>/dev/null || true
+  gh label edit "$name" --repo "$REPO" --color "$color" --description "$desc" 2>/dev/null || {
+    echo "  ⚠️  Failed to create or update label $name"
+  }
 done
 
 echo ""
@@ -102,7 +106,9 @@ milestones=(
 for milestone in "${milestones[@]}"; do
   IFS='|' read -r title desc due <<< "$milestone"
   echo "  + $title"
-  gh api repos/$REPO/milestones -X POST -f title="$title" -f description="$desc" -f due_on="$due" 2>/dev/null || true
+  gh api repos/$REPO/milestones -X POST -f title="$title" -f description="$desc" -f due_on="$due" 2>/dev/null || {
+    echo "  ⚠️  Failed to create milestone $title"
+  }
 done
 
 echo ""
@@ -167,15 +173,20 @@ cat > /tmp/branch-protection.json <<'EOF'
 }
 EOF
 
-gh api repos/$REPO/rulesets -X POST --input /tmp/branch-protection.json 2>/dev/null || \
-echo "⚠️  Ruleset creation requires repository admin access. Create manually in GitHub UI."
+gh api repos/$REPO/rulesets -X POST --input /tmp/branch-protection.json 2>/dev/null || {
+  echo "⚠️  Ruleset creation requires repository admin access. Create manually in GitHub UI."
+}
 
 rm -f /tmp/branch-protection.json
 
 echo ""
 echo "🌍 Creating Environments"
-gh api repos/$REPO/environments/production -X PUT -f wait_timer=5 2>/dev/null || true
-gh api repos/$REPO/environments/staging -X PUT -f wait_timer=2 2>/dev/null || true
+gh api repos/$REPO/environments/production -X PUT -f wait_timer=5 2>/dev/null || {
+  echo "  ⚠️  Failed to create production environment"
+}
+gh api repos/$REPO/environments/staging -X PUT -f wait_timer=2 2>/dev/null || {
+  echo "  ⚠️  Failed to create staging environment"
+}
 
 echo ""
 echo "🔔 Setting Up Webhooks"

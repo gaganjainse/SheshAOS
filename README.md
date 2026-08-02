@@ -11,7 +11,6 @@ lang: en
 ![Version](https://img.shields.io/badge/Version-v2.0.0-green?style=for-the-badge&logo=git-semver)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue?style=for-the-badge&logo=github)
-![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/Tests-1000%2B-success?style=for-the-badge)
 
 **🏛️ Governance-first, event-sourced AI operating environment
@@ -45,11 +44,10 @@ To provide a **governance-first AI platform** where:
 ### 📊 Project Stats
 
 | Metric | Value |
-| ------- | ------- |
+| ------- | ----- |
 | 🦀 **Language** | Rust 2024 |
 | 📦 **Crates** | 12 workspace crates |
 | 🧪 **Tests** | 981 passing |
-| 📈 **Coverage** | 100% public API |
 | 🔍 **Lints** | 0 warnings |
 | 🚀 **CI/CD** | GitHub Actions |
 | 📄 **License** | MIT |
@@ -166,7 +164,8 @@ cargo build --release
 
 ### 🌐 Topics
 
-`rust` `terminal` `ai` `governance` `event-sourcing` `microkernel` `tui` `gui` `ssh` `pty` `sqlite` `iced` `ratatui` `local-first` `privacy` `open-source`
+`rust` `terminal` `ai` `governance` `event-sourcing` `microkernel` `tui` `gui` `ssh`
+`pty` `sqlite` `iced` `ratatui` `local-first` `privacy` `open-source`
 
 ---
 
@@ -181,11 +180,11 @@ of every state change.
 
 | Problem | Solution |
 | -------- | -------- |
-| 🤖 AI models operate without oversight | ✅ **Governance-first**: Kernel validates every action |
-| 📝 State changes are lost or mutable | ✅ **Event sourcing**: Append-only audit trail |
-| 🔌 Cloud-dependent AI tools | ✅ **Local-first**: Works offline, no cloud dependencies |
-| 🔒 Destructive operations without confirmation | ✅ **Policy engine**: All actions pass through checks |
-| 🧩 Locked to specific model runners | ✅ **Provider interface**: Models are replaceable |
+| 🤖 AI lacks oversight | ✅ **Governance-first**: Kernel validates actions |
+| 📝 State is mutable | ✅ **Event sourcing**: Append-only log |
+| 🔌 Cloud-dependent AI tools | ✅ **Local-first**: Works offline, no cloud |
+| 🔒 Destructive ops need approval | ✅ **Policy engine**: Actions pass checks |
+| 🧩 Locked to one model | ✅ **Provider interface**: Models are swappable |
 
 ### Design Principles
 
@@ -392,8 +391,8 @@ graph TD
 
 | Role | Model | Quantization | Use Case |
 | ----- | ------ | ------------ | -------- |
-| 📋 **Planner** | Gemma 4 12B Agentic Fable | Q4_K_M | Architecture, planning, review |
-| 💻 **Coder** | Qwen3-Coder 30B-A3B | Q4_K_M | Implementation, debugging, tests |
+| 📋 **Planner** | Gemma 4 12B | Q4_K_M | Architecture, planning, review |
+| 💻 **Coder** | Qwen3-Coder 30B | Q4_K_M | Implementation, debugging, tests |
 | 👁️ **Vision** | Qwen3.5 9B | Q4_K_M | Screenshots, diagrams, documents |
 
 ---
@@ -497,21 +496,21 @@ NexusAOS/
 
 ### Test Coverage
 
-| Crate | Tests | Coverage |
-| ----- | ----- | -------- |
-| nexusaos-kernel | 396 | 100% public API |
-| nexusaos-waveobj | 204 | 100% public API |
-| nexusaos-wps | 71 | 100% public API |
-| nexusaos-blockctl | 48 | 100% public API |
-| nexusaos-ai | 18 | 100% public API |
-| nexusaos-rpc | 29 | 100% public API |
-| nexusaos-remote | 19 | 100% public API |
-| nexusaos-terminal | 19 | 100% public API |
-| nexusaos-vault | 53 | 100% public API |
-| nexusaos-wconfig | 31 | 100% public API |
-| nexusaos-gui | 32 | 100% public API |
-| nexusaos-tui | 30 | 100% public API |
-| **Total** | **981** | **100%** |
+| Crate | Tests |
+| ----- | ----- |
+| nexusaos-kernel | 396 |
+| nexusaos-waveobj | 204 |
+| nexusaos-wps | 71 |
+| nexusaos-blockctl | 48 |
+| nexusaos-ai | 18 |
+| nexusaos-rpc | 29 |
+| nexusaos-remote | 19 |
+| nexusaos-terminal | 19 |
+| nexusaos-vault | 53 |
+| nexusaos-wconfig | 31 |
+| nexusaos-gui | 32 |
+| nexusaos-tui | 30 |
+| **Total** | **981** |
 
 ### Running Tests
 
@@ -602,4 +601,5 @@ This project is licensed under the [MIT License](LICENSE).
 
 ### Built with ❤️ by the NexusAOS Team
 
-[GitHub](https://github.com/nexusaos/NexusAOS) • [Issues](https://github.com/nexusaos/NexusAOS/issues) • [Discussions](https://github.com/nexusaos/NexusAOS/discussions)
+[GitHub](https://github.com/nexusaos/NexusAOS) • [Issues](https://github.com/nexusaos/NexusAOS/issues)
+• [Discussions](https://github.com/nexusaos/NexusAOS/discussions)

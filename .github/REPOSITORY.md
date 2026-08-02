@@ -231,8 +231,6 @@ postStartCommand: cargo test --workspace
 | CI Pipeline | push, pull_request | Internal | Trigger GitHub Actions |
 | Deployment | deployment | Internal | Notify on deployments |
 | Security | security_advisory, vulnerability_alert | Internal | Security notifications |
-| Slack | * | https://hooks.slack.com/... | Team notifications |
-| Discord | * | https://discord.com/... | Community notifications |
 
 ---
 
@@ -240,9 +238,9 @@ postStartCommand: cargo test --workspace
 
 | Provider | Purpose | Trust Policy |
 |----------|---------|--------------|
-| AWS | Deploy to EC2/S3 | arn:aws:iam::123456789012:role/nexusaos-deploy |
-| Azure | Deploy to Azure | /subscriptions/.../resourceGroups/... |
-| GCP | Deploy to GCP | projects/.../serviceAccounts/nexusaos@... |
+| AWS | Deploy to EC2/S3 | arn:aws:iam::ACCOUNT_ID:role/nexusaos-deploy |
+| Azure | Deploy to Azure | /subscriptions/SUBSCRIPTION_ID/resourceGroups/RESOURCE_GROUP |
+| GCP | Deploy to GCP | projects/PROJECT_ID/serviceAccounts/nexusaos@PROJECT_ID.iam.gserviceaccount.com |
 
 ---
 

@@ -56,7 +56,7 @@ jobs:
 
       - name: Check test coverage
         run: |
-          TOTAL=$(cargo test --workspace 2>&1 | grep "test result:" | awk '{print $4}' | sed 's/;//g' | paste -sd+ | bc)
+          TOTAL=$(cargo test --workspace 2>&1 | grep "test result:" | awk '{print $4}' | sed 's/;//g' | tr '\n' '+' | sed 's/+$//' | bc 2>/dev/null || echo "0")
           if [ "$TOTAL" -lt 100 ]; then
             echo "::warning::Test count ($TOTAL) is below threshold (100). Add more tests."
           fi
@@ -65,7 +65,7 @@ jobs:
     name: Auto-merge Dependencies
     runs-on: ubuntu-latest
     needs: pr-validation
-    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'dependencies')
+    if: github.event.pull_request.draft == false && github.actor == 'dependabot[bot]' && contains(github.event.pull_request.labels.*.name, 'dependencies')
     steps:
       - uses: actions/checkout@v4
       - uses: actions/github-script@v7

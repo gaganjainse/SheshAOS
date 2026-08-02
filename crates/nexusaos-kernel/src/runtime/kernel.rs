@@ -83,7 +83,8 @@ impl Kernel {
 
         // Emit TaskCreated event
         let event_payload = EventPayload::TaskCreated {
-            request: serde_json::to_value(&request).unwrap_or(serde_json::Value::Null),
+            request: serde_json::to_value(&request)
+                .map_err(NexusError::Serde)?,
         };
         let event =
             Event::new(task_id, EventKind::TaskCreated, event_payload, "kernel".to_string());

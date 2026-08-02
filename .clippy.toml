@@ -1,4 +1,0 @@
-# Clippy configuration for NexusAOS
-#
-# Note: Most lint configuration is in Cargo.toml under [workspace.lints.clippy].
-# This file is reserved for future Clippy-specific settings.

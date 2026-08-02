@@ -20,7 +20,7 @@ cargo test --lib
 
 echo ""
 echo "==> Integration tests"
-cargo test --test '*' 2>/dev/null || echo "  (no integration tests yet)"
+cargo test --test '*'
 
 echo ""
 echo "=========================================="
