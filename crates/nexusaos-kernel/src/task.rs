@@ -66,6 +66,22 @@ pub struct TaskRequest {
     pub metadata: serde_json::Value,
 }
 
+impl TaskInput {
+    /// Returns a text representation of the input, preserving semantic structure
+    /// for Multi variants by joining parts with a separator.
+    pub fn text(&self) -> String {
+        match self {
+            TaskInput::Text(t) => t.clone(),
+            TaskInput::Vision { text, .. } => text.clone(),
+            TaskInput::Multi { parts } => parts
+                .iter()
+                .map(|p| p.text())
+                .collect::<Vec<_>>()
+                .join("\n---\n"),
+        }
+    }
+}
+
 impl TaskRequest {
     /// Creates a new TaskRequest with default values for priority, timestamps, and metadata
     pub fn new(input: TaskInput) -> Self {

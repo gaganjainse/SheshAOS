@@ -65,6 +65,10 @@ pub struct ResourceLimitsConfig {
 
     /// Minimum free disk space in GB before refusing writes.
     pub min_disk_free_gb: u64,
+
+    /// Maximum tool output size in bytes before truncation.
+    #[serde(default = "default_max_tool_output_size")]
+    pub max_tool_output_size: usize,
 }
 
 /// Policy enforcement settings.
@@ -298,6 +302,10 @@ fn default_terminal_timeout() -> u64 {
 
 fn default_drain_timeout() -> u64 {
     10
+}
+
+fn default_max_tool_output_size() -> usize {
+    1_048_576
 }
 
 fn default_provider_kind() -> String {

@@ -34,7 +34,7 @@ pub mod test_utils {
         let registry = Arc::new(ProviderRegistry::new());
         let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
         
-        let kernel = Kernel::new(store, Arc::new(policy), registry, broker).await.unwrap();
+        let kernel = Kernel::new(store, Arc::new(policy), registry, broker, 1_048_576).await.unwrap();
         
         (kernel, temp_dir)
     }

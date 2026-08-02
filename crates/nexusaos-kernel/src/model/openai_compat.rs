@@ -80,6 +80,42 @@ struct OpenAiUsage {
     completion_tokens: usize,
 }
 
+/// Parses SSE (Server-Sent Events) data from a buffer, extracting tokens and
+/// detecting the `[DONE]` sentinel.
+///
+/// Processes all lines in the buffer (including a final line without a trailing
+/// newline), clears the buffer, and appends any extracted content tokens to
+/// `full_content` while invoking `on_token` for each token.
+///
+/// Returns `true` if a `[DONE]` event was encountered.
+fn parse_sse_buffer(
+    buffer: &mut String,
+    full_content: &mut String,
+    on_token: &mut (impl FnMut(&str) + ?Sized),
+) -> bool {
+    let mut done_received = false;
+
+    for line in buffer.lines() {
+        let line = line.trim();
+        if let Some(data) = line.strip_prefix("data: ") {
+            if data == "[DONE]" {
+                done_received = true;
+                break;
+            }
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(data)
+                && let Some(token) = val["choices"][0]["delta"]["content"].as_str()
+            {
+                let token_str = token.to_string();
+                full_content.push_str(&token_str);
+                on_token(&token_str);
+            }
+        }
+    }
+
+    buffer.clear();
+    done_received
+}
+
 #[async_trait]
 impl ModelProvider for OpenAiCompatProvider {
     fn name(&self) -> &str {
@@ -198,48 +234,16 @@ impl ModelProvider for OpenAiCompatProvider {
             let text = String::from_utf8_lossy(&chunk_result);
             buffer.push_str(&text);
 
-            while let Some(pos) = buffer.find('\n') {
-                let line = buffer[..pos].trim().to_string();
-                buffer.drain(..=pos);
-
-                if let Some(data) = line.strip_prefix("data: ") {
-                    if data == "[DONE]" {
-                        done_received = true;
-                        break;
-                    }
-                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(data)
-                        && let Some(token) = val["choices"][0]["delta"]["content"].as_str()
-                    {
-                        let token_str = token.to_string();
-                        full_content.push_str(&token_str);
-                        on_token(&token_str);
-                    }
-                }
-            }
-            
-            if done_received {
+            if parse_sse_buffer(&mut buffer, &mut full_content, on_token) {
+                done_received = true;
                 break;
             }
         }
 
         if !done_received && !buffer.is_empty() {
-            // Handle case where stream ends without [DONE] marker
             tracing::warn!("Stream ended without [DONE] marker, processing remaining buffer");
-            for line in buffer.lines() {
-                let line = line.trim();
-                if let Some(data) = line.strip_prefix("data: ") {
-                    if data == "[DONE]" {
-                        done_received = true;
-                        break;
-                    }
-                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(data)
-                        && let Some(token) = val["choices"][0]["delta"]["content"].as_str()
-                    {
-                        let token_str = token.to_string();
-                        full_content.push_str(&token_str);
-                        on_token(&token_str);
-                    }
-                }
+            if parse_sse_buffer(&mut buffer, &mut full_content, on_token) {
+                done_received = true;
             }
         }
 

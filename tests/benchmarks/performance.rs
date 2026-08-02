@@ -91,7 +91,7 @@ fn bench_kernel_task_submission(c: &mut Criterion) {
     let registry = Arc::new(ProviderRegistry::new());
     let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
     
-    let kernel = rt.block_on(Kernel::new(store, policy, registry, broker)).unwrap();
+    let kernel = rt.block_on(Kernel::new(store, policy, registry, broker, 1_048_576)).unwrap();
     
     let mut group = c.benchmark_group("kernel_task_submission");
     

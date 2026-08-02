@@ -83,6 +83,16 @@ impl SqliteEventStore {
         rows.collect::<Result<Vec<_>, _>>()
             .map_err(|e| StorageError::Database(e.into()))
     }
+
+    /// Get total event count.
+    pub async fn count(&self) -> Result<u64, StorageError> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn
+            .prepare("SELECT COUNT(*) FROM events")
+            .map_err(|e| StorageError::Database(e.into()))?;
+        let count: i64 = stmt.query_row([], |row| row.get(0)).map_err(|e| StorageError::Database(e.into()))?;
+        Ok(count as u64)
+    }
 }
 
 #[async_trait]
@@ -115,5 +125,148 @@ impl EventStore for SqliteEventStore {
 
     async fn read_since(&self, sequence: u64) -> Result<Vec<Event>, NexusError> {
         Self::read_since(self, sequence).await.map_err(NexusError::Storage)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use tempfile::TempDir;
+
+    use super::*;
+    use crate::events::{EventKind, EventPayload, SequenceNumber};
+    use crate::task::TaskId;
+
+    #[tokio::test]
+    async fn test_open() {
+        let temp_dir = TempDir::new().unwrap();
+        let store = SqliteEventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+        let events = store.read_all().await.unwrap();
+        assert!(events.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_append() {
+        let temp_dir = TempDir::new().unwrap();
+        let store = SqliteEventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+        let task_id = TaskId::new();
+        let mut event = Event::new(
+            task_id,
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        event.sequence = SequenceNumber(1);
+        store.append(event.clone()).await.unwrap();
+        let events = store.read_all().await.unwrap();
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].id, event.id);
+    }
+
+    #[tokio::test]
+    async fn test_read_for_task() {
+        let temp_dir = TempDir::new().unwrap();
+        let store = SqliteEventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+
+        let task_id = TaskId::new();
+        let other_task_id = TaskId::new();
+
+        let mut event1 = Event::new(
+            task_id,
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        event1.sequence = SequenceNumber(1);
+        store.append(event1).await.unwrap();
+
+        let mut event2 = Event::new(
+            other_task_id,
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        event2.sequence = SequenceNumber(2);
+        store.append(event2).await.unwrap();
+
+        let task_events = store.read_for_task(&task_id).await.unwrap();
+        assert_eq!(task_events.len(), 1);
+        assert_eq!(task_events[0].task_id, Some(task_id));
+
+        let other_events = store.read_for_task(&other_task_id).await.unwrap();
+        assert_eq!(other_events.len(), 1);
+        assert_eq!(other_events[0].task_id, Some(other_task_id));
+    }
+
+    #[tokio::test]
+    async fn test_read_since() {
+        let temp_dir = TempDir::new().unwrap();
+        let store = SqliteEventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+
+        let mut e1 = Event::new(
+            TaskId::new(),
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        e1.sequence = SequenceNumber(1);
+        store.append(e1).await.unwrap();
+
+        let mut e2 = Event::new(
+            TaskId::new(),
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        e2.sequence = SequenceNumber(2);
+        store.append(e2).await.unwrap();
+
+        let mut e3 = Event::new(
+            TaskId::new(),
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        e3.sequence = SequenceNumber(3);
+        store.append(e3).await.unwrap();
+
+        let since_2 = store.read_since(2).await.unwrap();
+        assert_eq!(since_2.len(), 2);
+
+        let since_3 = store.read_since(3).await.unwrap();
+        assert_eq!(since_3.len(), 1);
+
+        let since_4 = store.read_since(4).await.unwrap();
+        assert!(since_4.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_count() {
+        let temp_dir = TempDir::new().unwrap();
+        let store = SqliteEventStore::open(temp_dir.path().to_path_buf()).await.unwrap();
+
+        assert_eq!(store.count().await.unwrap(), 0);
+
+        let task_id = TaskId::new();
+        let mut event = Event::new(
+            task_id,
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        event.sequence = SequenceNumber(1);
+        store.append(event).await.unwrap();
+
+        assert_eq!(store.count().await.unwrap(), 1);
+
+        let mut event2 = Event::new(
+            TaskId::new(),
+            EventKind::TaskCreated,
+            EventPayload::TaskCreated { request: serde_json::json!({}) },
+            "test".to_string(),
+        );
+        event2.sequence = SequenceNumber(2);
+        store.append(event2).await.unwrap();
+
+        assert_eq!(store.count().await.unwrap(), 2);
     }
 }
