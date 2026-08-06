@@ -116,11 +116,11 @@ struct TerminalView<'a> {
 }
 
 impl<'a> Program<Message> for TerminalView<'a> {
-    type State = Vec<LineCache>;
+    type State = ();
 
     fn draw(
         &self,
-        state: &Self::State,
+        _state: &Self::State,
         renderer: &iced::Renderer,
         _theme: &iced::Theme,
         bounds: Rectangle,
@@ -131,21 +131,15 @@ impl<'a> Program<Message> for TerminalView<'a> {
         let p = &self.app.terminal.performer;
         let cell_w = crate::terminal::CELL_W;
         let cell_h = crate::terminal::CELL_H;
-        let _rows = p.grid.len();
 
         // Draw background as a single geometry
         let mut bg_frame = Frame::new(renderer, bounds.size());
         bg_frame.fill_rectangle(Point::ORIGIN, bounds.size(), theme::BASE);
         geometries.push(bg_frame.into_geometry());
 
-        // Draw all lines - render each line at its correct Y position
+        // Draw all lines — render each line at its correct Y position
         for (r, row) in p.grid.iter().enumerate() {
-            let cache = &state[r];
             let y = r as f32 * cell_h;
-
-            // Check if line is dirty (either from performer or cache)
-            let _is_dirty = *cache.dirty.borrow() || p.dirty_lines.get(r).copied().unwrap_or(true);
-
             let mut line_frame = Frame::new(renderer, Size::new(bounds.width, cell_h));
 
             let spans = row_to_spans(row);
@@ -175,18 +169,15 @@ impl<'a> Program<Message> for TerminalView<'a> {
                 }
             }
 
-            // Mark line as clean after rendering
-            *cache.dirty.borrow_mut() = false;
-
             geometries.push(line_frame.into_geometry());
         }
 
-        // Draw cursor (always on top, not cached)
-        let _cx = p.cursor_col as f32 * cell_w;
-        let _cy = p.cursor_row as f32 * cell_h;
+        // Draw cursor at its actual position (always on top)
+        let cx = p.cursor_col as f32 * cell_w;
+        let cy = p.cursor_row as f32 * cell_h;
         let mut cursor_frame = Frame::new(renderer, Size::new(cell_w, cell_h));
         cursor_frame.fill_rectangle(
-            Point::ORIGIN,
+            Point::new(cx, cy),
             Size::new(cell_w, cell_h),
             Color::from_rgba(1.0, 1.0, 1.0, 0.5),
         );
@@ -260,7 +251,7 @@ fn render_terminal(app: &NexusApp) -> Element<'_, Message> {
             Space::new().width(20),
             text("NexusAOS v0.1.7").size(11).color(theme::SURFACE1),
             Space::new().width(Length::Fill),
-            text("120×30").size(11).color(theme::SUBTEXT0),
+            text(format!("{}×{}", app.terminal.performer.cols, app.terminal.performer.rows)).size(11).color(theme::SUBTEXT0),
         ]
         .align_y(Alignment::Center),
     )

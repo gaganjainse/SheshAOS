@@ -19,9 +19,13 @@ impl ConnectionManager {
         }
     }
     
-    pub async fn connect(&self, user: &str, host: &str, port: u16) -> Result<Handle<ClientHandler>, russh::Error> {
-        let mut handle = russh::client::connect(self.config.clone(), (host, port), ClientHandler {}).await?;
-        
+    pub async fn connect(&self, user: &str, host: &str, port: u16, password: &str) -> Result<Handle<ClientHandler>, russh::Error> {
+        let handler = ClientHandler {
+            host: host.to_string(),
+            trust_new: false,
+        };
+        let mut handle = russh::client::connect(self.config.clone(), (host, port), handler).await?;
+
         let event = WaveEvent::global(
             EVENT_CONN_CHANGE,
             json!({
@@ -30,8 +34,12 @@ impl ConnectionManager {
             })
         );
         self.broker.publish(event);
-        
-        let _ = handle.authenticate_password(user, "test").await;
+
+        let auth_result = handle.authenticate_password(user, password).await?;
+        if !auth_result.success() {
+            tracing::error!("SSH authentication failed for user '{}' on {}:{}", user, host, port);
+            return Err(russh::Error::msg("SSH authentication failed"));
+        }
         Ok(handle)
     }
 }
@@ -57,7 +65,7 @@ mod tests {
     async fn test_connection_manager_connect_unreachable_host() {
         let broker = Broker::new(10);
         let manager = ConnectionManager::new(broker);
-        let result = manager.connect("user", "127.0.0.1", 1).await;
+        let result = manager.connect("user", "127.0.0.1", 1, "testpass").await;
         assert!(result.is_err());
     }
 
@@ -65,7 +73,7 @@ mod tests {
     async fn test_connection_manager_connect_invalid_host() {
         let broker = Broker::new(10);
         let manager = ConnectionManager::new(broker);
-        let result = manager.connect("user", "invalid-host-that-does-not-exist.example", 22).await;
+        let result = manager.connect("user", "invalid-host-that-does-not-exist.example", 22, "testpass").await;
         assert!(result.is_err());
     }
 

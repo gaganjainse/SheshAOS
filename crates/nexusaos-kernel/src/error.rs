@@ -125,6 +125,9 @@ pub enum ProviderError {
     #[error("HTTP error: {0}")]
     Http(String),
 
+    #[error("Provider API error: {0}")]
+    Api(String),
+
     #[error("No provider registered for role: {role}")]
     NoProviderForRole { role: String },
 }

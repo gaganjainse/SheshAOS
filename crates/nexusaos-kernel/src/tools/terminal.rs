@@ -10,11 +10,26 @@ use crate::error::ToolError;
 pub struct TerminalTool {
     timeout_secs: u64,
     denied_prefixes: Vec<String>,
+    /// If true, refuse to run commands when bwrap is unavailable.
+    require_sandbox: bool,
 }
 
 impl TerminalTool {
     pub fn new(timeout_secs: u64, denied_prefixes: Vec<String>) -> Self {
-        Self { timeout_secs, denied_prefixes }
+        Self { timeout_secs, denied_prefixes, require_sandbox: false }
+    }
+
+    /// Resolve the bwrap binary through PATH.
+    fn resolve_bwrap() -> Option<std::path::PathBuf> {
+        if let Ok(path) = std::env::var("PATH") {
+            for dir in path.split(':') {
+                let candidate = std::path::Path::new(dir).join("bwrap");
+                if candidate.exists() {
+                    return Some(candidate);
+                }
+            }
+        }
+        None
     }
 
     fn is_command_denied(&self, command: &str) -> bool {
@@ -49,11 +64,18 @@ impl ToolExecutor for TerminalTool {
             return Err(ToolError::CommandDenied { command: command.to_string() });
         }
 
-        let has_bwrap = std::path::Path::new("/usr/bin/bwrap").exists()
-            || std::path::Path::new("/bin/bwrap").exists();
+        let bwrap_path = Self::resolve_bwrap();
+        let has_bwrap = bwrap_path.is_some();
 
-        let mut cmd = if has_bwrap {
-            let mut bwrap = Command::new("bwrap");
+        if self.require_sandbox && !has_bwrap {
+            return Err(ToolError::ExecutionFailed {
+                name: self.name().to_string(),
+                reason: "Sandbox required but bwrap not found".to_string(),
+            });
+        }
+
+        let mut cmd = if let Some(bwrap_bin) = bwrap_path {
+            let mut bwrap = Command::new(bwrap_bin);
             bwrap
                 .arg("--ro-bind")
                 .arg("/")
@@ -65,7 +87,6 @@ impl ToolExecutor for TerminalTool {
                 .arg("--tmpfs")
                 .arg("/tmp")
                 .arg("--unshare-all")
-                .arg("--share-net")
                 .arg("--")
                 .arg("sh")
                 .arg("-c")
@@ -77,6 +98,7 @@ impl ToolExecutor for TerminalTool {
             sh
         };
 
+        cmd.kill_on_drop(true);
         let future = cmd.output();
 
         match timeout(Duration::from_secs(self.timeout_secs), future).await {

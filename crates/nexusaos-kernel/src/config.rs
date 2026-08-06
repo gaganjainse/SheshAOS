@@ -172,7 +172,7 @@ impl ModelProviderConfig {
                     self.api_key.clone(),
                     self.model_id.clone(),
                     role,
-                )))
+                )?))
             }
             _ => {
                 let provider = crate::model::openai_compat::OpenAiCompatProvider::new(self)?;

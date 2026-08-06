@@ -479,8 +479,13 @@ Err(e) => {
     ) -> Result<(), NexusError> {
         let max_size = self.max_tool_output_size;
         let truncated = if output.len() > max_size {
-            // Try to truncate at a newline boundary to preserve line structure
-            let cut_point = &output[..max_size];
+            // Step back to the nearest UTF-8 character boundary.
+            let mut boundary = max_size;
+            while boundary > 0 && !output.is_char_boundary(boundary) {
+                boundary -= 1;
+            }
+            // Step back to the nearest newline boundary to preserve line structure.
+            let cut_point = &output[..boundary];
             if let Some(last_newline) = cut_point.rfind('\n') {
                 &output[..last_newline + 1]
             } else {

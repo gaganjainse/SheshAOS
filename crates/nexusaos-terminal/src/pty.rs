@@ -23,6 +23,8 @@ pub struct PtyManager {
     shutdown: Arc<AtomicBool>,
     /// Channel for streaming PTY output to consumers.
     output_tx: Option<mpsc::Sender<Vec<u8>>>,
+    /// Cached PTY master writer for repeated writes.
+    writer: Option<Box<dyn Write + Send>>,
 }
 
 impl PtyManager {
@@ -34,12 +36,14 @@ impl PtyManager {
         let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string());
         let cmd = CommandBuilder::new(shell);
         let _child = pair.slave.spawn_command(cmd)?;
+        let writer = pair.master.take_writer().ok();
         info!("Spawned PTY shell instance");
 
         Ok(Self {
             pair,
             shutdown: Arc::new(AtomicBool::new(false)),
             output_tx: None,
+            writer,
         })
     }
 
@@ -62,8 +66,9 @@ impl PtyManager {
 
     /// Write raw input bytes to the PTY master.
     pub fn write_input(&mut self, bytes: &[u8]) -> Result<(), std::io::Error> {
-        let mut writer =
-            self.pair.master.take_writer().map_err(|e| std::io::Error::other(e.to_string()))?;
+        let writer = self.writer.as_mut().ok_or_else(|| {
+            std::io::Error::new(std::io::ErrorKind::NotConnected, "PTY writer not initialized")
+        })?;
         writer.write_all(bytes)?;
         writer.flush()?;
         Ok(())

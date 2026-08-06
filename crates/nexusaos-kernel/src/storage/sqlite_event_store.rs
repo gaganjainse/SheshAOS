@@ -1,15 +1,17 @@
 use async_trait::async_trait;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::{
     error::{NexusError, StorageError},
-    events::Event,
+    events::{Event, SequenceNumber},
     storage::EventStore,
 };
 
 /// SQLite-backed event store.
 pub struct SqliteEventStore {
     db_path: PathBuf,
+    next_sequence: AtomicU64,
 }
 
 impl SqliteEventStore {
@@ -17,7 +19,7 @@ impl SqliteEventStore {
     pub async fn open(path: PathBuf) -> Result<Self, NexusError> {
         let db_path = path.join("events.db");
         let db_path_clone = db_path.clone();
-        tokio::task::spawn_blocking(move || {
+        let max_seq: i64 = tokio::task::spawn_blocking(move || {
             let conn = rusqlite::Connection::open(&db_path_clone)
                 .map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
             conn.execute(
@@ -30,7 +32,13 @@ impl SqliteEventStore {
                 (),
             )
             .map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
-            Ok::<_, NexusError>(())
+            // Migrate existing default-sequence rows to 0
+            conn.execute("UPDATE events SET sequence = 0 WHERE sequence IS NULL OR sequence = 0", ())
+                .ok();
+            let max: i64 = conn
+                .query_row("SELECT COALESCE(MAX(sequence), 0) FROM events", [], |r| r.get(0))
+                .unwrap_or(0);
+            Ok::<_, NexusError>(max)
         })
         .await
         .map_err(|e| {
@@ -38,7 +46,10 @@ impl SqliteEventStore {
                 e.to_string(),
             )))
         })??;
-        Ok(Self { db_path })
+        Ok(Self {
+            db_path,
+            next_sequence: AtomicU64::new(max_seq as u64 + 1),
+        })
     }
 
     /// Read all events in sequence order.
@@ -141,9 +152,13 @@ impl SqliteEventStore {
 
 #[async_trait]
 impl EventStore for SqliteEventStore {
-    async fn append(&self, event: Event) -> Result<(), NexusError> {
+    async fn append(&self, mut event: Event) -> Result<(), NexusError> {
+        // Assign the next monotonic sequence number (matching JsonlEventStore behavior)
+        event.sequence = SequenceNumber(self.next_sequence.fetch_add(1, Ordering::SeqCst));
+
         let data = serde_json::to_string(&event).map_err(NexusError::Serde)?;
         let db_path = self.db_path.clone();
+        let sequence = event.sequence.0;
         tokio::task::spawn_blocking(move || {
             let conn = rusqlite::Connection::open(&db_path)
                 .map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
@@ -152,7 +167,7 @@ impl EventStore for SqliteEventStore {
                 (
                     event.id.0.to_string(),
                     event.task_id.map(|id| id.0.to_string()),
-                    event.sequence.0,
+                    sequence,
                     data,
                 ),
             )

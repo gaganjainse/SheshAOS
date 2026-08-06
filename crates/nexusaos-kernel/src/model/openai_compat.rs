@@ -23,6 +23,7 @@ pub struct OpenAiCompatProvider {
     role: ModelRole,
     base_url: String,
     model_id: String,
+    api_key: String,
     max_context: usize,
     supports_vision: bool,
     client: Client,
@@ -48,12 +49,21 @@ impl OpenAiCompatProvider {
             role,
             base_url: config.base_url.trim_end_matches('/').to_string(),
             model_id: config.model_id.clone(),
+            api_key: config.api_key.clone(),
             max_context: config.max_context,
             supports_vision: config.supports_vision,
             client,
         })
     }
 
+    /// Applies bearer authentication only when the API key is non-empty.
+    fn authorize(&self, req: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+        if self.api_key.is_empty() {
+            req
+        } else {
+            req.bearer_auth(&self.api_key)
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -83,20 +93,26 @@ struct OpenAiUsage {
 /// Parses SSE (Server-Sent Events) data from a buffer, extracting tokens and
 /// detecting the `[DONE]` sentinel.
 ///
-/// Processes all lines in the buffer (including a final line without a trailing
-/// newline), clears the buffer, and appends any extracted content tokens to
-/// `full_content` while invoking `on_token` for each token.
+/// Processes only complete newline-terminated lines, retaining any trailing
+/// partial line in the buffer for the next chunk. When `flush` is true (start
+/// of stream completion), processes the remaining buffered content.
 ///
 /// Returns `true` if a `[DONE]` event was encountered.
 fn parse_sse_buffer(
     buffer: &mut String,
     full_content: &mut String,
     on_token: &mut (impl FnMut(&str) + ?Sized),
+    flush: bool,
 ) -> bool {
     let mut done_received = false;
+    let mut consumed = 0usize;
 
-    for line in buffer.lines() {
-        let line = line.trim();
+    while let Some(offset) = buffer[consumed..].find('\n') {
+        let end = consumed + offset;
+        let line = buffer[consumed..end].trim().to_string();
+        consumed = end + 1;
+        let line = line.as_str();
+
         if let Some(data) = line.strip_prefix("data: ") {
             if data == "[DONE]" {
                 done_received = true;
@@ -112,7 +128,24 @@ fn parse_sse_buffer(
         }
     }
 
-    buffer.clear();
+    buffer.drain(..consumed);
+
+    if flush {
+        let line = buffer.trim().to_string();
+        if let Some(data) = line.strip_prefix("data: ") {
+            if data == "[DONE]" {
+                done_received = true;
+            } else if let Ok(val) = serde_json::from_str::<serde_json::Value>(data) {
+                if let Some(token) = val["choices"][0]["delta"]["content"].as_str() {
+                    let token_str = token.to_string();
+                    full_content.push_str(&token_str);
+                    on_token(&token_str);
+                }
+            }
+        }
+        buffer.clear();
+    }
+
     done_received
 }
 
@@ -136,8 +169,11 @@ impl ModelProvider for OpenAiCompatProvider {
 
     async fn health_check(&self) -> Result<bool, ProviderError> {
         let url = format!("{}/v1/models", self.base_url);
-        let resp =
-            self.client.get(&url).send().await.map_err(|e| ProviderError::Http(e.to_string()))?;
+        let resp = self
+            .authorize(self.client.get(&url))
+            .send()
+            .await
+            .map_err(|e| ProviderError::Http(e.to_string()))?;
         if resp.status().is_success() {
             Ok(true)
         } else {
@@ -157,15 +193,14 @@ impl ModelProvider for OpenAiCompatProvider {
 
         let url = format!("{}/v1/chat/completions", self.base_url);
         let resp = self
-            .client
-            .post(&url)
-            .json(&request)
+            .authorize(self.client.post(&url).json(&request))
             .send()
             .await
             .map_err(|e| ProviderError::Http(e.to_string()))?;
 
         if !resp.status().is_success() {
-            return Err(ProviderError::InferenceFailed(format!("HTTP {}", resp.status())));
+            let body = resp.text().await.unwrap_or_default();
+            return Err(ProviderError::Api(body));
         }
 
         let oa_resp: OpenAiResponse =
@@ -200,15 +235,14 @@ impl ModelProvider for OpenAiCompatProvider {
         }
 
         let resp = self
-            .client
-            .post(&url)
-            .json(&payload)
+            .authorize(self.client.post(&url).json(&payload))
             .send()
             .await
             .map_err(|e| ProviderError::Http(e.to_string()))?;
 
         if !resp.status().is_success() {
-            return Err(ProviderError::InferenceFailed(format!("HTTP {}", resp.status())));
+            let body = resp.text().await.unwrap_or_default();
+            return Err(ProviderError::Api(body));
         }
 
         let mut stream = resp.bytes_stream();
@@ -234,7 +268,7 @@ impl ModelProvider for OpenAiCompatProvider {
             let text = String::from_utf8_lossy(&chunk_result);
             buffer.push_str(&text);
 
-            if parse_sse_buffer(&mut buffer, &mut full_content, on_token) {
+            if parse_sse_buffer(&mut buffer, &mut full_content, on_token, false) {
                 done_received = true;
                 break;
             }
@@ -242,7 +276,7 @@ impl ModelProvider for OpenAiCompatProvider {
 
         if !done_received && !buffer.is_empty() {
             tracing::warn!("Stream ended without [DONE] marker, processing remaining buffer");
-            if parse_sse_buffer(&mut buffer, &mut full_content, on_token) {
+            if parse_sse_buffer(&mut buffer, &mut full_content, on_token, true) {
                 done_received = true;
             }
         }

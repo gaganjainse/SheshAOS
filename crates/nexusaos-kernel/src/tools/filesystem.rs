@@ -16,6 +16,18 @@ impl FilesystemTool {
         Self { allowed_paths, denied_patterns }
     }
 
+    /// Resolve a path for permission checks by walking up to the deepest
+    /// existing ancestor and canonicalizing it, then re-appending non-existent
+    /// components. Also rejects paths with unresolved `..` traversal components.
+    fn resolve_for_check(path: &Path) -> Option<PathBuf> {
+        // Reject any explicit parent-dir components that could escape scope
+        if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+            return None;
+        }
+        let canonicalized = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+        Some(canonicalized)
+    }
+
     fn is_path_allowed(&self, path: &Path) -> bool {
         let path_str = path.to_string_lossy();
         for pattern in &self.denied_patterns {
@@ -24,7 +36,10 @@ impl FilesystemTool {
             }
         }
 
-        let abs_path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+        let abs_path = match Self::resolve_for_check(path) {
+            Some(p) => p,
+            None => return false,
+        };
         for allowed in &self.allowed_paths {
             let abs_allowed = allowed.canonicalize().unwrap_or_else(|_| allowed.to_path_buf());
             if abs_path.starts_with(&abs_allowed) {
