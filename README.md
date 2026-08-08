@@ -11,7 +11,7 @@ lang: en
 ![Version](https://img.shields.io/badge/Version-v2.0.0-green?style=for-the-badge&logo=git-semver)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue?style=for-the-badge&logo=github)
-![Tests](https://img.shields.io/badge/Tests-1000%2B-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-981-success?style=for-the-badge)
 
 **🏛️ Governance-first, event-sourced AI operating environment
 for Ubuntu Linux.**
