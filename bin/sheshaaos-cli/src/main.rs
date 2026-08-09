@@ -4,7 +4,7 @@ use clap::{Parser, Subcommand};
 
 /// NexusAOS — Governance-first AI operating environment
 #[derive(Parser, Debug)]
-#[command(name = "nexusaos", version, about, long_about = None)]
+#[command(name = "sheshaaos", version, about, long_about = None)]
 struct Cli {
     /// Increase logging verbosity (-v, -vv, -vvv)
     #[arg(short, long, action = clap::ArgAction::Count)]
@@ -92,33 +92,33 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command {
         None | Some(Commands::Tui) => run_interactive_tui()?,
-        Some(Commands::Init) => nexusaos_kernel::cli::init::run(&cli.config)?,
-        Some(Commands::Doctor) => nexusaos_kernel::cli::doctor::run(&cli.config)?,
-        Some(Commands::Status) => nexusaos_kernel::cli::status::run(&cli.config)?,
+        Some(Commands::Init) => sheshaaos_kernel::cli::init::run(&cli.config)?,
+        Some(Commands::Doctor) => sheshaaos_kernel::cli::doctor::run(&cli.config)?,
+        Some(Commands::Status) => sheshaaos_kernel::cli::status::run(&cli.config)?,
         Some(Commands::Run { task, background, yes }) => {
-            nexusaos_kernel::cli::run::execute(&cli.config, &task, background, yes)?
+            sheshaaos_kernel::cli::run::execute(&cli.config, &task, background, yes)?
         }
         Some(Commands::Replay { task_id }) => {
-            nexusaos_kernel::cli::replay::run(&cli.config, &task_id)?
+            sheshaaos_kernel::cli::replay::run(&cli.config, &task_id)?
         }
-        Some(Commands::Config) => nexusaos_kernel::cli::config_show::run(&cli.config)?,
+        Some(Commands::Config) => sheshaaos_kernel::cli::config_show::run(&cli.config)?,
         Some(Commands::Vault { action }) => {
             println!("NexusAOS Command Vault [{}]", action);
-            let vault_path = std::path::PathBuf::from("~/.nexusaos/data/commands.jsonl");
-            let store = nexusaos_vault::snippet::VaultStore::new(vault_path);
+            let vault_path = std::path::PathBuf::from("~/.sheshaaos/data/commands.jsonl");
+            let store = sheshaaos_vault::snippet::VaultStore::new(vault_path);
             let loaded = store.load_all().unwrap_or_default();
             println!("Loaded {} saved snippets from vault.", loaded.len());
         }
         Some(Commands::Explain { command }) => {
             println!("NexusAOS Flag Inspector for command: {}", command);
-            let flags = nexusaos_vault::inspector::FlagInspector::explain_flags(&command);
+            let flags = sheshaaos_vault::inspector::FlagInspector::explain_flags(&command);
             for (flag, exp) in flags {
                 println!("  {:12} -> {}", flag, exp);
             }
         }
         Some(Commands::Pty) => {
             println!("Testing Native Zig VT100 Parser & PTY Integration...");
-            if let Some(parser) = nexusaos_terminal::ZigVt100Parser::new(80, 24) {
+            if let Some(parser) = sheshaaos_terminal::ZigVt100Parser::new(80, 24) {
                 parser.feed(b"Echo from PTY\nLine 2\n");
                 println!(
                     "Zig VT100 Parser processed {} lines successfully.",
@@ -150,10 +150,10 @@ fn run_interactive_tui() -> anyhow::Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = nexusaos_tui::App::new_cli();
+    let mut app = sheshaaos_tui::App::new_cli();
 
     while app.running {
-        terminal.draw(|f| nexusaos_tui::render_ui(f, &app))?;
+        terminal.draw(|f| sheshaaos_tui::render_ui(f, &app))?;
 
         if event::poll(std::time::Duration::from_millis(50))? {
             match event::read()? {
@@ -177,13 +177,13 @@ fn run_interactive_tui() -> anyhow::Result<()> {
                     KeyCode::Char('d')
                         if key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) =>
                     {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::CodeEditor);
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::CodeEditor);
                         app.push_log("[TILE] Split tile horizontally -> Added Code Editor Block");
                     }
                     KeyCode::Char('e')
                         if key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) =>
                     {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::MarkdownReader);
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::MarkdownReader);
                         app.push_log("[TILE] Split tile vertically -> Added Markdown Reader Block");
                     }
                     KeyCode::Char('w')
@@ -193,52 +193,52 @@ fn run_interactive_tui() -> anyhow::Result<()> {
                         app.push_log("[TILE] Closed active tile block");
                     }
                     KeyCode::Char('1') if app.tile_grid.launcher_open => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::PtyTerminal);
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::PtyTerminal);
                         app.tile_grid.launcher_open = false;
                     }
                     KeyCode::Char('2') if app.tile_grid.launcher_open => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::WaveAi);
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::WaveAi);
                         app.tile_grid.launcher_open = false;
                     }
                     KeyCode::Char('3') if app.tile_grid.launcher_open => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::CodeEditor);
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::CodeEditor);
                         app.tile_grid.launcher_open = false;
                     }
                     KeyCode::Char('4') if app.tile_grid.launcher_open => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::MarkdownReader);
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::MarkdownReader);
                         app.tile_grid.launcher_open = false;
                     }
                     KeyCode::Char('5') if app.tile_grid.launcher_open => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::AiFileDiff);
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::AiFileDiff);
                         app.tile_grid.launcher_open = false;
                     }
                     KeyCode::Char('6') if app.tile_grid.launcher_open => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::ProcessViewer);
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::ProcessViewer);
                         app.tile_grid.launcher_open = false;
                     }
                     KeyCode::Char('7') if app.tile_grid.launcher_open => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::SysInfoGauges);
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::SysInfoGauges);
                         app.tile_grid.launcher_open = false;
                     }
                     KeyCode::Char('8') if app.tile_grid.launcher_open => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::CsvViewer);
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::CsvViewer);
                         app.tile_grid.launcher_open = false;
                     }
                     KeyCode::Char('9') if app.tile_grid.launcher_open => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::WaveConfig);
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::WaveConfig);
                         app.tile_grid.launcher_open = false;
                     }
                     KeyCode::F(1) => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::WaveAi)
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::WaveAi)
                     }
                     KeyCode::F(2) => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::CodeEditor)
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::CodeEditor)
                     }
                     KeyCode::F(3) => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::MarkdownReader)
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::MarkdownReader)
                     }
                     KeyCode::F(4) => {
-                        app.tile_grid.split_tile(nexusaos_tui::block::BlockKind::AiFileDiff)
+                        app.tile_grid.split_tile(sheshaaos_tui::block::BlockKind::AiFileDiff)
                     }
                     KeyCode::Tab => {
                         app.tile_grid.cycle_focus();
@@ -262,11 +262,11 @@ fn run_interactive_tui() -> anyhow::Result<()> {
                                 app.history.clear();
                             } else if submitted == "/vault" {
                                 app.set_tool_window(
-                                    nexusaos_tui::app::ActiveToolWindow::CommandVault,
+                                    sheshaaos_tui::app::ActiveToolWindow::CommandVault,
                                 );
                             } else if let Some(cmd) = submitted.strip_prefix("/explain ") {
                                 let flags =
-                                    nexusaos_vault::inspector::FlagInspector::explain_flags(cmd);
+                                    sheshaaos_vault::inspector::FlagInspector::explain_flags(cmd);
                                 app.push_log(&format!("[EXPLAIN] Flags for: {}", cmd));
                                 for (f, desc) in flags {
                                     app.push_log(&format!("  {:12} -> {}", f, desc));
@@ -280,7 +280,7 @@ fn run_interactive_tui() -> anyhow::Result<()> {
                         }
                     }
                     KeyCode::Esc => {
-                        app.mode = nexusaos_tui::app::AppMode::NormalPrompt;
+                        app.mode = sheshaaos_tui::app::AppMode::NormalPrompt;
                     }
                     _ => {}
                 },
