@@ -1,4 +1,4 @@
-# 🚀 NexusAOS Terminal — Developer Handover Document
+# 🚀 SheshaAOS Terminal — Developer Handover Document
 
 **📅 Date**: 2026-08-02  
 **👥 Audience**: New contributors, maintainers, AI assistants  
@@ -9,7 +9,7 @@
 
 ## 📋 Executive Summary
 
-NexusAOS is a **production-ready, governance-first AI operating environment** built with Rust. It combines:
+SheshaAOS is a **production-ready, governance-first AI operating environment** built with Rust. It combines:
 
 - 🧠 **AI-powered terminal** with local LLM integration
 - 🖥️ **GPU-accelerated rendering** via Iced/wgpu
@@ -28,9 +28,9 @@ NexusAOS is a **production-ready, governance-first AI operating environment** bu
 ```mermaid
 graph TB
     subgraph "Interface Layer"
-        CLI["🖥️ CLI<br/>nexusaos-cli"]
-        TUI["📱 TUI<br/>nexusaos-tui"]
-        GUI["🖼️ GUI<br/>nexusaos-gui"]
+        CLI["🖥️ CLI<br/>sheshaaos-cli"]
+        TUI["📱 TUI<br/>sheshaaos-tui"]
+        GUI["🖼️ GUI<br/>sheshaaos-gui"]
     end
 
     subgraph "Kernel Core"
@@ -103,19 +103,19 @@ graph LR
 
 | Crate | Path | Description | Tests |
 |-------|------|-------------|-------|
-| 🏛️ `nexusaos-kernel` | `crates/nexusaos-kernel/` | Governance microkernel | 396 |
-| 📦 `nexusaos-waveobj` | `crates/nexusaos-waveobj/` | Object store & ORef graph | 204 |
-| 📡 `nexusaos-wps` | `crates/nexusaos-wps/` | Pub/Sub event broker | 71 |
-| 🧱 `nexusaos-blockctl` | `crates/nexusaos-blockctl/` | PTY shell controller | 48 |
-| 🤖 `nexusaos-ai` | `crates/nexusaos-ai/` | AI providers & streaming | 18 |
-| 🔌 `nexusaos-rpc` | `crates/nexusaos-rpc/` | Unix socket JSON-RPC | 29 |
-| 🌐 `nexusaos-remote` | `crates/nexusaos-remote/` | SSH remote shell | 19 |
-| 🖥️ `nexusaos-terminal` | `crates/nexusaos-terminal/` | Zig VT100 + PTY | 19 |
-| 🔐 `nexusaos-vault` | `crates/nexusaos-vault/` | Command snippets | 53 |
-| ⚙️ `nexusaos-wconfig` | `crates/nexusaos-wconfig/` | Config watcher | 31 |
-| 🖼️ `nexusaos-gui` | `crates/nexusaos-gui/` | Iced native GUI | 32 |
-| 📱 `nexusaos-tui` | `crates/nexusaos-tui/` | Ratatui TUI | 30 |
-| 🧪 `nexusaos-tests` | `tests/` | Integration tests & benchmarks | - |
+| 🏛️ `sheshaaos-kernel` | `crates/sheshaaos-kernel/` | Governance microkernel | 396 |
+| 📦 `sheshaaos-waveobj` | `crates/sheshaaos-waveobj/` | Object store & ORef graph | 204 |
+| 📡 `sheshaaos-wps` | `crates/sheshaaos-wps/` | Pub/Sub event broker | 71 |
+| 🧱 `sheshaaos-blockctl` | `crates/sheshaaos-blockctl/` | PTY shell controller | 48 |
+| 🤖 `sheshaaos-ai` | `crates/sheshaaos-ai/` | AI providers & streaming | 18 |
+| 🔌 `sheshaaos-rpc` | `crates/sheshaaos-rpc/` | Unix socket JSON-RPC | 29 |
+| 🌐 `sheshaaos-remote` | `crates/sheshaaos-remote/` | SSH remote shell | 19 |
+| 🖥️ `sheshaaos-terminal` | `crates/sheshaaos-terminal/` | Zig VT100 + PTY | 19 |
+| 🔐 `sheshaaos-vault` | `crates/sheshaaos-vault/` | Command snippets | 53 |
+| ⚙️ `sheshaaos-wconfig` | `crates/sheshaaos-wconfig/` | Config watcher | 31 |
+| 🖼️ `sheshaaos-gui` | `crates/sheshaaos-gui/` | Iced native GUI | 32 |
+| 📱 `sheshaaos-tui` | `crates/sheshaaos-tui/` | Ratatui TUI | 30 |
+| 🧪 `sheshaaos-tests` | `tests/` | Integration tests & benchmarks | - |
 
 ---
 
@@ -132,8 +132,8 @@ graph LR
 
 ```bash
 # 1. Clone
-git clone https://github.com/nexusaos/NexusAOS.git
-cd NexusAOS
+git clone https://github.com/sheshaaos/SheshaAOS.git
+cd SheshaAOS
 
 # 2. Build
 cargo build --workspace
@@ -150,7 +150,7 @@ cargo fmt
 
 ### First Task
 
-Start with `crates/nexusaos-kernel/src/runtime/kernel.rs` — the heart of the system.
+Start with `crates/sheshaaos-kernel/src/runtime/kernel.rs` — the heart of the system.
 
 ---
 
@@ -171,10 +171,10 @@ graph LR
 ```
 
 **Key Files**:
-- `crates/nexusaos-kernel/src/runtime/kernel.rs` — Main kernel loop
-- `crates/nexusaos-kernel/src/policy.rs` — Policy engine
-- `crates/nexusaos-kernel/src/router.rs` — Task routing
-- `crates/nexusaos-kernel/src/storage/event_store.rs` — Event persistence
+- `crates/sheshaaos-kernel/src/runtime/kernel.rs` — Main kernel loop
+- `crates/sheshaaos-kernel/src/policy.rs` — Policy engine
+- `crates/sheshaaos-kernel/src/router.rs` — Task routing
+- `crates/sheshaaos-kernel/src/storage/event_store.rs` — Event persistence
 
 ### Wave Object Model
 
@@ -193,10 +193,10 @@ graph TD
 ```
 
 **Key Files**:
-- `crates/nexusaos-waveobj/src/types.rs` — Type definitions
-- `crates/nexusaos-waveobj/src/store.rs` — SQLite persistence
-- `crates/nexusaos-waveobj/src/oref.rs` — Object references
-- `crates/nexusaos-waveobj/src/meta.rs` — Metadata
+- `crates/sheshaaos-waveobj/src/types.rs` — Type definitions
+- `crates/sheshaaos-waveobj/src/store.rs` — SQLite persistence
+- `crates/sheshaaos-waveobj/src/oref.rs` — Object references
+- `crates/sheshaaos-waveobj/src/meta.rs` — Metadata
 
 ### Terminal Rendering Pipeline
 
@@ -210,10 +210,10 @@ graph LR
 ```
 
 **Key Files**:
-- `crates/nexusaos-terminal/src/pty.rs` — PTY management
-- `crates/nexusaos-terminal/src/ffi.rs` — Zig FFI
-- `crates/nexusaos-gui/src/terminal.rs` — Terminal state machine
-- `crates/nexusaos-gui/src/view.rs` — Iced rendering
+- `crates/sheshaaos-terminal/src/pty.rs` — PTY management
+- `crates/sheshaaos-terminal/src/ffi.rs` — Zig FFI
+- `crates/sheshaaos-gui/src/terminal.rs` — Terminal state machine
+- `crates/sheshaaos-gui/src/view.rs` — Iced rendering
 
 ---
 
@@ -246,8 +246,8 @@ make test     # Run tests
 make lint     # Check style
 
 # During development
-cargo test -p nexusaos-kernel            # Test specific crate
-cargo clippy -p nexusaos-waveobj         # Lint specific crate
+cargo test -p sheshaaos-kernel            # Test specific crate
+cargo clippy -p sheshaaos-waveobj         # Lint specific crate
 
 # Before PR
 make all       # Full verification
@@ -349,9 +349,9 @@ graph LR
 ## 🤝 Getting Help
 
 - 📖 **Documentation**: Check this file and linked docs
-- 🐛 **Issues**: [GitHub Issues](https://github.com/nexusaos/NexusAOS/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/nexusaos/NexusAOS/discussions)
-- 📧 **Email**: team@nexusaos.dev
+- 🐛 **Issues**: [GitHub Issues](https://github.com/sheshaaos/SheshaAOS/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/sheshaaos/SheshaAOS/discussions)
+- 📧 **Email**: team@sheshaaos.dev
 
 ---
 
@@ -365,11 +365,11 @@ Contributors are recognized in:
 ---
 
 <p align="center">
-  <b>🚀 NexusAOS — Built for the future of AI-native computing</b>
+  <b>🚀 SheshaAOS — Built for the future of AI-native computing</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/nexusaos/NexusAOS">⭐ Star on GitHub</a> •
-  <a href="https://github.com/nexusaos/NexusAOS/fork">🍴 Fork</a> •
-  <a href="https://github.com/nexusaos/NexusAOS/issues">🐛 Report Bug</a>
+  <a href="https://github.com/sheshaaos/SheshaAOS">⭐ Star on GitHub</a> •
+  <a href="https://github.com/sheshaaos/SheshaAOS/fork">🍴 Fork</a> •
+  <a href="https://github.com/sheshaaos/SheshaAOS/issues">🐛 Report Bug</a>
 </p>

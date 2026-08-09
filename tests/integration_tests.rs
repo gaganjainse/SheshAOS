@@ -1,4 +1,4 @@
-//! Integration test suite for NexusAOS v2.
+//! Integration test suite for SheshaAOS v2.
 //!
 //! Tests end-to-end task lifecycle, durability & event replay, policy enforcement,
 //! and failure recovery.
@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use tokio::sync::RwLock;
 
-use nexusaos_kernel::{
+use sheshaaos_kernel::{
     config::AppConfig,
     events::{Event, EventKind, EventPayload},
     model::registry::ProviderRegistry,

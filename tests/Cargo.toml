@@ -1,5 +1,5 @@
 [package]
-name = "nexusaos-tests"
+name = "sheshaaos-tests"
 version = "0.1.0"
 edition = "2021"
 
@@ -28,15 +28,15 @@ name = "ai_integration"
 path = "ai_integration/ai_provider.rs"
 
 [dependencies]
-nexusaos-gui = { path = "../crates/nexusaos-gui" }
-nexusaos-ai = { path = "../crates/nexusaos-ai" }
-nexusaos-kernel = { path = "../crates/nexusaos-kernel" }
-nexusaos-terminal = { path = "../crates/nexusaos-terminal" }
-nexusaos-remote = { path = "../crates/nexusaos-remote" }
-nexusaos-wps = { path = "../crates/nexusaos-wps" }
-nexusaos-waveobj = { path = "../crates/nexusaos-waveobj" }
-nexusaos-blockctl = { path = "../crates/nexusaos-blockctl" }
-nexusaos-wconfig = { path = "../crates/nexusaos-wconfig" }
+sheshaaos-gui = { path = "../crates/sheshaaos-gui" }
+sheshaaos-ai = { path = "../crates/sheshaaos-ai" }
+sheshaaos-kernel = { path = "../crates/sheshaaos-kernel" }
+sheshaaos-terminal = { path = "../crates/sheshaaos-terminal" }
+sheshaaos-remote = { path = "../crates/sheshaaos-remote" }
+sheshaaos-wps = { path = "../crates/sheshaaos-wps" }
+sheshaaos-waveobj = { path = "../crates/sheshaaos-waveobj" }
+sheshaaos-blockctl = { path = "../crates/sheshaaos-blockctl" }
+sheshaaos-wconfig = { path = "../crates/sheshaaos-wconfig" }
 
 # Test dependencies
 async-trait = "0.1"

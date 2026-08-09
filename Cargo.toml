@@ -1,19 +1,19 @@
 [workspace]
 resolver = "3"
 members = [
-    "crates/nexusaos-waveobj",
-    "crates/nexusaos-wps",
-    "crates/nexusaos-blockctl",
-    "crates/nexusaos-wconfig",
-    "crates/nexusaos-ai",
-    "crates/nexusaos-remote",
-    "crates/nexusaos-rpc",
-    "crates/nexusaos-gui",
-    "crates/nexusaos-kernel",
-    "crates/nexusaos-vault",
-    "crates/nexusaos-tui",
-    "crates/nexusaos-terminal",
-    "bin/nexusaos-cli",
+    "crates/sheshaaos-waveobj",
+    "crates/sheshaaos-wps",
+    "crates/sheshaaos-blockctl",
+    "crates/sheshaaos-wconfig",
+    "crates/sheshaaos-ai",
+    "crates/sheshaaos-remote",
+    "crates/sheshaaos-rpc",
+    "crates/sheshaaos-gui",
+    "crates/sheshaaos-kernel",
+    "crates/sheshaaos-vault",
+    "crates/sheshaaos-tui",
+    "crates/sheshaaos-terminal",
+    "bin/sheshaaos-cli",
 ]
 
 [workspace.dependencies]
@@ -43,18 +43,18 @@ rusqlite = { version = "0.32", features = ["bundled", "backup"] }
 notify = "6.1"
 
 # Internal workspace crates
-nexusaos-waveobj = { path = "crates/nexusaos-waveobj" }
-nexusaos-wps = { path = "crates/nexusaos-wps" }
-nexusaos-blockctl = { path = "crates/nexusaos-blockctl" }
-nexusaos-wconfig = { path = "crates/nexusaos-wconfig" }
-nexusaos-ai = { path = "crates/nexusaos-ai" }
-nexusaos-remote = { path = "crates/nexusaos-remote" }
-nexusaos-rpc = { path = "crates/nexusaos-rpc" }
-nexusaos-gui = { path = "crates/nexusaos-gui" }
-nexusaos-kernel = { path = "crates/nexusaos-kernel" }
-nexusaos-vault = { path = "crates/nexusaos-vault" }
-nexusaos-tui = { path = "crates/nexusaos-tui" }
-nexusaos-terminal = { path = "crates/nexusaos-terminal" }
+sheshaaos-waveobj = { path = "crates/sheshaaos-waveobj" }
+sheshaaos-wps = { path = "crates/sheshaaos-wps" }
+sheshaaos-blockctl = { path = "crates/sheshaaos-blockctl" }
+sheshaaos-wconfig = { path = "crates/sheshaaos-wconfig" }
+sheshaaos-ai = { path = "crates/sheshaaos-ai" }
+sheshaaos-remote = { path = "crates/sheshaaos-remote" }
+sheshaaos-rpc = { path = "crates/sheshaaos-rpc" }
+sheshaaos-gui = { path = "crates/sheshaaos-gui" }
+sheshaaos-kernel = { path = "crates/sheshaaos-kernel" }
+sheshaaos-vault = { path = "crates/sheshaaos-vault" }
+sheshaaos-tui = { path = "crates/sheshaaos-tui" }
+sheshaaos-terminal = { path = "crates/sheshaaos-terminal" }
 
 [profile.release]
 lto = true

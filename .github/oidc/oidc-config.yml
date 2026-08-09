@@ -1,33 +1,33 @@
 oidc:
   federation:
     - provider: aws
-      audience: https://nexusaos.aws.example.com
+      audience: https://sheshaaos.aws.example.com
       subject_claim: sub
       issuer: https://token.actions.githubusercontent.com
-      authorization_url: https://nexusaos.aws.example.com/login
-      token_url: https://nexusaos.aws.example.com/token
+      authorization_url: https://sheshaaos.aws.example.com/login
+      token_url: https://sheshaaos.aws.example.com/token
     - provider: azure
-      audience: https://nexusaos.azure.example.com
+      audience: https://sheshaaos.azure.example.com
       subject_claim: sub
       issuer: https://token.actions.githubusercontent.com
-      authorization_url: https://nexusaos.azure.example.com/login
-      token_url: https://nexusaos.azure.example.com/token
+      authorization_url: https://sheshaaos.azure.example.com/login
+      token_url: https://sheshaaos.azure.example.com/token
     - provider: gcp
-      audience: https://nexusaos-gcp.example.com
+      audience: https://sheshaaos-gcp.example.com
       subject_claim: sub
       issuer: https://token.actions.githubusercontent.com
-      authorization_url: https://nexusaos-gcp.example.com/login
-      token_url: https://nexusaos-gcp.example.com/token
+      authorization_url: https://sheshaaos-gcp.example.com/login
+      token_url: https://sheshaaos-gcp.example.com/token
   roles:
     - name: deploy-role
       provider: aws
       conditions:
         - claim: repository
-          equals: NexusAOS/NexusAOS
+          equals: SheshaAOS/SheshaAOS
         - claim: environment
           equals: production
         - claim: actor
-          pattern: "^nexusaos-bot$"
+          pattern: "^sheshaaos-bot$"
       permissions:
         - sts:AssumeRole
       session_duration_seconds: 3600
@@ -35,11 +35,11 @@ oidc:
       provider: aws
       conditions:
         - claim: repository
-          equals: NexusAOS/NexusAOS
+          equals: SheshaAOS/SheshaAOS
         - claim: environment
           equals: staging
         - claim: actor
-          pattern: "^nexusaos-bot$"
+          pattern: "^sheshaaos-bot$"
       permissions:
         - sts:AssumeRole
       session_duration_seconds: 3600
@@ -47,7 +47,7 @@ oidc:
       provider: azure
       conditions:
         - claim: repository
-          equals: NexusAOS/NexusAOS
+          equals: SheshaAOS/SheshaAOS
         - claim: environment
           equals: production
       permissions:
@@ -57,7 +57,7 @@ oidc:
       provider: gcp
       conditions:
         - claim: repository
-          equals: NexusAOS/NexusAOS
+          equals: SheshaAOS/SheshaAOS
         - claim: environment
           equals: production
       permissions:
@@ -66,22 +66,22 @@ oidc:
   trust_policies:
     - issuer: https://token.actions.githubusercontent.com
       audiences:
-        - https://nexusaos.aws.example.com
-        - https://nexusaos.azure.example.com
-        - https://nexusaos-gcp.example.com
+        - https://sheshaaos.aws.example.com
+        - https://sheshaaos.azure.example.com
+        - https://sheshaaos-gcp.example.com
       condition:
         - claim: repository
-          equals: NexusAOS/NexusAOS
+          equals: SheshaAOS/SheshaAOS
         - claim: ref
           pattern: "^refs/heads/(main|master)$"
     - issuer: https://token.actions.githubusercontent.com
       audiences:
-        - https://nexusaos.aws.example.com
-        - https://nexusaos.azure.example.com
-        - https://nexusaos-gcp.example.com
+        - https://sheshaaos.aws.example.com
+        - https://sheshaaos.azure.example.com
+        - https://sheshaaos-gcp.example.com
       condition:
         - claim: repository
-          equals: NexusAOS/NexusAOS
+          equals: SheshaAOS/SheshaAOS
         - claim: environment
           equals: staging
   token_exchange:

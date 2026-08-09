@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# NexusAOS development helper script
+# SheshaAOS development helper script
 set -euo pipefail
 
 case "${1:-help}" in
@@ -40,6 +40,6 @@ case "${1:-help}" in
         echo "  lint   - Run fmt check and clippy"
         echo "  fmt    - Format code"
         echo "  all    - Run fmt check, clippy, and tests"
-        echo "  run    - Run nexusaos with arguments"
+        echo "  run    - Run sheshaaos with arguments"
         ;;
 esac

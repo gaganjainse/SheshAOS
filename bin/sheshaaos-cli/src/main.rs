@@ -1,8 +1,8 @@
-//! NexusAOS CLI entrypoint.
+//! SheshaAOS CLI entrypoint.
 
 use clap::{Parser, Subcommand};
 
-/// NexusAOS — Governance-first AI operating environment
+/// SheshaAOS — Governance-first AI operating environment
 #[derive(Parser, Debug)]
 #[command(name = "sheshaaos", version, about, long_about = None)]
 struct Cli {
@@ -23,7 +23,7 @@ enum Commands {
     /// Launch interactive terminal TUI session (Claude Code / Antigravity style)
     Tui,
 
-    /// Initialize a new NexusAOS data directory
+    /// Initialize a new SheshaAOS data directory
     Init,
 
     /// Check system health and prerequisites
@@ -103,14 +103,14 @@ fn main() -> anyhow::Result<()> {
         }
         Some(Commands::Config) => sheshaaos_kernel::cli::config_show::run(&cli.config)?,
         Some(Commands::Vault { action }) => {
-            println!("NexusAOS Command Vault [{}]", action);
+            println!("SheshaAOS Command Vault [{}]", action);
             let vault_path = std::path::PathBuf::from("~/.sheshaaos/data/commands.jsonl");
             let store = sheshaaos_vault::snippet::VaultStore::new(vault_path);
             let loaded = store.load_all().unwrap_or_default();
             println!("Loaded {} saved snippets from vault.", loaded.len());
         }
         Some(Commands::Explain { command }) => {
-            println!("NexusAOS Flag Inspector for command: {}", command);
+            println!("SheshaAOS Flag Inspector for command: {}", command);
             let flags = sheshaaos_vault::inspector::FlagInspector::explain_flags(&command);
             for (flag, exp) in flags {
                 println!("  {:12} -> {}", flag, exp);
@@ -293,6 +293,6 @@ fn run_interactive_tui() -> anyhow::Result<()> {
     execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
     terminal.show_cursor()?;
 
-    println!("NexusAOS interactive session closed cleanly.");
+    println!("SheshaAOS interactive session closed cleanly.");
     Ok(())
 }

@@ -1,7 +1,7 @@
 use criterion::{black_box, criterion_group, Criterion};
-use nexusaos_gui::terminal::{TermPerformer};
+use sheshaaos_gui::terminal::{TermPerformer};
 use vte::Parser;
-use nexusaos_kernel::{
+use sheshaaos_kernel::{
     runtime::kernel::Kernel,
     storage::event_store::EventStore,
     model::registry::ProviderRegistry,
@@ -133,7 +133,7 @@ fn bench_event_store(c: &mut Criterion) {
     let mut group = c.benchmark_group("event_store");
     
     group.bench_function("append_event", |b| {
-        use nexusaos_kernel::{events::{Event, EventKind, EventPayload}, task::TaskId};
+        use sheshaaos_kernel::{events::{Event, EventKind, EventPayload}, task::TaskId};
         use uuid::Uuid;
         
         b.iter(|| {
@@ -167,7 +167,7 @@ fn bench_terminal_rendering(c: &mut Criterion) {
     let mut group = c.benchmark_group("terminal_rendering");
 
     // Pre-create a performer with colored content
-    use nexusaos_gui::terminal::{Cell, CellAttr, TermColor};
+    use sheshaaos_gui::terminal::{Cell, CellAttr, TermColor};
     let mut performer = TermPerformer::new(30, 120);
     for r in 0..30 {
         for c in 0..120 {
@@ -233,7 +233,7 @@ fn bench_snapshot_projection(c: &mut Criterion) {
 
     // Pre-populate with events
     rt.block_on(async {
-        use nexusaos_kernel::{events::{Event, EventKind, EventPayload}, task::TaskId};
+        use sheshaaos_kernel::{events::{Event, EventKind, EventPayload}, task::TaskId};
         use uuid::Uuid;
         for i in 0..100u64 {
             let mut event = Event::new(
@@ -249,7 +249,7 @@ fn bench_snapshot_projection(c: &mut Criterion) {
     group.bench_function("replay_100_events", |b| {
         b.iter(|| {
             rt.block_on(async {
-                let projection = nexusaos_kernel::runtime::replay::ReplayEngine::replay(&*store).await.unwrap();
+                let projection = sheshaaos_kernel::runtime::replay::ReplayEngine::replay(&*store).await.unwrap();
                 black_box(projection);
             });
         });
@@ -260,7 +260,7 @@ fn bench_snapshot_projection(c: &mut Criterion) {
 
 /// Benchmark tool broker routing throughput
 fn bench_tool_broker_throughput(c: &mut Criterion) {
-    use nexusaos_kernel::tools::executor::{ToolRequest, ToolResult};
+    use sheshaaos_kernel::tools::executor::{ToolRequest, ToolResult};
     use std::sync::Arc;
 
     let mut group = c.benchmark_group("tool_broker");

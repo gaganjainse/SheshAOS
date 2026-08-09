@@ -1,7 +1,7 @@
 security:
   vulnerability_reporting:
     enabled: true
-    email: security@nexusaos.io
+    email: security@sheshaaos.io
     private_vulnerability_reporting:
       enabled: true
       advisory_database: https://api.github.com/security-advisories
@@ -41,7 +41,7 @@ security:
     notifications:
       - type: email
         recipients:
-          - security@nexusaos.io
+          - security@sheshaaos.io
       - type: slack
         channel: "#security-alerts"
         webhook: ${SECURITY_SLACK_WEBHOOK}
@@ -54,7 +54,7 @@ security:
     enabled: true
     escalation_contacts:
       - name: Security Lead
-        email: security-lead@nexusaos.io
+        email: security-lead@sheshaaos.io
       - name: Infrastructure Lead
-        email: infra@nexusaos.io
-    runbook_url: https://nexusaos.io/docs/security/runbook
+        email: infra@sheshaaos.io
+    runbook_url: https://sheshaaos.io/docs/security/runbook

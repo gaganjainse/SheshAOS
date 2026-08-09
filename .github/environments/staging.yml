@@ -1,5 +1,5 @@
 name: staging
-url: https://staging.nexusaos.io
+url: https://staging.sheshaaos.io
 protection_rules:
   - required_reviewers:
       reviewers:

@@ -2,7 +2,7 @@
 name = "sheshaaos"
 version = "0.1.0"
 edition = "2021"
-description = "NexusAOS CLI Application Binary"
+description = "SheshaAOS CLI Application Binary"
 license = "MIT"
 
 [[bin]]

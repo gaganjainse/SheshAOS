@@ -1,5 +1,5 @@
 [general]
-data_dir = "/tmp/nexusaos-test"
+data_dir = "/tmp/sheshaaos-test"
 log_level = "debug"
 
 [resource_limits]
@@ -46,7 +46,7 @@ max_context = 16384
 supports_vision = true
 
 [tools.filesystem]
-allowed_paths = ["/tmp/nexusaos-test"]
+allowed_paths = ["/tmp/sheshaaos-test"]
 denied_patterns = ["**/.git/objects/**"]
 
 [tools.git]

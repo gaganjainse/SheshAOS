@@ -1,9 +1,9 @@
-# NexusAOS default configuration
+# SheshaAOS default configuration
 # This file defines the baseline settings. Override per-project via local config.
 
 [general]
-# Directory where NexusAOS stores events, snapshots, and artifacts
-data_dir = "~/.nexusaos/data"
+# Directory where SheshaAOS stores events, snapshots, and artifacts
+data_dir = "~/.sheshaaos/data"
 # Log level: trace, debug, info, warn, error
 log_level = "info"
 
