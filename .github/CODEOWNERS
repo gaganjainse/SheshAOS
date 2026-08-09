@@ -1,42 +1,42 @@
 # CODEOWNERS
 
 # Global owners
-* @nexusaos-maintainers
+* @sheshaaos-maintainers
 
 # Core kernel
-crates/nexusaos-kernel/src/runtime/ @nexusaos-maintainers
-crates/nexusaos-kernel/src/policy.rs @nexusaos-maintainers
-crates/nexusaos-kernel/src/storage/ @nexusaos-maintainers
+crates/sheshaaos-kernel/src/runtime/ @sheshaaos-maintainers
+crates/sheshaaos-kernel/src/policy.rs @sheshaaos-maintainers
+crates/sheshaaos-kernel/src/storage/ @sheshaaos-maintainers
 
 # Wave object model
-crates/nexusaos-waveobj/src/store.rs @nexusaos-maintainers
-crates/nexusaos-waveobj/src/types.rs @nexusaos-maintainers
+crates/sheshaaos-waveobj/src/store.rs @sheshaaos-maintainers
+crates/sheshaaos-waveobj/src/types.rs @sheshaaos-maintainers
 
 # Pub/Sub
-crates/nexusaos-wps/src/broker.rs @nexusaos-maintainers
+crates/sheshaaos-wps/src/broker.rs @sheshaaos-maintainers
 
 # Block controller
-crates/nexusaos-blockctl/src/ @nexusaos-maintainers
+crates/sheshaaos-blockctl/src/ @sheshaaos-maintainers
 
 # Terminal / PTY
-crates/nexusaos-terminal/src/ @nexusaos-maintainers
+crates/sheshaaos-terminal/src/ @sheshaaos-maintainers
 
 # AI providers
-crates/nexusaos-ai/src/ @nexusaos-maintainers
+crates/sheshaaos-ai/src/ @sheshaaos-maintainers
 
 # GUI / TUI
-crates/nexusaos-gui/src/ @nexusaos-maintainers
-crates/nexusaos-tui/src/ @nexusaos-maintainers
+crates/sheshaaos-gui/src/ @sheshaaos-maintainers
+crates/sheshaaos-tui/src/ @sheshaaos-maintainers
 
 # Remote / RPC
-crates/nexusaos-remote/src/ @nexusaos-maintainers
-crates/nexusaos-rpc/src/ @nexusaos-maintainers
+crates/sheshaaos-remote/src/ @sheshaaos-maintainers
+crates/sheshaaos-rpc/src/ @sheshaaos-maintainers
 
 # Vault / Config
-crates/nexusaos-vault/src/ @nexusaos-maintainers
-crates/nexusaos-wconfig/src/ @nexusaos-maintainers
+crates/sheshaaos-vault/src/ @sheshaaos-maintainers
+crates/sheshaaos-wconfig/src/ @sheshaaos-maintainers
 
 # CI / Docs
-.github/ @nexusaos-maintainers
-CONTRIBUTING.md @nexusaos-maintainers
-README.md @nexusaos-maintainers
+.github/ @sheshaaos-maintainers
+CONTRIBUTING.md @sheshaaos-maintainers
+README.md @sheshaaos-maintainers
