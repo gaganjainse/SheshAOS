@@ -1,19 +1,19 @@
 [package]
-name = "nexusaos"
+name = "sheshaaos"
 version = "0.1.0"
 edition = "2021"
 description = "NexusAOS CLI Application Binary"
 license = "MIT"
 
 [[bin]]
-name = "nexusaos"
+name = "sheshaaos"
 path = "src/main.rs"
 
 [dependencies]
-nexusaos-kernel.workspace = true
-nexusaos-vault.workspace = true
-nexusaos-tui.workspace = true
-nexusaos-terminal.workspace = true
+sheshaaos-kernel.workspace = true
+sheshaaos-vault.workspace = true
+sheshaaos-tui.workspace = true
+sheshaaos-terminal.workspace = true
 tokio.workspace = true
 clap.workspace = true
 tracing.workspace = true
