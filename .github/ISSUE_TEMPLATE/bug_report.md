@@ -21,7 +21,7 @@ Clear description of the bug.
 
 - OS: [e.g., Ubuntu 26.04 LTS]
 - Rust version: [e.g., 1.75.0]
-- NexusAOS version/commit:
+- SheshaAOS version/commit:
 - Hardware: [e.g., Intel i7-14700HX, 16GB RAM]
 
 ## Logs / Output

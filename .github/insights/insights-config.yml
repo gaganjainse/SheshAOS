@@ -18,7 +18,7 @@ insights:
     weeks: 52
   participation:
     enabled: true
-    owner_username: nexusaos
+    owner_username: sheshaaos
   pulse:
     enabled: true
     metrics:
@@ -32,13 +32,13 @@ insights:
     enabled: true
     contact_links:
       - name: Security
-        url: https://github.com/NexusAOS/NexusAOS/security/advisories/new
+        url: https://github.com/SheshaAOS/SheshaAOS/security/advisories/new
       - name: Documentation
-        url: https://nexusaos.io/docs
+        url: https://sheshaaos.io/docs
       - name: Discord
-        url: https://discord.gg/nexusaos
+        url: https://discord.gg/sheshaaos
       - name: Matrix
-        url: https://matrix.to/#/#nexusaos:matrix.org
+        url: https://matrix.to/#/#sheshaaos:matrix.org
   traffic:
     enabled: true
     referrers: true
@@ -49,7 +49,7 @@ insights:
     groups:
       - name: core-maintainers
         members:
-          - "@nexusaos/maintainers"
+          - "@sheshaaos/maintainers"
   contributors:
     enabled: true
     show_bots: false

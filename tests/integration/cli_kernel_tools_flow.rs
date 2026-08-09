@@ -52,44 +52,44 @@ max_context = 4096
 "#;
     std::fs::write(&config_path, config_content).unwrap();
 
-    // Test 1: nexusaos init
+    // Test 1: sheshaaos init
     let output = Command::new("cargo")
-        .args(["run", "--bin", "nexusaos", "--", "--config", config_path.to_str().unwrap(), "init"])
-        .current_dir("/home/gagan/Workspace/NexusAOS")
+        .args(["run", "--bin", "sheshaaos", "--", "--config", config_path.to_str().unwrap(), "init"])
+        .current_dir("/home/gagan/Workspace/SheshaAOS")
         .output()
         .expect("Failed to execute init");
     assert!(output.status.success(), "init failed: {}", String::from_utf8_lossy(&output.stderr));
 
-    // Test 2: nexusaos doctor
+    // Test 2: sheshaaos doctor
     let output = Command::new("cargo")
-        .args(["run", "--bin", "nexusaos", "--", "--config", config_path.to_str().unwrap(), "doctor"])
-        .current_dir("/home/gagan/Workspace/NexusAOS")
+        .args(["run", "--bin", "sheshaaos", "--", "--config", config_path.to_str().unwrap(), "doctor"])
+        .current_dir("/home/gagan/Workspace/SheshaAOS")
         .output()
         .expect("Failed to execute doctor");
     assert!(output.status.success(), "doctor failed: {}", String::from_utf8_lossy(&output.stderr));
 
-    // Test 3: nexusaos run with simple task
+    // Test 3: sheshaaos run with simple task
     let output = Command::new("cargo")
-        .args(["run", "--bin", "nexusaos", "--", "--config", config_path.to_str().unwrap(), "run", "echo hello", "--yes"])
-        .current_dir("/home/gagan/Workspace/NexusAOS")
+        .args(["run", "--bin", "sheshaaos", "--", "--config", config_path.to_str().unwrap(), "run", "echo hello", "--yes"])
+        .current_dir("/home/gagan/Workspace/SheshaAOS")
         .output()
         .expect("Failed to execute run");
     // May fail due to no LLM server, but should not crash
     println!("Run output: {}", String::from_utf8_lossy(&output.stdout));
     println!("Run stderr: {}", String::from_utf8_lossy(&output.stderr));
 
-    // Test 4: nexusaos status
+    // Test 4: sheshaaos status
     let output = Command::new("cargo")
-        .args(["run", "--bin", "nexusaos", "--", "--config", config_path.to_str().unwrap(), "status"])
-        .current_dir("/home/gagan/Workspace/NexusAOS")
+        .args(["run", "--bin", "sheshaaos", "--", "--config", config_path.to_str().unwrap(), "status"])
+        .current_dir("/home/gagan/Workspace/SheshaAOS")
         .output()
         .expect("Failed to execute status");
     assert!(output.status.success(), "status failed: {}", String::from_utf8_lossy(&output.stderr));
 
-    // Test 5: nexusaos config
+    // Test 5: sheshaaos config
     let output = Command::new("cargo")
-        .args(["run", "--bin", "nexusaos", "--", "--config", config_path.to_str().unwrap(), "config"])
-        .current_dir("/home/gagan/Workspace/NexusAOS")
+        .args(["run", "--bin", "sheshaaos", "--", "--config", config_path.to_str().unwrap(), "config"])
+        .current_dir("/home/gagan/Workspace/SheshaAOS")
         .output()
         .expect("Failed to execute config");
     assert!(output.status.success(), "config failed: {}", String::from_utf8_lossy(&output.stderr));
@@ -98,7 +98,7 @@ max_context = 4096
 /// Test task submission and event store persistence
 #[tokio::test]
 async fn test_task_submission_and_event_persistence() {
-    use nexusaos_kernel::{
+    use sheshaaos_kernel::{
         runtime::kernel::{Kernel, EventStore as EventStoreTrait},
         storage::event_store::EventStore,
         model::registry::ProviderRegistry,
@@ -137,14 +137,14 @@ let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
     assert!(!events.is_empty(), "TaskCreated event should be persisted");
     
     // Verify event types
-    let has_task_created = events.iter().any(|e| matches!(e.kind, nexusaos_kernel::events::EventKind::TaskCreated));
+    let has_task_created = events.iter().any(|e| matches!(e.kind, sheshaaos_kernel::events::EventKind::TaskCreated));
     assert!(has_task_created, "TaskCreated event should exist");
 }
 
 /// Test kernel state transitions
 #[tokio::test]
 async fn test_kernel_state_transitions() {
-    use nexusaos_kernel::{
+    use sheshaaos_kernel::{
         runtime::kernel::{Kernel, EventStore as EventStoreTrait},
         storage::event_store::EventStore,
         model::registry::ProviderRegistry,
@@ -184,8 +184,8 @@ let broker = Arc::new(ToolBroker::new(Arc::new(policy.clone())));
     // Check events for state transitions
     let events = store.get_task_events(&task_id).await.unwrap();
     // submit_task emits TaskCreated and TaskClassified events
-    let has_task_created = events.iter().any(|e| matches!(e.kind, nexusaos_kernel::events::EventKind::TaskCreated));
-    let has_task_classified = events.iter().any(|e| matches!(e.kind, nexusaos_kernel::events::EventKind::TaskClassified));
+    let has_task_created = events.iter().any(|e| matches!(e.kind, sheshaaos_kernel::events::EventKind::TaskCreated));
+    let has_task_classified = events.iter().any(|e| matches!(e.kind, sheshaaos_kernel::events::EventKind::TaskClassified));
     assert!(has_task_created, "Should have TaskCreated event");
     assert!(has_task_classified, "Should have TaskClassified event");
 }

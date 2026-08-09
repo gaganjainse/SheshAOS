@@ -1,5 +1,5 @@
 name: production
-url: https://nexusaos.io
+url: https://sheshaaos.io
 protection_rules:
   - required_reviewers:
       reviewers:

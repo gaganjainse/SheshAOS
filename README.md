@@ -1,10 +1,10 @@
 ---
-title: NexusAOS
+title: SheshaAOS
 description: Governance-first, event-sourced AI operating environment for Ubuntu Linux
 lang: en
 ---
 
-## 🦀 NexusAOS
+## 🦀 SheshaAOS
 
 ![Rust](https://img.shields.io/badge/Rust-2024-important?style=for-the-badge&logo=rust)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
@@ -20,13 +20,13 @@ for Ubuntu Linux.**
 [🤝 Contributing](CONTRIBUTING.md)  
 [🔒 Security](SECURITY.md)  
 [📝 Changelog](CHANGELOG.md)  
-[💬 Discussions](https://github.com/nexusaos/NexusAOS/discussions)
+[💬 Discussions](https://github.com/sheshaaos/SheshaAOS/discussions)
 
 ---
 
 ## 📋 About
 
-**NexusAOS** is a production-ready, open-source AI operating
+**SheshaAOS** is a production-ready, open-source AI operating
 environment that combines local LLM inference, terminal
 emulation, SSH multiplexing, and governance-first task
 execution into a unified Rust system.
@@ -53,9 +53,9 @@ To provide a **governance-first AI platform** where:
 | 📄 **License** | MIT |
 | 🏷️ **Status** | Production Ready |
 
-### 🌟 What Makes NexusAOS Different
+### 🌟 What Makes SheshaAOS Different
 
-| Traditional AI Tools | NexusAOS |
+| Traditional AI Tools | SheshaAOS |
 | ------------------- | -------- |
 | Cloud-dependent | 💻 **Local-first** — works offline |
 | No oversight | 🛡️ **Governance-first** — kernel validates everything |
@@ -68,14 +68,14 @@ To provide a **governance-first AI platform** where:
 ```mermaid
 graph TB
     subgraph "Interface Layer"
-        CLI["🖥️ CLI<br/>nexusaos-cli"]
-        TUI["📱 TUI<br/>nexusaos-tui"]
-        GUI["🖼️ GUI<br/>nexusaos-gui"]
-        RPC["🔌 RPC<br/>nexusaos-rpc"]
+        CLI["🖥️ CLI<br/>sheshaaos-cli"]
+        TUI["📱 TUI<br/>sheshaaos-tui"]
+        GUI["🖼️ GUI<br/>sheshaaos-gui"]
+        RPC["🔌 RPC<br/>sheshaaos-rpc"]
     end
 
     subgraph "Kernel Core"
-        K["🏛️ Kernel<br/>nexusaos-kernel"]
+        K["🏛️ Kernel<br/>sheshaaos-kernel"]
         P["🛡️ Policy Engine"]
         R["🔀 Task Router"]
         S["⏰ Scheduler"]
@@ -127,17 +127,17 @@ graph TB
 
 ```bash
 # Clone
-git clone https://github.com/nexusaos/NexusAOS.git
-cd NexusAOS
+git clone https://github.com/sheshaaos/SheshaAOS.git
+cd SheshaAOS
 
 # Build
 cargo build --release
 
 # Initialize
-./target/release/nexusaos init
+./target/release/sheshaaos init
 
 # Run
-./target/release/nexusaos run "describe the project structure"
+./target/release/sheshaaos run "describe the project structure"
 ```
 
 ### 🧪 Quality Metrics
@@ -171,12 +171,12 @@ cargo build --release
 
 ## 🎯 Overview
 
-NexusAOS is a **microkernel-like system** that routes tasks to
+SheshaAOS is a **microkernel-like system** that routes tasks to
 specialist local AI models (planner, coder, vision), enforces
 policy on every action, and keeps an **append-only audit trail**
 of every state change.
 
-### Why NexusAOS?
+### Why SheshaAOS?
 
 | Problem | Solution |
 | -------- | -------- |
@@ -244,14 +244,14 @@ graph LR
 ```mermaid
 graph TB
     subgraph "Interface Layer"
-        CLI["🖥️ CLI<br/>nexusaos-cli"]
-        TUI["📱 TUI<br/>nexusaos-tui"]
-        GUI["🖼️ GUI<br/>nexusaos-gui"]
-        RPC["🔌 RPC<br/>nexusaos-rpc"]
+        CLI["🖥️ CLI<br/>sheshaaos-cli"]
+        TUI["📱 TUI<br/>sheshaaos-tui"]
+        GUI["🖼️ GUI<br/>sheshaaos-gui"]
+        RPC["🔌 RPC<br/>sheshaaos-rpc"]
     end
 
     subgraph "Kernel Core"
-        KERNEL["🏛️ Kernel<br/>nexusaos-kernel"]
+        KERNEL["🏛️ Kernel<br/>sheshaaos-kernel"]
         POLICY["🛡️ Policy Engine"]
         ROUTER["🔀 Task Router"]
         SCHEDULER["⏰ Scheduler"]
@@ -410,23 +410,23 @@ graph TD
 
 ```bash
 # Clone the repository
-git clone https://github.com/nexusaos/NexusAOS.git
-cd NexusAOS
+git clone https://github.com/sheshaaos/SheshaAOS.git
+cd SheshaAOS
 
 # Build the project
 cargo build --release
 
 # Run initialization
-./target/release/nexusaos init
+./target/release/sheshaaos init
 
 # Check system health
-./target/release/nexusaos doctor
+./target/release/sheshaaos doctor
 
 # Start interactive TUI
-./target/release/nexusaos tui
+./target/release/sheshaaos tui
 
 # Run a task
-./target/release/nexusaos run "describe the project structure"
+./target/release/sheshaaos run "describe the project structure"
 ```
 
 ### Development Setup
@@ -453,27 +453,27 @@ cargo bench --workspace
 ## 📁 Project Structure
 
 ```text
-NexusAOS/
+SheshaAOS/
 ├── .github/                    # GitHub Actions, templates, dependabot
 │   ├── workflows/             # CI/CD pipelines
 │   ├── ISSUE_TEMPLATE/        # Issue templates
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── CODEOWNERS
 │   └── BRANCH_PROTECTION.md
-├── bin/nexusaos-cli/          # CLI binary entrypoint
+├── bin/sheshaaos-cli/          # CLI binary entrypoint
 ├── crates/
-│   ├── nexusaos-kernel/       # 🏛️ Core governance microkernel
-│   ├── nexusaos-waveobj/      # 📦 Object store & ORef graph
-│   ├── nexusaos-wps/          # 📡 Pub/Sub event broker
-│   ├── nexusaos-blockctl/     # 🧱 PTY shell controller
-│   ├── nexusaos-terminal/     # 🖥️ Zig VT100 + PTY bridge
-│   ├── nexusaos-ai/           # 🤖 OpenAI/Anthropic streaming
-│   ├── nexusaos-remote/       # 🌐 SSH remote shell
-│   ├── nexusaos-rpc/          # 🔌 Unix socket JSON-RPC
-│   ├── nexusaos-gui/          # 🖼️ Iced native GUI
-│   ├── nexusaos-tui/          # 📱 Ratatui TUI
-│   ├── nexusaos-vault/        # 🔐 Command snippets & inspector
-│   └── nexusaos-wconfig/      # ⚙️ Config watcher & settings
+│   ├── sheshaaos-kernel/       # 🏛️ Core governance microkernel
+│   ├── sheshaaos-waveobj/      # 📦 Object store & ORef graph
+│   ├── sheshaaos-wps/          # 📡 Pub/Sub event broker
+│   ├── sheshaaos-blockctl/     # 🧱 PTY shell controller
+│   ├── sheshaaos-terminal/     # 🖥️ Zig VT100 + PTY bridge
+│   ├── sheshaaos-ai/           # 🤖 OpenAI/Anthropic streaming
+│   ├── sheshaaos-remote/       # 🌐 SSH remote shell
+│   ├── sheshaaos-rpc/          # 🔌 Unix socket JSON-RPC
+│   ├── sheshaaos-gui/          # 🖼️ Iced native GUI
+│   ├── sheshaaos-tui/          # 📱 Ratatui TUI
+│   ├── sheshaaos-vault/        # 🔐 Command snippets & inspector
+│   └── sheshaaos-wconfig/      # ⚙️ Config watcher & settings
 ├── tests/                     # Integration tests & benchmarks
 ├── configs/                   # Configuration files
 ├── scripts/                   # Dev/test helper scripts
@@ -498,18 +498,18 @@ NexusAOS/
 
 | Crate | Tests |
 | ----- | ----- |
-| nexusaos-kernel | 396 |
-| nexusaos-waveobj | 204 |
-| nexusaos-wps | 71 |
-| nexusaos-blockctl | 48 |
-| nexusaos-ai | 18 |
-| nexusaos-rpc | 29 |
-| nexusaos-remote | 19 |
-| nexusaos-terminal | 19 |
-| nexusaos-vault | 53 |
-| nexusaos-wconfig | 31 |
-| nexusaos-gui | 32 |
-| nexusaos-tui | 30 |
+| sheshaaos-kernel | 396 |
+| sheshaaos-waveobj | 204 |
+| sheshaaos-wps | 71 |
+| sheshaaos-blockctl | 48 |
+| sheshaaos-ai | 18 |
+| sheshaaos-rpc | 29 |
+| sheshaaos-remote | 19 |
+| sheshaaos-terminal | 19 |
+| sheshaaos-vault | 53 |
+| sheshaaos-wconfig | 31 |
+| sheshaaos-gui | 32 |
+| sheshaaos-tui | 30 |
 | **Total** | **981** |
 
 ### Running Tests
@@ -538,7 +538,7 @@ cargo test --workspace -- --nocapture
 cargo bench --workspace
 
 # Specific benchmark
-cargo bench -p nexusaos-kernel bench_kernel_task_submission
+cargo bench -p sheshaaos-kernel bench_kernel_task_submission
 ```
 
 | Benchmark | Description |
@@ -599,7 +599,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-### Built with ❤️ by the NexusAOS Team
+### Built with ❤️ by the SheshaAOS Team
 
-[GitHub](https://github.com/nexusaos/NexusAOS) • [Issues](https://github.com/nexusaos/NexusAOS/issues)
-• [Discussions](https://github.com/nexusaos/NexusAOS/discussions)
+[GitHub](https://github.com/sheshaaos/SheshaAOS) • [Issues](https://github.com/sheshaaos/SheshaAOS/issues)
+• [Discussions](https://github.com/sheshaaos/SheshaAOS/discussions)

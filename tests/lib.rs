@@ -1,10 +1,10 @@
-//! NexusAOS Test Suite Library
+//! SheshaAOS Test Suite Library
 //! 
 //! This library provides common test utilities and re-exports
-//! for the NexusAOS test suite.
+//! for the SheshaAOS test suite.
 
 pub mod test_utils {
-    use nexusaos_kernel::{
+    use sheshaaos_kernel::{
         runtime::kernel::Kernel,
         storage::JsonlEventStore,
         model::registry::ProviderRegistry,

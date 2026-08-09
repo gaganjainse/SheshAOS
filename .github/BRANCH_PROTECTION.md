@@ -1,6 +1,6 @@
 # Branch Protection Rules
 
-This document describes the required branch protection settings for the NexusAOS repository.
+This document describes the required branch protection settings for the SheshaAOS repository.
 
 ## Required Settings for `main` / `master`
 

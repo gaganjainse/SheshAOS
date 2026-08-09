@@ -6,7 +6,7 @@ updates:
       interval: daily
     open-pull-requests-limit: 10
     reviewers:
-      - nexusaos/maintainers
+      - sheshaaos/maintainers
     labels:
       - dependencies
       - cargo
@@ -47,7 +47,7 @@ updates:
       interval: daily
     open-pull-requests-limit: 5
     reviewers:
-      - nexusaos/maintainers
+      - sheshaaos/maintainers
     labels:
       - dependencies
       - github-actions

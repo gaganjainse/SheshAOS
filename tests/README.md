@@ -1,6 +1,6 @@
-# NexusAOS Test Suite
+# SheshaAOS Test Suite
 
-This directory contains comprehensive tests for NexusAOS organized by category:
+This directory contains comprehensive tests for SheshaAOS organized by category:
 
 ## Test Categories
 
@@ -23,22 +23,22 @@ This directory contains comprehensive tests for NexusAOS organized by category:
 
 ```bash
 # Run all integration tests
-cargo test -p nexusaos-tests --test integration
+cargo test -p sheshaaos-tests --test integration
 
 # Run visual regression tests
-cargo test -p nexusaos-tests --test visual
+cargo test -p sheshaaos-tests --test visual
 
 # Run PTY/SSH tests
-cargo test -p nexusaos-tests --test pty
+cargo test -p sheshaaos-tests --test pty
 
 # Run benchmarks
-cargo bench -p nexusaos-tests
+cargo bench -p sheshaaos-tests
 
 # Run AI integration tests
-cargo test -p nexusaos-tests --test ai_integration
+cargo test -p sheshaaos-tests --test ai_integration
 
 # Run all tests
-cargo test -p nexusaos-tests
+cargo test -p sheshaaos-tests
 ```
 
 ## Visual Regression Testing
@@ -46,13 +46,13 @@ cargo test -p nexusaos-tests
 Reference images are stored in `tests/visual/references/`. To regenerate:
 
 ```bash
-cargo test -p nexusaos-tests --test visual generate_reference_images -- --ignored
+cargo test -p sheshaaos-tests --test visual generate_reference_images -- --ignored
 ```
 
 To run visual regression tests:
 
 ```bash
-cargo test -p nexusaos-tests --test visual
+cargo test -p sheshaaos-tests --test visual
 ```
 
 ## Benchmarks
@@ -60,7 +60,7 @@ cargo test -p nexusaos-tests --test visual
 Run with criterion:
 
 ```bash
-cargo bench -p nexusaos-tests
+cargo bench -p sheshaaos-tests
 ```
 
 Results are saved to `target/criterion/`.

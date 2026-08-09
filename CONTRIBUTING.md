@@ -1,11 +1,11 @@
-# 🤝 Contributing to NexusAOS
+# 🤝 Contributing to SheshaAOS
 
 ![Rust](https://img.shields.io/badge/Rust-2024-important?style=for-the-badge&logo=rust)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue?style=for-the-badge&logo=github)
 ![Tests](https://img.shields.io/badge/Tests-1000%2B-success?style=for-the-badge)
 ![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen?style=for-the-badge)
 
-Thank you for your interest in contributing to **NexusAOS**! This document describes the development workflow, code standards, and review process.
+Thank you for your interest in contributing to **SheshaAOS**! This document describes the development workflow, code standards, and review process.
 
 ---
 
@@ -30,7 +30,7 @@ Thank you for your interest in contributing to **NexusAOS**! This document descr
 
 Be respectful, constructive, and inclusive. We follow the [Contributor Covenant](https://www.contributor-covenant.org/).
 
-Report violations to: **conduct@nexusaos.dev**
+Report violations to: **conduct@sheshaaos.dev**
 
 ---
 
@@ -39,8 +39,8 @@ Report violations to: **conduct@nexusaos.dev**
 ### 1. Fork & Clone
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/NexusAOS.git
-cd NexusAOS
+git clone https://github.com/YOUR_USERNAME/SheshaAOS.git
+cd SheshaAOS
 ```
 
 ### 2. Install Dependencies
@@ -288,7 +288,7 @@ graph TD
 
 | Item | Convention | Example |
 |------|------------|---------|
-| Crate names | `snake_case` | `nexusaos_kernel` |
+| Crate names | `snake_case` | `sheshaaos_kernel` |
 | Module names | `snake_case` | `event_store` |
 | Function names | `snake_case` | `submit_task` |
 | Struct names | `PascalCase` | `TaskProjection` |
@@ -364,31 +364,31 @@ graph TB
 
 ```
 ✅ Allowed:
-nexusaos-kernel → nexusaos-waveobj
-nexusaos-tui → nexusaos-kernel
-nexusaos-gui → nexusaos-ai
+sheshaaos-kernel → sheshaaos-waveobj
+sheshaaos-tui → sheshaaos-kernel
+sheshaaos-gui → sheshaaos-ai
 
 ❌ Forbidden:
-nexusaos-waveobj → nexusaos-kernel (circular)
-nexusaos-tui → nexusaos-ai (bypasses kernel)
+sheshaaos-waveobj → sheshaaos-kernel (circular)
+sheshaaos-tui → sheshaaos-ai (bypasses kernel)
 ```
 
 ### Module Responsibilities
 
 | Crate | Responsibility |
 |-------|----------------|
-| `nexusaos-kernel` | Governance, routing, policy, event sourcing |
-| `nexusaos-waveobj` | Object persistence, ORef graph, metadata |
-| `nexusaos-wps` | Pub/sub events, scoping, history |
-| `nexusaos-blockctl` | PTY lifecycle, shell I/O |
-| `nexusaos-terminal` | Zig VT100 parser, PTY bridge |
-| `nexusaos-ai` | OpenAI/Anthropic streaming, sessions |
-| `nexusaos-remote` | SSH client, connection management |
-| `nexusaos-rpc` | Unix socket JSON-RPC |
-| `nexusaos-gui` | Iced native GUI |
-| `nexusaos-tui` | Ratatui TUI |
-| `nexusaos-vault` | Command snippets, flag inspector |
-| `nexusaos-wconfig` | Config watcher, settings |
+| `sheshaaos-kernel` | Governance, routing, policy, event sourcing |
+| `sheshaaos-waveobj` | Object persistence, ORef graph, metadata |
+| `sheshaaos-wps` | Pub/sub events, scoping, history |
+| `sheshaaos-blockctl` | PTY lifecycle, shell I/O |
+| `sheshaaos-terminal` | Zig VT100 parser, PTY bridge |
+| `sheshaaos-ai` | OpenAI/Anthropic streaming, sessions |
+| `sheshaaos-remote` | SSH client, connection management |
+| `sheshaaos-rpc` | Unix socket JSON-RPC |
+| `sheshaaos-gui` | Iced native GUI |
+| `sheshaaos-tui` | Ratatui TUI |
+| `sheshaaos-vault` | Command snippets, flag inspector |
+| `sheshaaos-wconfig` | Config watcher, settings |
 
 ---
 
@@ -488,19 +488,19 @@ Comment `"/assign"` on the issue to claim it.
 
 ## 📞 Contact
 
-- **Issues**: [GitHub Issues](https://github.com/nexusaos/NexusAOS/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/nexusaos/NexusAOS/discussions)
-- **Email**: team@nexusaos.dev
-- **Conduct**: conduct@nexusaos.dev
+- **Issues**: [GitHub Issues](https://github.com/sheshaaos/SheshaAOS/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/sheshaaos/SheshaAOS/discussions)
+- **Email**: team@sheshaaos.dev
+- **Conduct**: conduct@sheshaaos.dev
 
 ---
 
 <p align="center">
-  <b>Built with ❤️ by the NexusAOS Team</b>
+  <b>Built with ❤️ by the SheshaAOS Team</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/nexusaos/NexusAOS">GitHub</a> •
-  <a href="https://github.com/nexusaos/NexusAOS/issues">Issues</a> •
-  <a href="https://github.com/nexusaos/NexusAOS/discussions">Discussions</a>
+  <a href="https://github.com/sheshaaos/SheshaAOS">GitHub</a> •
+  <a href="https://github.com/sheshaaos/SheshaAOS/issues">Issues</a> •
+  <a href="https://github.com/sheshaaos/SheshaAOS/discussions">Discussions</a>
 </p>

@@ -1,4 +1,4 @@
-use nexusaos_gui::terminal::{TermPerformer, CellAttr, TermColor};
+use sheshaaos_gui::terminal::{TermPerformer, CellAttr, TermColor};
 use vte::Parser;
 use image::{ImageBuffer, Rgba};
 

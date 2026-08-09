@@ -22,7 +22,7 @@ If you discover a security vulnerability, **please report it privately**. Do not
 
 | Method | Contact | Purpose |
 |--------|---------|---------|
-| 📧 Email | security@nexusaos.dev | Primary reporting channel |
+| 📧 Email | security@sheshaaos.dev | Primary reporting channel |
 | 🐛 GitHub | Private security advisory | Alternative reporting |
 
 ### Report Content
@@ -212,9 +212,9 @@ graph LR
 
 ## 📞 Contact
 
-- **Security Team**: security@nexusaos.dev
-- **General Contact**: team@nexusaos.dev
-- **Conduct Issues**: conduct@nexusaos.dev
+- **Security Team**: security@sheshaaos.dev
+- **General Contact**: team@sheshaaos.dev
+- **Conduct Issues**: conduct@sheshaaos.dev
 
 ---
 

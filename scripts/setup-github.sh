@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# NexusAOS GitHub Repository Setup Script
+# SheshaAOS GitHub Repository Setup Script
 # Run this from the repository root: ./scripts/setup-github.sh
 set -euo pipefail
 
-REPO="gaganjainse/nexus-kernel"
-HOMEPAGE="https://nexusaos.dev"
+REPO="gaganjainse/shesha-kernel"
+HOMEPAGE="https://sheshaaos.dev"
 
 echo "🚀 Setting up GitHub repository: $REPO"
 

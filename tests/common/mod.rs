@@ -1,3 +1,3 @@
-//! Shared test utilities for NexusAOS integration tests.
+//! Shared test utilities for SheshaAOS integration tests.
 
-pub use nexusaos::*;
+pub use sheshaaos::*;

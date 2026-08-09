@@ -1,7 +1,7 @@
 .PHONY: help check test lint fmt build bench clean
 
 help:
-	@echo "NexusAOS Development Commands"
+	@echo "SheshaAOS Development Commands"
 	@echo ""
 	@echo "  make check    - Run cargo check"
 	@echo "  make test     - Run all tests"

@@ -1,6 +1,6 @@
 webhooks:
   - name: ci-pipeline
-    url: https://nexusaos-ci.example.com/webhooks/github
+    url: https://sheshaaos-ci.example.com/webhooks/github
     content_type: json
     secret: ${CI_WEBHOOK_SECRET}
     events:
@@ -20,7 +20,7 @@ webhooks:
       retry_backoff_multiplier: 2
     timeout_seconds: 10
   - name: deployment-notifications
-    url: https://nexusaos-webhooks.example.com/deployments
+    url: https://sheshaaos-webhooks.example.com/deployments
     content_type: json
     secret: ${DEPLOY_WEBHOOK_SECRET}
     events:
@@ -36,7 +36,7 @@ webhooks:
       retry_backoff_multiplier: 2
     timeout_seconds: 10
   - name: security-alerts
-    url: https://nexusaos-webhooks.example.com/security
+    url: https://sheshaaos-webhooks.example.com/security
     content_type: json
     secret: ${SECURITY_WEBHOOK_SECRET}
     events:

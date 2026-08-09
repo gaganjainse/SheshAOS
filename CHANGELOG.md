@@ -63,5 +63,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [//]: # (Add your release notes here following Keep a Changelog format)
 
-[Unreleased]: https://github.com/nexusaos/NexusAOS/compare/v0.1.0...HEAD
-[v0.1.0]: https://github.com/nexusaos/NexusAOS/releases/tag/v0.1.0
+[Unreleased]: https://github.com/sheshaaos/SheshaAOS/compare/v0.1.0...HEAD
+[v0.1.0]: https://github.com/sheshaaos/SheshaAOS/releases/tag/v0.1.0

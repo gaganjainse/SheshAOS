@@ -2,7 +2,7 @@ pages:
   source:
     branch: main
     path: /docs
-  custom_domain: nexusaos.io
+  custom_domain: sheshaaos.io
   https:
     enabled: true
     force_https: true
