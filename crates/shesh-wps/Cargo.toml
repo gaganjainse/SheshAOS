@@ -2,6 +2,7 @@
 name = "shesh-wps"
 version = "0.1.0"
 edition = "2021"
+license.workspace = true
 description = "Wave Pub/Sub event broker: scope-aware pub/sub with history persistence"
 
 [dependencies]

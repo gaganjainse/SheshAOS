@@ -3,7 +3,7 @@ name = "shesh"
 version = "0.1.0"
 edition = "2021"
 description = "SheshAOS CLI Application Binary"
-license = "MIT"
+license.workspace = true
 
 [[bin]]
 name = "shesh"
@@ -12,9 +12,7 @@ path = "src/main.rs"
 [dependencies]
 shesh-kernel.workspace = true
 shesh-vault.workspace = true
-tokio.workspace = true
 clap.workspace = true
-tracing.workspace = true
 tracing-subscriber.workspace = true
 anyhow = "1"
 dirs = "5"

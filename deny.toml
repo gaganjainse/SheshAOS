@@ -1,0 +1,39 @@
+# cargo-deny policy for SheshAOS (adopted 2026-08-12).
+# Three checks: advisories (CVEs), licenses (compliance), bans (dup/supply risk).
+
+[advisories]
+yanked = "deny"
+ignore = [
+    # RUSTSEC-2023-0071 (Marvin Attack, rsa via russh): no patched upstream
+    # release exists (advisory patched = [] as of 2026-08-12). shesh-remote
+    # is an SSH client using password auth; the vulnerable RSA private-key
+    # decryption path is never exercised. Re-check on every russh upgrade.
+    # See .cargo/audit.toml (same exception, documented for cargo-audit).
+    "RUSTSEC-2023-0071",
+    # RUSTSEC-2017-0008 (`serial` unmaintained, informational): arrives
+    # transitively via portable-pty -> shesh-blockctl. portable-pty uses it
+    # only for serial-port enumeration, a code path SheshAOS never calls
+    # (blockctl spawns PTYs, not serial ports). No maintained drop-in
+    # replacement exists for portable-pty's usage. Re-check on each
+    # portable-pty upgrade.
+    "RUSTSEC-2017-0008",
+]
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+    "CC0-1.0",
+    "MPL-2.0",
+    "0BSD",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"

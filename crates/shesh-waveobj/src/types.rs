@@ -1338,8 +1338,8 @@ mod tests {
             Block::otype(),
             Job::otype(),
         ];
-        for ot in &otypes {
-            assert!(VALID_OTYPES.contains(ot), "otype '{}' not in VALID_OTYPES", ot);
+        for otype in &otypes {
+            assert!(VALID_OTYPES.contains(otype), "otype '{}' not in VALID_OTYPES", otype);
         }
     }
 }

@@ -1,4 +1,5 @@
 [workspace]
+
 resolver = "3"
 members = [
     "crates/shesh-waveobj",
@@ -12,6 +13,9 @@ members = [
     "crates/shesh-vault",
     "bin/shesh-cli",
 ]
+
+[workspace.package]
+license = "MIT"
 
 [workspace.dependencies]
 criterion = "0.5"
@@ -38,16 +42,16 @@ portable-pty = "0.8"
 rusqlite = { version = "0.32", features = ["bundled", "backup"] }
 notify = "6.1"
 
-# Internal workspace crates
-shesh-waveobj = { path = "crates/shesh-waveobj" }
-shesh-wps = { path = "crates/shesh-wps" }
-shesh-blockctl = { path = "crates/shesh-blockctl" }
-shesh-wconfig = { path = "crates/shesh-wconfig" }
-shesh-ai = { path = "crates/shesh-ai" }
-shesh-remote = { path = "crates/shesh-remote" }
-shesh-rpc = { path = "crates/shesh-rpc" }
-shesh-kernel = { path = "crates/shesh-kernel" }
-shesh-vault = { path = "crates/shesh-vault" }
+# Internal workspace crates (explicit versions: cargo-deny `wildcards = "deny"`)
+shesh-waveobj = { path = "crates/shesh-waveobj", version = "0.1.0" }
+shesh-wps = { path = "crates/shesh-wps", version = "0.1.0" }
+shesh-blockctl = { path = "crates/shesh-blockctl", version = "0.1.0" }
+shesh-wconfig = { path = "crates/shesh-wconfig", version = "0.1.0" }
+shesh-ai = { path = "crates/shesh-ai", version = "0.1.0" }
+shesh-remote = { path = "crates/shesh-remote", version = "0.1.0" }
+shesh-rpc = { path = "crates/shesh-rpc", version = "0.1.0" }
+shesh-kernel = { path = "crates/shesh-kernel", version = "0.1.0" }
+shesh-vault = { path = "crates/shesh-vault", version = "0.1.0" }
 
 [profile.release]
 lto = true

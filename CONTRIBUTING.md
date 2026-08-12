@@ -362,16 +362,22 @@ graph TB
 
 ### Dependency Rules
 
-```
-✅ Allowed:
-shesh-kernel → shesh-waveobj
-shesh-tui → shesh-kernel
-shesh-gui → shesh-ai
+The generated truth lives in shesh-ecosystem/docs/architecture/DEPENDENCY_GRAPH.md
+(CI freshness gate; do not hand-edit). As of 2026-08-12 the edges are:
 
-❌ Forbidden:
-shesh-waveobj → shesh-kernel (circular)
-shesh-tui → shesh-ai (bypasses kernel)
 ```
+shesh-cli    → kernel, vault
+shesh-ai     → wconfig, wps
+shesh-remote → blockctl, wps
+shesh-rpc    → waveobj, wps
+kernel, vault, blockctl, wps, waveobj, wconfig → no internal deps
+```
+
+Invariants enforced by review (and by cargo-machete/`--locked` in CI):
+
+- **`shesh-kernel` takes no internal dependencies** — the small auditable core stays small.
+- Foundation crates (wps, waveobj, wconfig, blockctl) never depend upward.
+- Unused declared dependencies get removed (cargo-machete gate, added 2026-08-12).
 
 ### Module Responsibilities
 
@@ -381,12 +387,9 @@ shesh-tui → shesh-ai (bypasses kernel)
 | `shesh-waveobj` | Object persistence, ORef graph, metadata |
 | `shesh-wps` | Pub/sub events, scoping, history |
 | `shesh-blockctl` | PTY lifecycle, shell I/O |
-| `shesh-terminal` | Zig VT100 parser, PTY bridge |
 | `shesh-ai` | OpenAI/Anthropic streaming, sessions |
 | `shesh-remote` | SSH client, connection management |
 | `shesh-rpc` | Unix socket JSON-RPC |
-| `shesh-gui` | Iced native GUI |
-| `shesh-tui` | Ratatui TUI |
 | `shesh-vault` | Command snippets, flag inspector |
 | `shesh-wconfig` | Config watcher, settings |
 

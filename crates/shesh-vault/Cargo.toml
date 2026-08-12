@@ -3,18 +3,13 @@ name = "shesh-vault"
 version = "0.1.0"
 edition = "2021"
 description = "Command vault and parameter resolver for SheshAOS (Komandi integration)"
-license = "MIT"
+license.workspace = true
 
 [dependencies]
-shesh-kernel.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-thiserror.workspace = true
 uuid.workspace = true
-chrono.workspace = true
 regex.workspace = true
-tracing.workspace = true
-tokio.workspace = true
 
 [dev-dependencies]
 tempfile = "3"

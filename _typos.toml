@@ -1,0 +1,6 @@
+# typos-cli configuration
+[default.extend-words]
+# Ratatui is the crate's proper noun; the typos dictionary maps it to
+# "Ratatouille". Historical CHANGELOG mentions stay because CHANGELOGs are
+# an append-only record.
+Ratatui = "Ratatui"

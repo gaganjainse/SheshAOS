@@ -2,6 +2,7 @@
 name = "shesh-ai"
 version = "0.1.0"
 edition = "2021"
+license.workspace = true
 description = "AI Chat Engine with streaming provider interfaces"
 
 [dependencies]
@@ -11,7 +12,6 @@ tokio = { workspace = true }
 futures = { workspace = true }
 reqwest = { workspace = true }
 thiserror = { workspace = true }
-tracing = { workspace = true }
 shesh-wconfig = { workspace = true }
 shesh-wps = { workspace = true }
 async-trait = { workspace = true }

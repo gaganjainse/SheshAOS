@@ -126,6 +126,38 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+  supply-chain:
+    name: Supply Chain (deny, machete, typos)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # Versions pinned to the local dev toolchain (scripts/bootstrap pins
+      # the same). taiki-e/install-action fetches prebuilt release binaries
+      # and checksum-verifies them.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny@0.20.2,cargo-machete@0.9.2,typos-cli@1.49.0
+
+      # deny.toml documents the two researched advisories ignores
+      # (RUSTSEC-2023-0071 rsa — no patched release; RUSTSEC-2017-0008
+      # serial — unreachable path via portable-pty), each with a re-check
+      # trigger. wildcards = "deny" is why internal path deps carry
+      # explicit versions. Everything else is a hard failure.
+      - name: cargo deny (advisories, bans, licenses, sources)
+        run: cargo deny check
+
+      # No declared-but-unused dependencies (this gate is what keeps the
+      # hand-drawn dependency graph in CONTRIBUTING.md honest).
+      - name: cargo machete (unused declared deps)
+        run: cargo machete
+
+      # Source typo gate; _typos.toml holds only proper-noun exceptions.
+      - name: typos (spell check)
+        run: typos
+
   architecture:
     name: Architecture Validation
     runs-on: ubuntu-latest

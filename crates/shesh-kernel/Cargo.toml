@@ -3,7 +3,7 @@ name = "shesh-kernel"
 version = "0.1.0"
 edition = "2021"
 description = "SheshAOS pure Rust governance microkernel engine"
-license = "MIT"
+license.workspace = true
 
 [dependencies]
 tokio.workspace = true
@@ -11,10 +11,8 @@ tokio-util.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 toml.workspace = true
-clap.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
-tracing-subscriber.workspace = true
 reqwest.workspace = true
 uuid.workspace = true
 chrono.workspace = true

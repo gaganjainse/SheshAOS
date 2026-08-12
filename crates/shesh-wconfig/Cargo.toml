@@ -2,18 +2,15 @@
 name = "shesh-wconfig"
 version = "0.1.0"
 edition = "2021"
+license.workspace = true
 description = "Configuration system: strongly-typed settings and live file watching"
 
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
-uuid = { workspace = true }
-chrono = { workspace = true }
-thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 notify = { workspace = true }
-shesh-waveobj = { workspace = true }
 shesh-wps = { workspace = true }
 
 [dev-dependencies]

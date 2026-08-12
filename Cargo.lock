@@ -2931,8 +2931,6 @@ dependencies = [
  "dirs",
  "shesh-kernel",
  "shesh-vault",
- "tokio",
- "tracing",
  "tracing-subscriber",
 ]
 
@@ -2949,7 +2947,6 @@ dependencies = [
  "shesh-wps",
  "thiserror 2.0.20",
  "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -2957,16 +2954,11 @@ name = "shesh-blockctl"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "chrono",
  "portable-pty",
  "serde",
  "serde_json",
- "shesh-waveobj",
- "shesh-wps",
  "thiserror 2.0.20",
  "tokio",
- "tracing",
- "uuid",
 ]
 
 [[package]]
@@ -2975,7 +2967,6 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
- "clap",
  "criterion",
  "futures",
  "reqwest",
@@ -2989,7 +2980,6 @@ dependencies = [
  "tokio-util",
  "toml",
  "tracing",
- "tracing-subscriber",
  "uuid",
 ]
 
@@ -2998,48 +2988,35 @@ name = "shesh-remote"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "futures",
  "rand",
  "russh",
- "serde",
  "serde_json",
  "shesh-blockctl",
  "shesh-wps",
- "thiserror 1.0.69",
  "tokio",
  "tracing",
- "uuid",
 ]
 
 [[package]]
 name = "shesh-rpc"
 version = "0.1.0"
 dependencies = [
- "async-trait",
- "futures",
  "serde",
  "serde_json",
  "shesh-waveobj",
  "shesh-wps",
  "tempfile",
- "thiserror 2.0.20",
  "tokio",
- "tracing",
 ]
 
 [[package]]
 name = "shesh-vault"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "regex",
  "serde",
  "serde_json",
- "shesh-kernel",
  "tempfile",
- "thiserror 2.0.20",
- "tokio",
- "tracing",
  "uuid",
 ]
 
@@ -3047,7 +3024,6 @@ dependencies = [
 name = "shesh-waveobj"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "criterion",
  "rusqlite",
  "serde",
@@ -3055,7 +3031,6 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.20",
  "tokio",
- "tracing",
  "uuid",
 ]
 
@@ -3063,17 +3038,13 @@ dependencies = [
 name = "shesh-wconfig"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "notify",
  "serde",
  "serde_json",
- "shesh-waveobj",
  "shesh-wps",
  "tempfile",
- "thiserror 2.0.20",
  "tokio",
  "tracing",
- "uuid",
 ]
 
 [[package]]

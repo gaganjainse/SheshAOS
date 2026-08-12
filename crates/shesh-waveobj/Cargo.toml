@@ -2,16 +2,15 @@
 name = "shesh-waveobj"
 version = "0.1.0"
 edition = "2021"
+license.workspace = true
 description = "Wave Terminal object store: ORef graph, SQLite persistence, and typed metadata"
 
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }
-chrono = { workspace = true }
 thiserror = { workspace = true }
 rusqlite = { workspace = true }
-tracing = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true }
