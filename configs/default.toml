@@ -1,9 +1,9 @@
-# SheshaAOS default configuration
+# SheshAOS default configuration
 # This file defines the baseline settings. Override per-project via local config.
 
 [general]
-# Directory where SheshaAOS stores events, snapshots, and artifacts
-data_dir = "~/.sheshaaos/data"
+# Directory where SheshAOS stores events, snapshots, and artifacts
+data_dir = "~/.shesh/data"
 # Log level: trace, debug, info, warn, error
 log_level = "info"
 

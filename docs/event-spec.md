@@ -1,8 +1,8 @@
-# SheshaAOS Event Specification
+# SheshAOS Event Specification
 
 ## Overview
 
-Events are the source of truth in SheshaAOS. Every state change, model interaction,
+Events are the source of truth in SheshAOS. Every state change, model interaction,
 tool call, and policy decision is recorded as an immutable event in the event store.
 
 ## Storage Format
@@ -51,8 +51,8 @@ Events are stored as JSON Lines (`.jsonl`) — one JSON object per line.
 | ConfirmationDenied | User denied an action |
 | CheckpointCreated | A checkpoint was saved |
 | SnapshotCreated | A projection snapshot was saved |
-| SystemStarted | SheshaAOS started |
-| SystemShutdown | SheshaAOS shut down |
+| SystemStarted | SheshAOS started |
+| SystemShutdown | SheshAOS shut down |
 | Error | An error occurred |
 
 ## Guarantees

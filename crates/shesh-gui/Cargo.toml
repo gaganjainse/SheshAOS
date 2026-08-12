@@ -1,0 +1,21 @@
+[package]
+name = "shesh-gui"
+version = "0.1.0"
+edition = "2021"
+description = "Native GUI for SheshAOS using iced"
+
+[dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+iced = { version = "0.14", features = ["tokio", "canvas"] }
+portable-pty = { workspace = true }
+vte = "0.13"
+shesh-wps = { workspace = true }
+shesh-waveobj = { workspace = true }
+shesh-blockctl = { workspace = true }
+shesh-wconfig = { workspace = true }
+tracing = { workspace = true }
+shesh-ai = { version = "0.1.0", path = "../shesh-ai" }
+shesh-remote = { version = "0.1.0", path = "../shesh-remote" }
+
+[lints]
+workspace = true

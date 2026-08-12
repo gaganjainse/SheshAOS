@@ -1,6 +1,6 @@
-# NexusAOS v2
+# SheshAOS v2
 
-NexusAOS v2 is a governance-first, event-sourced AI operating environment for Ubuntu Linux.
+SheshAOS v2 is a governance-first, event-sourced AI operating environment for Ubuntu Linux.
 
 ## Core Principles
 

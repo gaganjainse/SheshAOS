@@ -1,4 +1,4 @@
-# SheshaAOS Architecture — Dependency Graph & System Mind Map
+# SheshAOS Architecture — Dependency Graph & System Mind Map
 
 > VS Code Markdown Preview renders the Mermaid diagrams below.
 > Install “Markdown Preview Mermaid” if preview is disabled.
@@ -10,29 +10,29 @@
 ```mermaid
 graph TD
     subgraph "External Binaries"
-        CLI["sheshaaos-cli<br/>(bin/sheshaaos-cli)"]
-        GUI_BIN["sheshaaos-gui binary"]
+        CLI["shesh-cli<br/>(bin/shesh-cli)"]
+        GUI_BIN["shesh-gui binary"]
     end
 
     subgraph "Core Layer"
-        KERNEL["sheshaaos-kernel<br/>Governance microkernel"]
-        WAVEOBJ["sheshaaos-waveobj<br/>Object store & ORef graph"]
-        WPS["sheshaaos-wps<br/>Pub/Sub event broker"]
+        KERNEL["shesh-kernel<br/>Governance microkernel"]
+        WAVEOBJ["shesh-waveobj<br/>Object store & ORef graph"]
+        WPS["shesh-wps<br/>Pub/Sub event broker"]
     end
 
     subgraph "Execution Layer"
-        BLOCKCTL["sheshaaos-blockctl<br/>PTY shell controller"]
-        REMOTE["sheshaaos-remote<br/>SSH remote shell"]
-        TERMINAL["sheshaaos-terminal<br/>Zig VT100 + PTY bridge"]
-        RPC["sheshaaos-rpc<br/>Unix socket JSON-RPC"]
+        BLOCKCTL["shesh-blockctl<br/>PTY shell controller"]
+        REMOTE["shesh-remote<br/>SSH remote shell"]
+        TERMINAL["shesh-terminal<br/>Zig VT100 + PTY bridge"]
+        RPC["shesh-rpc<br/>Unix socket JSON-RPC"]
     end
 
     subgraph "Interface Layer"
-        TUI["sheshaaos-tui<br/>Ratatui TUI"]
-        GUI["sheshaaos-gui<br/>Iced native GUI"]
-        AI["sheshaaos-ai<br/>OpenAI/Anthropic streaming"]
-        VAULT["sheshaaos-vault<br/>Command snippets & inspector"]
-        WCONFIG["sheshaaos-wconfig<br/>Config watcher & settings"]
+        TUI["shesh-tui<br/>Ratatui TUI"]
+        GUI["shesh-gui<br/>Iced native GUI"]
+        AI["shesh-ai<br/>OpenAI/Anthropic streaming"]
+        VAULT["shesh-vault<br/>Command snippets & inspector"]
+        WCONFIG["shesh-wconfig<br/>Config watcher & settings"]
     end
 
     CLI --> KERNEL
@@ -393,7 +393,7 @@ graph LR
 
 ## 9. Module → Public Function Inventory
 
-### sheshaaos-kernel (`crates/sheshaaos-kernel/src/`)
+### shesh-kernel (`crates/shesh-kernel/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
@@ -424,7 +424,7 @@ graph LR
 | `tools::git` | `GitTool::new` |
 | `tools::terminal` | `TerminalTool::new` |
 
-### sheshaaos-waveobj (`crates/sheshaaos-waveobj/src/`)
+### shesh-waveobj (`crates/shesh-waveobj/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
@@ -434,14 +434,14 @@ graph LR
 | `store` | `WaveStore::open/open_in_memory/with_tx/insert/get/get_all/find_workspace_for_tab` |
 | `rtinfo` | `ObjRTInfo`, `RTInfoStore::new/get/set/remove` |
 
-### sheshaaos-wps (`crates/sheshaaos-wps/src/`)
+### shesh-wps (`crates/shesh-wps/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
 | `events` | `WaveEvent::new/global/with_persist`, `FileEventData`, `SubscriptionRequest` |
 | `broker` | `Broker::new/subscribe/unsubscribe/unsubscribe_all/publish/read_history/subscriber_count/get_matching_routes/receiver` |
 
-### sheshaaos-blockctl (`crates/sheshaaos-blockctl/src/`)
+### shesh-blockctl (`crates/shesh-blockctl/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
@@ -449,7 +449,7 @@ graph LR
 | `shell` | `ShellController::new/start/stop/send_input/runtime_status/conn_name` |
 | `filestore` | `BlockFileStore::new/append/read_all/read_tail/truncate/delete_zone/zone_size/set_max_size` |
 
-### sheshaaos-rpc (`crates/sheshaaos-rpc/src/`)
+### shesh-rpc (`crates/shesh-rpc/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
@@ -457,7 +457,7 @@ graph LR
 | `handler` | `RpcHandler::new/process_request/handle_connection` |
 | `server` | `RpcServer::new/run` |
 
-### sheshaaos-remote (`crates/sheshaaos-remote/src/`)
+### shesh-remote (`crates/shesh-remote/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
@@ -466,14 +466,14 @@ graph LR
 | `remote_shell` | `RemoteShellController::new/start/stop/send_input/runtime_status/conn_name` |
 | `monitor` | `ConnectionMonitor::new` |
 
-### sheshaaos-terminal (`crates/sheshaaos-terminal/src/`)
+### shesh-terminal (`crates/shesh-terminal/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
 | `ffi` | `ZigVt100Parser::new/feed/lines_processed/bytes_processed` |
 | `pty` | `PtyManager::spawn/read_output/write_input/spawn_reader_task/shutdown` |
 
-### sheshaaos-vault (`crates/sheshaaos-vault/src/`)
+### shesh-vault (`crates/shesh-vault/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
@@ -481,7 +481,7 @@ graph LR
 | `resolver` | `ParameterResolver::extract_placeholders/resolve` |
 | `snippet` | `CommandSnippet::new`, `VaultStore::new/save/load_all` |
 
-### sheshaaos-tui (`crates/sheshaaos-tui/src/`)
+### shesh-tui (`crates/shesh-tui/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
@@ -491,7 +491,7 @@ graph LR
 | `modal` | `ApprovalModal::confirm_prompt` |
 | `patch` | `PatchEngine::apply_patch` |
 
-### sheshaaos-gui (`crates/sheshaaos-gui/src/`)
+### shesh-gui (`crates/shesh-gui/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
@@ -499,7 +499,7 @@ graph LR
 | `view` | `TerminalView` (iced `Program` impl) |
 | `app` | `NexusApp`, `Message`, `Tab`, `ChatMessage` |
 
-### sheshaaos-ai (`crates/sheshaaos-ai/src/`)
+### shesh-ai (`crates/shesh-ai/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
@@ -508,7 +508,7 @@ graph LR
 | `anthropic` | `AnthropicProvider::new`, `stream_chat()` |
 | `session` | `ChatSession::new/send_message/send_message_stream`, `StreamHandle::new/try_recv` |
 
-### sheshaaos-wconfig (`crates/sheshaaos-wconfig/src/`)
+### shesh-wconfig (`crates/shesh-wconfig/src/`)
 
 | Module | Key Public Types / Functions |
 |--------|------------------------------|
@@ -701,13 +701,13 @@ TermPerformer::advance (via vte::Parser)
 |------|-------|------------|
 | `src/model/registry.rs` | `unimplemented!()` stub, never compiled | Delete entire `src/` tree (orphaned) |
 | `src/runtime/kernel.rs` | Duplicate of active crate file | Delete entire `src/` tree |
-| `crates/sheshaaos-waveobj/src/store.rs` | `format!` with no interpolation | Replaced with string literal |
-| `crates/sheshaaos-terminal/src/pty.rs` | `PTY_MAX_BUFFER` unused | Used in backpressure range check |
-| `crates/sheshaaos-gui/src/app.rs` | Collapsible `if let` chains | Collapsed with `&& let` |
-| `crates/sheshaaos-gui/src/view.rs` | Useless `.into()` conversion | Removed redundant cast |
-| `crates/sheshaaos-remote/src/remote_shell.rs` | Empty test functions | Added `ControllerStatus` and `BlockInput` assertions |
-| `crates/sheshaaos-remote/src/ssh_client.rs` | Empty + fragile tests | Added meaningful assertions |
-| `crates/sheshaaos-terminal/src/ffi.rs` | Tautological `>= 0` on `usize` | Replaced with real byte-count assertion |
+| `crates/shesh-waveobj/src/store.rs` | `format!` with no interpolation | Replaced with string literal |
+| `crates/shesh-terminal/src/pty.rs` | `PTY_MAX_BUFFER` unused | Used in backpressure range check |
+| `crates/shesh-gui/src/app.rs` | Collapsible `if let` chains | Collapsed with `&& let` |
+| `crates/shesh-gui/src/view.rs` | Useless `.into()` conversion | Removed redundant cast |
+| `crates/shesh-remote/src/remote_shell.rs` | Empty test functions | Added `ControllerStatus` and `BlockInput` assertions |
+| `crates/shesh-remote/src/ssh_client.rs` | Empty + fragile tests | Added meaningful assertions |
+| `crates/shesh-terminal/src/ffi.rs` | Tautological `>= 0` on `usize` | Replaced with real byte-count assertion |
 
 ---
 
@@ -728,18 +728,18 @@ TermPerformer::advance (via vte::Parser)
 
 | Crate | Test Count | Coverage Notes |
 |-------|-----------|----------------|
-| sheshaaos-kernel | 396 | Every public function, state machine, error variant, tool, policy rule |
-| sheshaaos-waveobj | 204 | All WaveObj types, store CRUD, ORef parsing, MetaMap, RTInfo |
-| sheshaaos-wps | 71 | Pub/sub, wildcards, scope matching, history, dedup |
-| sheshaaos-blockctl | 48 | Controller registry, shell lifecycle, filestore CRUD |
-| sheshaaos-ai | 18 | Provider creation, session streaming, error types |
-| sheshaaos-rpc | 29 | RPC message round-trips, handler frame protocol, server socket |
-| sheshaaos-remote | 19 | Connection manager, SSH client, remote shell, monitor |
-| sheshaaos-terminal | 19 | PTY spawn/read/write, Zig VT100 parser, backpressure task |
-| sheshaaos-vault | 53 | Snippet CRUD, parameter resolver, flag inspector |
-| sheshaaos-wconfig | 31 | Settings merge, watcher behavior, file I/O |
-| sheshaaos-gui | 32 | Terminal state, ANSI parsing, cursor, scroll, colors |
-| sheshaaos-tui | 30 | Block kinds, grid ops, diff rendering, patch engine, stream |
+| shesh-kernel | 396 | Every public function, state machine, error variant, tool, policy rule |
+| shesh-waveobj | 204 | All WaveObj types, store CRUD, ORef parsing, MetaMap, RTInfo |
+| shesh-wps | 71 | Pub/sub, wildcards, scope matching, history, dedup |
+| shesh-blockctl | 48 | Controller registry, shell lifecycle, filestore CRUD |
+| shesh-ai | 18 | Provider creation, session streaming, error types |
+| shesh-rpc | 29 | RPC message round-trips, handler frame protocol, server socket |
+| shesh-remote | 19 | Connection manager, SSH client, remote shell, monitor |
+| shesh-terminal | 19 | PTY spawn/read/write, Zig VT100 parser, backpressure task |
+| shesh-vault | 53 | Snippet CRUD, parameter resolver, flag inspector |
+| shesh-wconfig | 31 | Settings merge, watcher behavior, file I/O |
+| shesh-gui | 32 | Terminal state, ANSI parsing, cursor, scroll, colors |
+| shesh-tui | 30 | Block kinds, grid ops, diff rendering, patch engine, stream |
 | **Total** | **1001** | |
 
 ---
@@ -749,9 +749,9 @@ TermPerformer::advance (via vte::Parser)
 ### 15.1 Repository Metadata
 
 ```yaml
-name: SheshaAOS
+name: SheshAOS
 description: Governance-first, event-sourced AI operating environment for Ubuntu Linux
-homepage: https://github.com/sheshaaos/SheshaAOS
+homepage: https://github.com/shesh/SheshAOS
 private: false
 has_issues: true
 has_projects: true
@@ -886,8 +886,8 @@ github_copilot:
   chat:
     enabled: true
     agents:
-      - name: SheshaAOS Assistant
-        description: Help with SheshaAOS development
+      - name: SheshAOS Assistant
+        description: Help with SheshAOS development
         tools:
           - read
           - search
@@ -898,7 +898,7 @@ github_copilot:
   restrictions:
     allow_private_repos: false
     allowed_users:
-      - org:sheshaaos
+      - org:shesh
 ```
 
 ### 15.10 Agents
@@ -925,7 +925,7 @@ source:
   branch: main
   path: /docs
 build_type: legacy
-custom_domain: docs.sheshaaos.dev
+custom_domain: docs.shesh.dev
 https_enforced: true
 ```
 
@@ -986,5 +986,5 @@ graph TD
 ---
 
 *Generated: 2026-08-02*  
-*Workspace: SheshaAOS*  
+*Workspace: SheshAOS*  
 *Architecture: event-sourced governance microkernel with wave-terminal object model*

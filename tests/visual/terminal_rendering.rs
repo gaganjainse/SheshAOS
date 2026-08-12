@@ -1,4 +1,4 @@
-use sheshaaos_gui::terminal::{TermPerformer, CellAttr, TermColor};
+use shesh_gui::terminal::{TermPerformer, CellAttr, TermColor};
 use vte::Parser;
 use image::{ImageBuffer, Rgba};
 

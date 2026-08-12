@@ -32,7 +32,7 @@ insights:
     enabled: true
     contact_links:
       - name: Security
-        url: https://github.com/SheshaAOS/SheshaAOS/security/advisories/new
+        url: https://github.com/SheshAOS/SheshAOS/security/advisories/new
       - name: Documentation
         url: https://sheshaaos.io/docs
       - name: Discord

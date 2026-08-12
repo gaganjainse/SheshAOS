@@ -1,8 +1,8 @@
-# NexusAOS v2 — Architecture Brief
+# SheshAOS v2 — Architecture Brief
 
 ## 1. Executive Summary
 
-NexusAOS v2 should be designed as a governance-first, event-sourced AI operating environment for Ubuntu Linux. The system is not a chatbot wrapper and not a monolithic agent. It is a small kernel plus a set of well-bounded specialist services that route tasks to local models, tools, and persistent state safely.
+SheshAOS v2 should be designed as a governance-first, event-sourced AI operating environment for Ubuntu Linux. The system is not a chatbot wrapper and not a monolithic agent. It is a small kernel plus a set of well-bounded specialist services that route tasks to local models, tools, and persistent state safely.
 
 The practical constraints matter: 16 GB RAM, 6 GB VRAM, Ubuntu 26.04, local-first execution, and only three chosen models. That means the architecture must assume model switching, not simultaneous residency of everything. The system should keep the kernel lightweight, make models replaceable, and treat every action as auditable, reversible, and permissioned.
 
@@ -292,15 +292,15 @@ Constraint:
 
 ## 6.11 MCP and ACP Integration
 
-NexusAOS should support both **MCP** and **ACP**, but in different roles.
+SheshAOS should support both **MCP** and **ACP**, but in different roles.
 
 ### MCP
 
-MCP is a good fit for the Tool Layer because it is an open protocol for connecting AI applications to external tools, data sources, and workflows. In NexusAOS, MCP should be used to expose capabilities such as filesystem access, Git, terminal helpers, search/fetch, and future adapters. All MCP requests must still pass through the Policy Engine, Capability Manager, and Kernel. MCP is a transport/interface standard, not a source of authority.
+MCP is a good fit for the Tool Layer because it is an open protocol for connecting AI applications to external tools, data sources, and workflows. In SheshAOS, MCP should be used to expose capabilities such as filesystem access, Git, terminal helpers, search/fetch, and future adapters. All MCP requests must still pass through the Policy Engine, Capability Manager, and Kernel. MCP is a transport/interface standard, not a source of authority.
 
 ### ACP
 
-ACP is a good fit for IDE and agent-client integration. JetBrains' ACP documentation describes it as a protocol for connecting external agents to the IDE, and JetBrains Air/AI Assistant already supports ACP-compatible agents. In NexusAOS, ACP should be used at the session/client boundary for editor integrations and agent-facing workflows. ACP should never bypass the Kernel, and ACP-connected agents must still receive explicit capabilities before they can act.
+ACP is a good fit for IDE and agent-client integration. JetBrains' ACP documentation describes it as a protocol for connecting external agents to the IDE, and JetBrains Air/AI Assistant already supports ACP-compatible agents. In SheshAOS, ACP should be used at the session/client boundary for editor integrations and agent-facing workflows. ACP should never bypass the Kernel, and ACP-connected agents must still receive explicit capabilities before they can act.
 
 ### Design rule
 
@@ -553,7 +553,7 @@ Mitigation:
 
 ## 15. Final Recommendation
 
-Build NexusAOS as a small kernel plus specialist model providers plus an explicit tool layer, all tied together by event sourcing and policy enforcement.
+Build SheshAOS as a small kernel plus specialist model providers plus an explicit tool layer, all tied together by event sourcing and policy enforcement.
 
 Do not try to make the models do the system design. Do not try to keep all models resident. Do not try to make the UI the architecture. The architecture should be the durable part; model runners and UI should be swappable.
 
@@ -565,7 +565,7 @@ The best near-term outcome is a system that can:
 - recover from failure
 - and keep an audit trail for every important action
 
-That is the correct foundation for NexusAOS v2.
+That is the correct foundation for SheshAOS v2.
 
 ## 16. Refinement notes after review
 

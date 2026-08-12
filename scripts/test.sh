@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# SheshaAOS test runner
+# SheshAOS test runner
 set -euo pipefail
 
 echo "=========================================="
-echo "  SheshaAOS Test Suite"
+echo "  SheshAOS Test Suite"
 echo "=========================================="
 
 echo ""

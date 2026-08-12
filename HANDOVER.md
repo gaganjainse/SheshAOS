@@ -1,4 +1,4 @@
-# 🚀 SheshaAOS Terminal — Developer Handover Document
+# 🚀 SheshAOS Terminal — Developer Handover Document
 
 **📅 Date**: 2026-08-02  
 **👥 Audience**: New contributors, maintainers, AI assistants  
@@ -9,7 +9,7 @@
 
 ## 📋 Executive Summary
 
-SheshaAOS is a **production-ready, governance-first AI operating environment** built with Rust. It combines:
+SheshAOS is a **production-ready, governance-first AI operating environment** built with Rust. It combines:
 
 - 🧠 **AI-powered terminal** with local LLM integration
 - 🖥️ **GPU-accelerated rendering** via Iced/wgpu
@@ -28,9 +28,9 @@ SheshaAOS is a **production-ready, governance-first AI operating environment** b
 ```mermaid
 graph TB
     subgraph "Interface Layer"
-        CLI["🖥️ CLI<br/>sheshaaos-cli"]
-        TUI["📱 TUI<br/>sheshaaos-tui"]
-        GUI["🖼️ GUI<br/>sheshaaos-gui"]
+        CLI["🖥️ CLI<br/>shesh-cli"]
+        TUI["📱 TUI<br/>shesh-tui"]
+        GUI["🖼️ GUI<br/>shesh-gui"]
     end
 
     subgraph "Kernel Core"
@@ -103,19 +103,19 @@ graph LR
 
 | Crate | Path | Description | Tests |
 |-------|------|-------------|-------|
-| 🏛️ `sheshaaos-kernel` | `crates/sheshaaos-kernel/` | Governance microkernel | 396 |
-| 📦 `sheshaaos-waveobj` | `crates/sheshaaos-waveobj/` | Object store & ORef graph | 204 |
-| 📡 `sheshaaos-wps` | `crates/sheshaaos-wps/` | Pub/Sub event broker | 71 |
-| 🧱 `sheshaaos-blockctl` | `crates/sheshaaos-blockctl/` | PTY shell controller | 48 |
-| 🤖 `sheshaaos-ai` | `crates/sheshaaos-ai/` | AI providers & streaming | 18 |
-| 🔌 `sheshaaos-rpc` | `crates/sheshaaos-rpc/` | Unix socket JSON-RPC | 29 |
-| 🌐 `sheshaaos-remote` | `crates/sheshaaos-remote/` | SSH remote shell | 19 |
-| 🖥️ `sheshaaos-terminal` | `crates/sheshaaos-terminal/` | Zig VT100 + PTY | 19 |
-| 🔐 `sheshaaos-vault` | `crates/sheshaaos-vault/` | Command snippets | 53 |
-| ⚙️ `sheshaaos-wconfig` | `crates/sheshaaos-wconfig/` | Config watcher | 31 |
-| 🖼️ `sheshaaos-gui` | `crates/sheshaaos-gui/` | Iced native GUI | 32 |
-| 📱 `sheshaaos-tui` | `crates/sheshaaos-tui/` | Ratatui TUI | 30 |
-| 🧪 `sheshaaos-tests` | `tests/` | Integration tests & benchmarks | - |
+| 🏛️ `shesh-kernel` | `crates/shesh-kernel/` | Governance microkernel | 396 |
+| 📦 `shesh-waveobj` | `crates/shesh-waveobj/` | Object store & ORef graph | 204 |
+| 📡 `shesh-wps` | `crates/shesh-wps/` | Pub/Sub event broker | 71 |
+| 🧱 `shesh-blockctl` | `crates/shesh-blockctl/` | PTY shell controller | 48 |
+| 🤖 `shesh-ai` | `crates/shesh-ai/` | AI providers & streaming | 18 |
+| 🔌 `shesh-rpc` | `crates/shesh-rpc/` | Unix socket JSON-RPC | 29 |
+| 🌐 `shesh-remote` | `crates/shesh-remote/` | SSH remote shell | 19 |
+| 🖥️ `shesh-terminal` | `crates/shesh-terminal/` | Zig VT100 + PTY | 19 |
+| 🔐 `shesh-vault` | `crates/shesh-vault/` | Command snippets | 53 |
+| ⚙️ `shesh-wconfig` | `crates/shesh-wconfig/` | Config watcher | 31 |
+| 🖼️ `shesh-gui` | `crates/shesh-gui/` | Iced native GUI | 32 |
+| 📱 `shesh-tui` | `crates/shesh-tui/` | Ratatui TUI | 30 |
+| 🧪 `shesh-tests` | `tests/` | Integration tests & benchmarks | - |
 
 ---
 
@@ -132,8 +132,8 @@ graph LR
 
 ```bash
 # 1. Clone
-git clone https://github.com/sheshaaos/SheshaAOS.git
-cd SheshaAOS
+git clone https://github.com/shesh/SheshAOS.git
+cd SheshAOS
 
 # 2. Build
 cargo build --workspace
@@ -150,7 +150,7 @@ cargo fmt
 
 ### First Task
 
-Start with `crates/sheshaaos-kernel/src/runtime/kernel.rs` — the heart of the system.
+Start with `crates/shesh-kernel/src/runtime/kernel.rs` — the heart of the system.
 
 ---
 
@@ -171,10 +171,10 @@ graph LR
 ```
 
 **Key Files**:
-- `crates/sheshaaos-kernel/src/runtime/kernel.rs` — Main kernel loop
-- `crates/sheshaaos-kernel/src/policy.rs` — Policy engine
-- `crates/sheshaaos-kernel/src/router.rs` — Task routing
-- `crates/sheshaaos-kernel/src/storage/event_store.rs` — Event persistence
+- `crates/shesh-kernel/src/runtime/kernel.rs` — Main kernel loop
+- `crates/shesh-kernel/src/policy.rs` — Policy engine
+- `crates/shesh-kernel/src/router.rs` — Task routing
+- `crates/shesh-kernel/src/storage/event_store.rs` — Event persistence
 
 ### Wave Object Model
 
@@ -193,10 +193,10 @@ graph TD
 ```
 
 **Key Files**:
-- `crates/sheshaaos-waveobj/src/types.rs` — Type definitions
-- `crates/sheshaaos-waveobj/src/store.rs` — SQLite persistence
-- `crates/sheshaaos-waveobj/src/oref.rs` — Object references
-- `crates/sheshaaos-waveobj/src/meta.rs` — Metadata
+- `crates/shesh-waveobj/src/types.rs` — Type definitions
+- `crates/shesh-waveobj/src/store.rs` — SQLite persistence
+- `crates/shesh-waveobj/src/oref.rs` — Object references
+- `crates/shesh-waveobj/src/meta.rs` — Metadata
 
 ### Terminal Rendering Pipeline
 
@@ -210,10 +210,10 @@ graph LR
 ```
 
 **Key Files**:
-- `crates/sheshaaos-terminal/src/pty.rs` — PTY management
-- `crates/sheshaaos-terminal/src/ffi.rs` — Zig FFI
-- `crates/sheshaaos-gui/src/terminal.rs` — Terminal state machine
-- `crates/sheshaaos-gui/src/view.rs` — Iced rendering
+- `crates/shesh-terminal/src/pty.rs` — PTY management
+- `crates/shesh-terminal/src/ffi.rs` — Zig FFI
+- `crates/shesh-gui/src/terminal.rs` — Terminal state machine
+- `crates/shesh-gui/src/view.rs` — Iced rendering
 
 ---
 
@@ -246,8 +246,8 @@ make test     # Run tests
 make lint     # Check style
 
 # During development
-cargo test -p sheshaaos-kernel            # Test specific crate
-cargo clippy -p sheshaaos-waveobj         # Lint specific crate
+cargo test -p shesh-kernel            # Test specific crate
+cargo clippy -p shesh-waveobj         # Lint specific crate
 
 # Before PR
 make all       # Full verification
@@ -349,9 +349,9 @@ graph LR
 ## 🤝 Getting Help
 
 - 📖 **Documentation**: Check this file and linked docs
-- 🐛 **Issues**: [GitHub Issues](https://github.com/sheshaaos/SheshaAOS/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/sheshaaos/SheshaAOS/discussions)
-- 📧 **Email**: team@sheshaaos.dev
+- 🐛 **Issues**: [GitHub Issues](https://github.com/shesh/SheshAOS/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/shesh/SheshAOS/discussions)
+- 📧 **Email**: team@shesh.dev
 
 ---
 
@@ -365,11 +365,11 @@ Contributors are recognized in:
 ---
 
 <p align="center">
-  <b>🚀 SheshaAOS — Built for the future of AI-native computing</b>
+  <b>🚀 SheshAOS — Built for the future of AI-native computing</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/sheshaaos/SheshaAOS">⭐ Star on GitHub</a> •
-  <a href="https://github.com/sheshaaos/SheshaAOS/fork">🍴 Fork</a> •
-  <a href="https://github.com/sheshaaos/SheshaAOS/issues">🐛 Report Bug</a>
+  <a href="https://github.com/shesh/SheshAOS">⭐ Star on GitHub</a> •
+  <a href="https://github.com/shesh/SheshAOS/fork">🍴 Fork</a> •
+  <a href="https://github.com/shesh/SheshAOS/issues">🐛 Report Bug</a>
 </p>

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SheshaAOS development helper script
+# SheshAOS development helper script
 set -euo pipefail
 
 case "${1:-help}" in

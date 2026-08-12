@@ -1,11 +1,11 @@
-# 🤝 Contributing to SheshaAOS
+# 🤝 Contributing to SheshAOS
 
 ![Rust](https://img.shields.io/badge/Rust-2024-important?style=for-the-badge&logo=rust)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue?style=for-the-badge&logo=github)
 ![Tests](https://img.shields.io/badge/Tests-1000%2B-success?style=for-the-badge)
 ![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen?style=for-the-badge)
 
-Thank you for your interest in contributing to **SheshaAOS**! This document describes the development workflow, code standards, and review process.
+Thank you for your interest in contributing to **SheshAOS**! This document describes the development workflow, code standards, and review process.
 
 ---
 
@@ -30,7 +30,7 @@ Thank you for your interest in contributing to **SheshaAOS**! This document desc
 
 Be respectful, constructive, and inclusive. We follow the [Contributor Covenant](https://www.contributor-covenant.org/).
 
-Report violations to: **conduct@sheshaaos.dev**
+Report violations to: **conduct@shesh.dev**
 
 ---
 
@@ -39,8 +39,8 @@ Report violations to: **conduct@sheshaaos.dev**
 ### 1. Fork & Clone
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/SheshaAOS.git
-cd SheshaAOS
+git clone https://github.com/YOUR_USERNAME/SheshAOS.git
+cd SheshAOS
 ```
 
 ### 2. Install Dependencies
@@ -288,7 +288,7 @@ graph TD
 
 | Item | Convention | Example |
 |------|------------|---------|
-| Crate names | `snake_case` | `sheshaaos_kernel` |
+| Crate names | `snake_case` | `shesh_kernel` |
 | Module names | `snake_case` | `event_store` |
 | Function names | `snake_case` | `submit_task` |
 | Struct names | `PascalCase` | `TaskProjection` |
@@ -364,31 +364,31 @@ graph TB
 
 ```
 ✅ Allowed:
-sheshaaos-kernel → sheshaaos-waveobj
-sheshaaos-tui → sheshaaos-kernel
-sheshaaos-gui → sheshaaos-ai
+shesh-kernel → shesh-waveobj
+shesh-tui → shesh-kernel
+shesh-gui → shesh-ai
 
 ❌ Forbidden:
-sheshaaos-waveobj → sheshaaos-kernel (circular)
-sheshaaos-tui → sheshaaos-ai (bypasses kernel)
+shesh-waveobj → shesh-kernel (circular)
+shesh-tui → shesh-ai (bypasses kernel)
 ```
 
 ### Module Responsibilities
 
 | Crate | Responsibility |
 |-------|----------------|
-| `sheshaaos-kernel` | Governance, routing, policy, event sourcing |
-| `sheshaaos-waveobj` | Object persistence, ORef graph, metadata |
-| `sheshaaos-wps` | Pub/sub events, scoping, history |
-| `sheshaaos-blockctl` | PTY lifecycle, shell I/O |
-| `sheshaaos-terminal` | Zig VT100 parser, PTY bridge |
-| `sheshaaos-ai` | OpenAI/Anthropic streaming, sessions |
-| `sheshaaos-remote` | SSH client, connection management |
-| `sheshaaos-rpc` | Unix socket JSON-RPC |
-| `sheshaaos-gui` | Iced native GUI |
-| `sheshaaos-tui` | Ratatui TUI |
-| `sheshaaos-vault` | Command snippets, flag inspector |
-| `sheshaaos-wconfig` | Config watcher, settings |
+| `shesh-kernel` | Governance, routing, policy, event sourcing |
+| `shesh-waveobj` | Object persistence, ORef graph, metadata |
+| `shesh-wps` | Pub/sub events, scoping, history |
+| `shesh-blockctl` | PTY lifecycle, shell I/O |
+| `shesh-terminal` | Zig VT100 parser, PTY bridge |
+| `shesh-ai` | OpenAI/Anthropic streaming, sessions |
+| `shesh-remote` | SSH client, connection management |
+| `shesh-rpc` | Unix socket JSON-RPC |
+| `shesh-gui` | Iced native GUI |
+| `shesh-tui` | Ratatui TUI |
+| `shesh-vault` | Command snippets, flag inspector |
+| `shesh-wconfig` | Config watcher, settings |
 
 ---
 
@@ -488,19 +488,19 @@ Comment `"/assign"` on the issue to claim it.
 
 ## 📞 Contact
 
-- **Issues**: [GitHub Issues](https://github.com/sheshaaos/SheshaAOS/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/sheshaaos/SheshaAOS/discussions)
-- **Email**: team@sheshaaos.dev
-- **Conduct**: conduct@sheshaaos.dev
+- **Issues**: [GitHub Issues](https://github.com/shesh/SheshAOS/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/shesh/SheshAOS/discussions)
+- **Email**: team@shesh.dev
+- **Conduct**: conduct@shesh.dev
 
 ---
 
 <p align="center">
-  <b>Built with ❤️ by the SheshaAOS Team</b>
+  <b>Built with ❤️ by the SheshAOS Team</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/sheshaaos/SheshaAOS">GitHub</a> •
-  <a href="https://github.com/sheshaaos/SheshaAOS/issues">Issues</a> •
-  <a href="https://github.com/sheshaaos/SheshaAOS/discussions">Discussions</a>
+  <a href="https://github.com/shesh/SheshAOS">GitHub</a> •
+  <a href="https://github.com/shesh/SheshAOS/issues">Issues</a> •
+  <a href="https://github.com/shesh/SheshAOS/discussions">Discussions</a>
 </p>

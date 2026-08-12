@@ -1,0 +1,18 @@
+[package]
+name = "shesh-remote"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+russh = "0.43"
+russh-keys = "0.43"
+tokio = { version = "1.0", features = ["full"] }
+futures = "0.3"
+async-trait = "0.1"
+tracing = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.0", features = ["v4", "v7", "serde"] }
+shesh-wps = { path = "../shesh-wps" }
+shesh-blockctl = { path = "../shesh-blockctl" }
+thiserror = "1.0"

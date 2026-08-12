@@ -1,19 +1,19 @@
 [workspace]
 resolver = "3"
 members = [
-    "crates/sheshaaos-waveobj",
-    "crates/sheshaaos-wps",
-    "crates/sheshaaos-blockctl",
-    "crates/sheshaaos-wconfig",
-    "crates/sheshaaos-ai",
-    "crates/sheshaaos-remote",
-    "crates/sheshaaos-rpc",
-    "crates/sheshaaos-gui",
-    "crates/sheshaaos-kernel",
-    "crates/sheshaaos-vault",
-    "crates/sheshaaos-tui",
-    "crates/sheshaaos-terminal",
-    "bin/sheshaaos-cli",
+    "crates/shesh-waveobj",
+    "crates/shesh-wps",
+    "crates/shesh-blockctl",
+    "crates/shesh-wconfig",
+    "crates/shesh-ai",
+    "crates/shesh-remote",
+    "crates/shesh-rpc",
+    "crates/shesh-gui",
+    "crates/shesh-kernel",
+    "crates/shesh-vault",
+    "crates/shesh-tui",
+    "crates/shesh-terminal",
+    "bin/shesh-cli",
 ]
 
 [workspace.dependencies]
@@ -43,18 +43,18 @@ rusqlite = { version = "0.32", features = ["bundled", "backup"] }
 notify = "6.1"
 
 # Internal workspace crates
-sheshaaos-waveobj = { path = "crates/sheshaaos-waveobj" }
-sheshaaos-wps = { path = "crates/sheshaaos-wps" }
-sheshaaos-blockctl = { path = "crates/sheshaaos-blockctl" }
-sheshaaos-wconfig = { path = "crates/sheshaaos-wconfig" }
-sheshaaos-ai = { path = "crates/sheshaaos-ai" }
-sheshaaos-remote = { path = "crates/sheshaaos-remote" }
-sheshaaos-rpc = { path = "crates/sheshaaos-rpc" }
-sheshaaos-gui = { path = "crates/sheshaaos-gui" }
-sheshaaos-kernel = { path = "crates/sheshaaos-kernel" }
-sheshaaos-vault = { path = "crates/sheshaaos-vault" }
-sheshaaos-tui = { path = "crates/sheshaaos-tui" }
-sheshaaos-terminal = { path = "crates/sheshaaos-terminal" }
+shesh-waveobj = { path = "crates/shesh-waveobj" }
+shesh-wps = { path = "crates/shesh-wps" }
+shesh-blockctl = { path = "crates/shesh-blockctl" }
+shesh-wconfig = { path = "crates/shesh-wconfig" }
+shesh-ai = { path = "crates/shesh-ai" }
+shesh-remote = { path = "crates/shesh-remote" }
+shesh-rpc = { path = "crates/shesh-rpc" }
+shesh-gui = { path = "crates/shesh-gui" }
+shesh-kernel = { path = "crates/shesh-kernel" }
+shesh-vault = { path = "crates/shesh-vault" }
+shesh-tui = { path = "crates/shesh-tui" }
+shesh-terminal = { path = "crates/shesh-terminal" }
 
 [profile.release]
 lto = true
