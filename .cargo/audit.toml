@@ -1,0 +1,20 @@
+# cargo-audit configuration for SheshAOS.
+#
+# One documented exception lives here. It is not a suppression of a finding:
+# it records a researched risk decision with its expiry condition.
+
+[advisories]
+ignore = [
+    # RUSTSEC-2023-0071 (Marvin Attack, rsa crate, pulled in via russh's
+    # ssh-key support):
+    #   - There is NO patched upstream release (advisory `patched = []`,
+    #     verified 2026-08-12 against the RustSec advisory-db).
+    #   - The vulnerable operation is RSA private-key decryption timing.
+    #     shesh-remote is an SSH *client* that authenticates with passwords;
+    #     it never loads, decrypts, or signs with an RSA private key, and the
+    #     workspace contains no SSH server at all — the timing surface is not
+    #     reachable from our code paths.
+    #   - Expiry: re-check on every russh upgrade; remove this entry the
+    #     moment a patched rsa release exists.
+    "RUSTSEC-2023-0071",
+]
