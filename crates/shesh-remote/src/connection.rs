@@ -23,7 +23,7 @@ impl ConnectionManager {
         port: u16,
         password: &str,
     ) -> Result<Handle<ClientHandler>, russh::Error> {
-        let handler = ClientHandler { host: host.to_string(), trust_new: false };
+        let handler = ClientHandler { host: host.to_string(), port, trust_new: false };
         let mut handle = russh::client::connect(self.config.clone(), (host, port), handler).await?;
 
         let event = WaveEvent::global(
@@ -35,9 +35,9 @@ impl ConnectionManager {
         );
         self.broker.publish(event);
 
-        // russh 0.43: authenticate_password yields Result<bool, Error>.
+        // russh 0.6x: authenticate_password yields AuthResult (Success/Failure).
         let authenticated = handle.authenticate_password(user, password).await?;
-        if !authenticated {
+        if !authenticated.success() {
             tracing::error!("SSH authentication failed for user '{}' on {}:{}", user, host, port);
             return Err(russh::Error::NotAuthenticated);
         }
