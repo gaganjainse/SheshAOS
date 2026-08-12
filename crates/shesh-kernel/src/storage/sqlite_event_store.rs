@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::{
-    error::{NexusError, StorageError},
+    error::{KernelError, StorageError},
     events::{Event, SequenceNumber},
     storage::EventStore,
 };
@@ -16,12 +16,12 @@ pub struct SqliteEventStore {
 
 impl SqliteEventStore {
     /// Open or create a SQLite event store at the given path.
-    pub async fn open(path: PathBuf) -> Result<Self, NexusError> {
+    pub async fn open(path: PathBuf) -> Result<Self, KernelError> {
         let db_path = path.join("events.db");
         let db_path_clone = db_path.clone();
         let max_seq: i64 = tokio::task::spawn_blocking(move || {
             let conn = rusqlite::Connection::open(&db_path_clone)
-                .map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
+                .map_err(|e| KernelError::Storage(StorageError::Database(e)))?;
             conn.execute(
                 "CREATE TABLE IF NOT EXISTS events (
                     id TEXT PRIMARY KEY,
@@ -31,7 +31,7 @@ impl SqliteEventStore {
                 )",
                 (),
             )
-            .map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
+            .map_err(|e| KernelError::Storage(StorageError::Database(e)))?;
             // Migrate existing default-sequence rows to 0
             conn.execute(
                 "UPDATE events SET sequence = 0 WHERE sequence IS NULL OR sequence = 0",
@@ -41,11 +41,11 @@ impl SqliteEventStore {
             let max: i64 = conn
                 .query_row("SELECT COALESCE(MAX(sequence), 0) FROM events", [], |r| r.get(0))
                 .unwrap_or(0);
-            Ok::<_, NexusError>(max)
+            Ok::<_, KernelError>(max)
         })
         .await
         .map_err(|e| {
-            NexusError::Storage(StorageError::Io(std::io::Error::other(e.to_string())))
+            KernelError::Storage(StorageError::Io(std::io::Error::other(e.to_string())))
         })??;
         Ok(Self { db_path, next_sequence: AtomicU64::new(max_seq as u64 + 1) })
     }
@@ -150,40 +150,40 @@ impl SqliteEventStore {
 
 #[async_trait]
 impl EventStore for SqliteEventStore {
-    async fn append(&self, mut event: Event) -> Result<(), NexusError> {
+    async fn append(&self, mut event: Event) -> Result<(), KernelError> {
         // Assign the next monotonic sequence number (matching JsonlEventStore behavior)
         event.sequence = SequenceNumber(self.next_sequence.fetch_add(1, Ordering::SeqCst));
 
-        let data = serde_json::to_string(&event).map_err(NexusError::Serde)?;
+        let data = serde_json::to_string(&event).map_err(KernelError::Serde)?;
         let db_path = self.db_path.clone();
         let sequence = event.sequence.0;
         tokio::task::spawn_blocking(move || {
             let conn = rusqlite::Connection::open(&db_path)
-                .map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
+                .map_err(|e| KernelError::Storage(StorageError::Database(e)))?;
             conn.execute(
                 "INSERT INTO events (id, task_id, sequence, data) VALUES (?1, ?2, ?3, ?4)",
                 (event.id.0.to_string(), event.task_id.map(|id| id.0.to_string()), sequence, data),
             )
-            .map_err(|e| NexusError::Storage(StorageError::Database(e)))?;
+            .map_err(|e| KernelError::Storage(StorageError::Database(e)))?;
             Ok(())
         })
         .await
-        .map_err(|e| NexusError::Storage(StorageError::Io(std::io::Error::other(e.to_string()))))?
+        .map_err(|e| KernelError::Storage(StorageError::Io(std::io::Error::other(e.to_string()))))?
     }
 
-    async fn get_all_events(&self) -> Result<Vec<Event>, NexusError> {
-        Self::read_all(self).await.map_err(NexusError::Storage)
+    async fn get_all_events(&self) -> Result<Vec<Event>, KernelError> {
+        Self::read_all(self).await.map_err(KernelError::Storage)
     }
 
     async fn get_task_events(
         &self,
         task_id: &crate::task::TaskId,
-    ) -> Result<Vec<Event>, NexusError> {
-        Self::read_for_task(self, task_id).await.map_err(NexusError::Storage)
+    ) -> Result<Vec<Event>, KernelError> {
+        Self::read_for_task(self, task_id).await.map_err(KernelError::Storage)
     }
 
-    async fn read_since(&self, sequence: u64) -> Result<Vec<Event>, NexusError> {
-        Self::read_since(self, sequence).await.map_err(NexusError::Storage)
+    async fn read_since(&self, sequence: u64) -> Result<Vec<Event>, KernelError> {
+        Self::read_since(self, sequence).await.map_err(KernelError::Storage)
     }
 }
 

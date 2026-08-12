@@ -8,15 +8,13 @@ members = [
     "crates/shesh-ai",
     "crates/shesh-remote",
     "crates/shesh-rpc",
-    "crates/shesh-gui",
     "crates/shesh-kernel",
     "crates/shesh-vault",
-    "crates/shesh-tui",
-    "crates/shesh-terminal",
     "bin/shesh-cli",
 ]
 
 [workspace.dependencies]
+criterion = "0.5"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }
 serde = { version = "1", features = ["derive"] }
@@ -33,8 +31,6 @@ sysinfo = "0.32"
 async-trait = "0.1"
 futures = "0.3"
 regex = "1"
-ratatui = "0.29"
-crossterm = { version = "0.28", features = ["event-stream"] }
 portable-pty = "0.8"
 # rusqlite uses the "bundled" feature to compile SQLite from source.
 # This ensures consistent behavior across platforms without requiring
@@ -50,11 +46,8 @@ shesh-wconfig = { path = "crates/shesh-wconfig" }
 shesh-ai = { path = "crates/shesh-ai" }
 shesh-remote = { path = "crates/shesh-remote" }
 shesh-rpc = { path = "crates/shesh-rpc" }
-shesh-gui = { path = "crates/shesh-gui" }
 shesh-kernel = { path = "crates/shesh-kernel" }
 shesh-vault = { path = "crates/shesh-vault" }
-shesh-tui = { path = "crates/shesh-tui" }
-shesh-terminal = { path = "crates/shesh-terminal" }
 
 [profile.release]
 lto = true

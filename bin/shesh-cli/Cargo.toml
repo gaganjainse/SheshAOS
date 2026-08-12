@@ -12,12 +12,9 @@ path = "src/main.rs"
 [dependencies]
 shesh-kernel.workspace = true
 shesh-vault.workspace = true
-shesh-tui.workspace = true
-shesh-terminal.workspace = true
 tokio.workspace = true
 clap.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
-crossterm.workspace = true
-ratatui.workspace = true
 anyhow = "1"
+dirs = "5"

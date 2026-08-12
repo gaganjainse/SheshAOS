@@ -4,10 +4,6 @@ on:
   pull_request:
     branches: [main, master]
 
-env:
-  # keep in sync with ci.yml — shesh-terminal's build.rs needs the Zig compiler
-  ZIG_VERSION: "0.15.2"
-
 jobs:
   pr-validation:
     name: PR Validation
@@ -19,10 +15,6 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Install Zig (required by shesh-terminal build script)
-        uses: mlugg/setup-zig@v2
-        with:
-          version: ${{ env.ZIG_VERSION }}
 
       - name: Check PR title follows convention
         run: |

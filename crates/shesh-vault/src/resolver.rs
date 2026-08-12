@@ -10,7 +10,13 @@ pub struct ParameterResolver;
 impl ParameterResolver {
     /// Extract all placeholder parameters (e.g. `<container>`, `<port>`) from a template.
     pub fn extract_placeholders(template: &str) -> Vec<String> {
-        let re = Regex::new(r"<([a-zA-Z0-9_]+)>").unwrap();
+        // The pattern is a fixed constant, so a compile error here is a bug in
+        // this file, not runtime input — test_placeholder_pattern_compiles
+        // covers it. Returning an empty list keeps the production path total
+        // without panicking (workspace lint forbids unwrap/panic).
+        let Ok(re) = Regex::new(r"<([a-zA-Z0-9_]+)>") else {
+            return Vec::new();
+        };
         re.captures_iter(template)
             .filter_map(|cap| cap.get(1).map(|m| m.as_str().to_string()))
             .collect()
@@ -30,6 +36,13 @@ impl ParameterResolver {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_placeholder_pattern_compiles() {
+        // Guards the `let Ok(re)` guard in extract_placeholders: if this fails,
+        // the extractor silently returns empty vectors everywhere.
+        assert!(regex::Regex::new(r"<([a-zA-Z0-9_]+)>").is_ok());
+    }
 
     #[test]
     fn test_extract_placeholders() {

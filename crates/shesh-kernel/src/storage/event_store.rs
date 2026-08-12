@@ -12,7 +12,7 @@ use tokio::{
 };
 
 use crate::{
-    error::{NexusError, StorageError},
+    error::{KernelError, StorageError},
     events::{Event, EventId, SequenceNumber},
     task::TaskId,
 };
@@ -27,16 +27,16 @@ use crate::{
 #[async_trait]
 pub trait EventStore: Send + Sync {
     /// Append a new event to the store.
-    async fn append(&self, event: Event) -> Result<(), NexusError>;
+    async fn append(&self, event: Event) -> Result<(), KernelError>;
 
     /// Get all events in chronological order.
-    async fn get_all_events(&self) -> Result<Vec<Event>, NexusError>;
+    async fn get_all_events(&self) -> Result<Vec<Event>, KernelError>;
 
     /// Get all events for a specific task in chronological order.
-    async fn get_task_events(&self, task_id: &TaskId) -> Result<Vec<Event>, NexusError>;
+    async fn get_task_events(&self, task_id: &TaskId) -> Result<Vec<Event>, KernelError>;
 
     /// Read events since a given sequence number.
-    async fn read_since(&self, sequence: u64) -> Result<Vec<Event>, NexusError>;
+    async fn read_since(&self, sequence: u64) -> Result<Vec<Event>, KernelError>;
 }
 
 /// Append-only event store backed by JSONL files.
@@ -150,23 +150,23 @@ impl JsonlEventStore {
 
 #[async_trait::async_trait]
 impl crate::storage::EventStore for JsonlEventStore {
-    async fn append(&self, mut event: Event) -> Result<(), crate::error::NexusError> {
-        Self::append(self, &mut event).await.map_err(crate::error::NexusError::Storage)
+    async fn append(&self, mut event: Event) -> Result<(), crate::error::KernelError> {
+        Self::append(self, &mut event).await.map_err(crate::error::KernelError::Storage)
     }
 
-    async fn get_all_events(&self) -> Result<Vec<Event>, crate::error::NexusError> {
-        Self::read_all(self).await.map_err(crate::error::NexusError::Storage)
+    async fn get_all_events(&self) -> Result<Vec<Event>, crate::error::KernelError> {
+        Self::read_all(self).await.map_err(crate::error::KernelError::Storage)
     }
 
     async fn get_task_events(
         &self,
         task_id: &TaskId,
-    ) -> Result<Vec<Event>, crate::error::NexusError> {
-        Self::read_for_task(self, task_id).await.map_err(crate::error::NexusError::Storage)
+    ) -> Result<Vec<Event>, crate::error::KernelError> {
+        Self::read_for_task(self, task_id).await.map_err(crate::error::KernelError::Storage)
     }
 
-    async fn read_since(&self, sequence: u64) -> Result<Vec<Event>, crate::error::NexusError> {
-        Self::read_since(self, sequence).await.map_err(crate::error::NexusError::Storage)
+    async fn read_since(&self, sequence: u64) -> Result<Vec<Event>, crate::error::KernelError> {
+        Self::read_since(self, sequence).await.map_err(crate::error::KernelError::Storage)
     }
 }
 

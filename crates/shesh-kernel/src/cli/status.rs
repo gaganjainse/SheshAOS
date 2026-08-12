@@ -4,13 +4,13 @@ use tracing::info;
 
 use crate::{
     config::AppConfig,
-    error::NexusError,
+    error::KernelError,
     resource::ResourceMonitor,
     storage::{SqliteEventStore, TaskProjection},
 };
 
 /// Run the status command: display kernel state and resource pressure.
-pub fn run(config_path: &str) -> Result<(), NexusError> {
+pub fn run(config_path: &str) -> Result<(), KernelError> {
     info!("Checking system status");
 
     let config = AppConfig::load(config_path)?;
@@ -25,7 +25,7 @@ pub fn run(config_path: &str) -> Result<(), NexusError> {
     println!("  Queue depth:    {}", pressure.queue_depth);
 
     let rt = tokio::runtime::Runtime::new().map_err(|e| {
-        NexusError::Config(crate::error::ConfigError::Invalid { message: e.to_string() })
+        KernelError::Config(crate::error::ConfigError::Invalid { message: e.to_string() })
     })?;
     rt.block_on(async {
         let events_dir = data_dir.join("events");

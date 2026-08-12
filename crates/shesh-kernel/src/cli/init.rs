@@ -4,10 +4,10 @@ use std::path::Path;
 
 use tracing::info;
 
-use crate::error::NexusError;
+use crate::error::KernelError;
 
 /// Run the init command: create data directory and write default config.
-pub fn run(config_path: &str) -> Result<(), NexusError> {
+pub fn run(config_path: &str) -> Result<(), KernelError> {
     info!("Initializing SheshAOS with config: {}", config_path);
 
     let config_path_obj = Path::new(config_path);

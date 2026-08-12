@@ -4,7 +4,7 @@ use chrono::Utc;
 use tokio::sync::RwLock;
 
 use crate::{
-    error::{NexusError, TaskError},
+    error::{KernelError, TaskError},
     events::{Event, EventKind, EventPayload},
     model::{
         registry::ProviderRegistry,
@@ -36,7 +36,7 @@ impl Kernel {
         provider_registry: Arc<ProviderRegistry>,
         tool_broker: Arc<ToolBroker>,
         max_tool_output_size: usize,
-    ) -> Result<Self, NexusError> {
+    ) -> Result<Self, KernelError> {
         let kernel = Self {
             event_store,
             projection: Arc::new(RwLock::new(TaskProjection::new())),
@@ -49,7 +49,7 @@ impl Kernel {
     }
 
     /// Submit a new task. Returns the TaskId.
-    pub async fn submit_task(&self, input: TaskInput) -> Result<TaskId, NexusError> {
+    pub async fn submit_task(&self, input: TaskInput) -> Result<TaskId, KernelError> {
         let task_id = TaskId::new();
         let request = TaskRequest::new(input.clone());
 
@@ -60,14 +60,14 @@ impl Kernel {
         };
 
         if decision.is_denied() {
-            return Err(NexusError::Policy(crate::error::PolicyError::Denied {
+            return Err(KernelError::Policy(crate::error::PolicyError::Denied {
                 reason: "Task creation denied by policy".into(),
             }));
         }
 
         // Emit TaskCreated event
         let event_payload = EventPayload::TaskCreated {
-            request: serde_json::to_value(&request).map_err(NexusError::Serde)?,
+            request: serde_json::to_value(&request).map_err(KernelError::Serde)?,
         };
         let event =
             Event::new(task_id, EventKind::TaskCreated, event_payload, "kernel".to_string());
@@ -115,12 +115,12 @@ impl Kernel {
     }
 
     /// Get the current state of a task.
-    pub async fn task_state(&self, id: &TaskId) -> Result<TaskState, NexusError> {
+    pub async fn task_state(&self, id: &TaskId) -> Result<TaskState, KernelError> {
         let proj = self.projection.read().await;
         if let Some(task) = proj.tasks.get(id) {
             Ok(task.current_state)
         } else {
-            Err(NexusError::Task(TaskError::NotFound { id: id.to_string() }))
+            Err(KernelError::Task(TaskError::NotFound { id: id.to_string() }))
         }
     }
 
@@ -139,17 +139,17 @@ impl Kernel {
         &self,
         task_id: &TaskId,
         new_state: TaskState,
-    ) -> Result<(), NexusError> {
+    ) -> Result<(), KernelError> {
         let mut proj = self.projection.write().await;
         let task = proj
             .tasks
             .get_mut(task_id)
-            .ok_or_else(|| NexusError::Task(TaskError::NotFound { id: task_id.to_string() }))?;
+            .ok_or_else(|| KernelError::Task(TaskError::NotFound { id: task_id.to_string() }))?;
 
         let current_state = task.current_state;
 
         if !current_state.can_transition_to(&new_state) {
-            return Err(NexusError::Task(TaskError::InvalidTransition {
+            return Err(KernelError::Task(TaskError::InvalidTransition {
                 from: current_state.to_string(),
                 to: new_state.to_string(),
             }));
@@ -179,18 +179,18 @@ impl Kernel {
     pub async fn execute_task(
         &self,
         task_id: &TaskId,
-    ) -> Result<crate::task::TaskOutcome, NexusError> {
+    ) -> Result<crate::task::TaskOutcome, KernelError> {
         // 1. Get request and verify state
         let task = {
             let proj = self.projection.read().await;
             proj.tasks
                 .get(task_id)
                 .cloned()
-                .ok_or_else(|| NexusError::Task(TaskError::NotFound { id: task_id.to_string() }))?
+                .ok_or_else(|| KernelError::Task(TaskError::NotFound { id: task_id.to_string() }))?
         };
 
         if task.current_state != TaskState::Classified {
-            return Err(NexusError::Task(TaskError::InvalidTransition {
+            return Err(KernelError::Task(TaskError::InvalidTransition {
                 from: task.current_state.to_string(),
                 to: TaskState::Planned.to_string(),
             }));
@@ -200,7 +200,7 @@ impl Kernel {
 
         let planner =
             self.provider_registry.get(&crate::state::ModelRole::Planner).ok_or_else(|| {
-                NexusError::Provider(crate::error::ProviderError::Unavailable {
+                KernelError::Provider(crate::error::ProviderError::Unavailable {
                     name: "Planner".into(),
                 })
             })?;
@@ -251,14 +251,11 @@ impl Kernel {
         let mut final_output = plan_resp.content;
 
         if requires_coder {
-            let coder = self.provider_registry.get(&crate::state::ModelRole::Coder);
-
-            if coder.is_none() {
+            let Some(coder) = self.provider_registry.get(&crate::state::ModelRole::Coder) else {
                 let err_msg = "Coder provider not available".to_string();
                 return self.emit_failure_and_return(*task_id, err_msg, Some(final_output)).await;
-            }
+            };
 
-            let coder = coder.unwrap();
             self.transition_task(task_id, TaskState::Executing).await?;
 
             let code_req = CompletionRequest::new(
@@ -470,7 +467,7 @@ impl Kernel {
     }
 
     // Helper: emit an event
-    async fn emit_event(&self, event: Event) -> Result<(), NexusError> {
+    async fn emit_event(&self, event: Event) -> Result<(), KernelError> {
         self.event_store.append(event).await
     }
 
@@ -479,7 +476,7 @@ impl Kernel {
         task_id: TaskId,
         role: &str,
         context_budget: usize,
-    ) -> Result<(), NexusError> {
+    ) -> Result<(), KernelError> {
         self.emit_event(Event::new(
             task_id,
             EventKind::ModelRequested,
@@ -495,7 +492,7 @@ impl Kernel {
         role: &str,
         response_tokens: usize,
         content: &str,
-    ) -> Result<(), NexusError> {
+    ) -> Result<(), KernelError> {
         self.emit_event(Event::new(
             task_id,
             EventKind::ModelResponded,
@@ -514,7 +511,7 @@ impl Kernel {
         task_id: TaskId,
         tool_name: &str,
         arguments: serde_json::Value,
-    ) -> Result<(), NexusError> {
+    ) -> Result<(), KernelError> {
         self.emit_event(Event::new(
             task_id,
             EventKind::ToolRequested,
@@ -531,7 +528,7 @@ impl Kernel {
         tool_name: &str,
         success: bool,
         output: &str,
-    ) -> Result<(), NexusError> {
+    ) -> Result<(), KernelError> {
         let max_size = self.max_tool_output_size;
         let truncated = if output.len() > max_size {
             // Step back to the nearest UTF-8 character boundary.
@@ -567,7 +564,7 @@ impl Kernel {
         task_id: TaskId,
         error_message: String,
         output: Option<String>,
-    ) -> Result<crate::task::TaskOutcome, NexusError> {
+    ) -> Result<crate::task::TaskOutcome, KernelError> {
         self.emit_event(Event::new(
             task_id,
             EventKind::Error,
@@ -654,14 +651,14 @@ mod tests {
 
     #[async_trait]
     impl EventStore for MockEventStore {
-        async fn append(&self, event: Event) -> Result<(), NexusError> {
+        async fn append(&self, event: Event) -> Result<(), KernelError> {
             self.events.lock().unwrap().push(event);
             Ok(())
         }
-        async fn get_all_events(&self) -> Result<Vec<Event>, NexusError> {
+        async fn get_all_events(&self) -> Result<Vec<Event>, KernelError> {
             Ok(self.events.lock().unwrap().clone())
         }
-        async fn get_task_events(&self, task_id: &TaskId) -> Result<Vec<Event>, NexusError> {
+        async fn get_task_events(&self, task_id: &TaskId) -> Result<Vec<Event>, KernelError> {
             Ok(self
                 .events
                 .lock()
@@ -671,7 +668,7 @@ mod tests {
                 .cloned()
                 .collect())
         }
-        async fn read_since(&self, _sequence: u64) -> Result<Vec<Event>, NexusError> {
+        async fn read_since(&self, _sequence: u64) -> Result<Vec<Event>, KernelError> {
             Ok(self.events.lock().unwrap().clone())
         }
     }
@@ -709,7 +706,7 @@ mod tests {
             .unwrap();
 
         let result = kernel.submit_task(TaskInput::Text("test".into())).await;
-        assert!(matches!(result, Err(NexusError::Policy(_))));
+        assert!(matches!(result, Err(KernelError::Policy(_))));
     }
 
     #[tokio::test]
@@ -754,7 +751,7 @@ mod tests {
         let id = kernel.submit_task(TaskInput::Text("test".into())).await.unwrap();
         // Classified -> Completed is invalid
         let result = kernel.transition_task(&id, TaskState::Completed).await;
-        assert!(matches!(result, Err(NexusError::Task(_))));
+        assert!(matches!(result, Err(KernelError::Task(_))));
     }
 
     #[tokio::test]
@@ -828,7 +825,7 @@ mod tests {
         let result = kernel.task_state(&fake_id).await;
         assert!(result.is_err());
         match result.unwrap_err() {
-            NexusError::Task(TaskError::NotFound { .. }) => {}
+            KernelError::Task(TaskError::NotFound { .. }) => {}
             _ => panic!("Expected TaskNotFound"),
         }
     }
@@ -929,7 +926,7 @@ mod tests {
         let result = kernel.execute_task(&id).await;
         assert!(result.is_err());
         match result.unwrap_err() {
-            NexusError::Provider(crate::error::ProviderError::Unavailable { .. }) => {}
+            KernelError::Provider(crate::error::ProviderError::Unavailable { .. }) => {}
             _ => panic!("Expected Provider Unavailable"),
         }
     }
