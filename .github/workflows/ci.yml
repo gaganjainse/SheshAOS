@@ -7,6 +7,11 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+env:
+  # shesh-terminal's build.rs compiles zig_src/vt100_expert.zig; keep this
+  # pin in sync with the documented local toolchain (zig 0.15.2).
+  ZIG_VERSION: "0.15.2"
+
 jobs:
   lint:
     name: Lint & Format
@@ -17,6 +22,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+
+      - name: Install Zig (required by shesh-terminal build script)
+        uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
 
       - name: Check formatting
         run: cargo fmt --check
@@ -38,6 +48,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Zig (required by shesh-terminal build script)
+        uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -71,6 +86,11 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Install Zig (required by shesh-terminal build script)
+        uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+
       - name: Build workspace
         run: cargo build --workspace
 
@@ -102,8 +122,11 @@ jobs:
           fi
 
       - name: Validate Mermaid diagrams
+        # NOTE: the pattern must be single-quoted — double quotes let bash
+        # treat the backticks as command substitution and the step aborts
+        # with "unexpected EOF" regardless of the file's contents.
         run: |
-          if ! grep -q "```mermaid" .kilo/plans/architecture.md; then
+          if ! grep -q '^```mermaid' .kilo/plans/architecture.md; then
             echo "::error::No Mermaid diagrams found in architecture.md"
             exit 1
           fi

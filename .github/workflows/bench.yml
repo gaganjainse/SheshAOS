@@ -7,6 +7,10 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+env:
+  # keep in sync with ci.yml — shesh-terminal's build.rs needs the Zig compiler
+  ZIG_VERSION: "0.15.2"
+
 jobs:
   benchmark:
     name: Run Benchmarks
@@ -14,6 +18,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Install Zig (required by shesh-terminal build script)
+        uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
       - name: Install cargo-criterion
         run: cargo install cargo-criterion
       - name: Run benchmarks
