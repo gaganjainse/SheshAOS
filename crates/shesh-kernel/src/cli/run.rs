@@ -7,7 +7,7 @@ use tracing::info;
 
 use crate::{
     config::AppConfig,
-    error::NexusError,
+    error::KernelError,
     model::{openai_compat::OpenAiCompatProvider, registry::ProviderRegistry},
     policy::{PolicyEngine, PolicyRule, TrustTier},
     runtime::kernel::Kernel,
@@ -22,14 +22,14 @@ pub fn execute(
     task: &str,
     background: bool,
     yes: bool,
-) -> Result<(), NexusError> {
+) -> Result<(), KernelError> {
     info!(task = task, background = background, "Submitting task");
 
     let config = AppConfig::load(config_path)?;
     let data_dir = config.resolved_data_dir();
 
     let rt = tokio::runtime::Runtime::new().map_err(|e| {
-        NexusError::Config(crate::error::ConfigError::Invalid { message: e.to_string() })
+        KernelError::Config(crate::error::ConfigError::Invalid { message: e.to_string() })
     })?;
     rt.block_on(async {
         // 1. Initialize Event Store
@@ -118,6 +118,6 @@ pub fn execute(
         // which transitions the task to AwaitingConfirmation state. The CLI
         // can then prompt the user and resume execution via confirm_task.
 
-        Ok::<(), NexusError>(())
+        Ok::<(), KernelError>(())
     })
 }

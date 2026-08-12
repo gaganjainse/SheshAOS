@@ -4,13 +4,13 @@ use tracing::info;
 
 use crate::{
     config::AppConfig,
-    error::NexusError,
+    error::KernelError,
     model::{openai_compat::OpenAiCompatProvider, provider::ModelProvider},
     resource::ResourceMonitor,
 };
 
 /// Run the doctor command: verify system prerequisites.
-pub fn run(config_path: &str) -> Result<(), NexusError> {
+pub fn run(config_path: &str) -> Result<(), KernelError> {
     info!("Running system health check");
     println!("SheshAOS Doctor\n");
 
@@ -60,7 +60,7 @@ pub fn run(config_path: &str) -> Result<(), NexusError> {
 
     println!("\n  Model Providers:");
     let rt = tokio::runtime::Runtime::new().map_err(|e| {
-        NexusError::Config(crate::error::ConfigError::Invalid { message: e.to_string() })
+        KernelError::Config(crate::error::ConfigError::Invalid { message: e.to_string() })
     })?;
     rt.block_on(async {
         for provider_cfg in &config.model_providers {

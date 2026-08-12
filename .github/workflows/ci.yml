@@ -7,11 +7,6 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
-env:
-  # shesh-terminal's build.rs compiles zig_src/vt100_expert.zig; keep this
-  # pin in sync with the documented local toolchain (zig 0.15.2).
-  ZIG_VERSION: "0.15.2"
-
 jobs:
   lint:
     name: Lint & Format
@@ -23,23 +18,18 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Install Zig (required by shesh-terminal build script)
-        uses: mlugg/setup-zig@v2
-        with:
-          version: ${{ env.ZIG_VERSION }}
 
       - name: Check formatting
         run: cargo fmt --check
 
+      # unwrap_used/expect_used/panic are enforced tool-natively: they are
+      # workspace lints (workspace Cargo.toml, every crate opts in via
+      # [lints] workspace = true) and `-D warnings` promotes them to errors,
+      # while clippy.toml's allow-*-in-tests keeps test code idiomatic.
+      # A grep for ".unwrap()" cannot track #[cfg(test)] scope and produced
+      # only false positives, so it was removed, not loosened.
       - name: Clippy
         run: cargo clippy --all-targets -- -D warnings
-
-      - name: Check for unwrap/expect in production code
-        run: |
-          if grep -rn "\.unwrap()\|\.expect(" crates/ bin/ --include="*.rs" | grep -v "tests\|#\[cfg(test)\]\|#\[allow" | grep -v "^.*//.*unwrap\|//.*expect"; then
-            echo "::error::Found unwrap/expect in production code"
-            exit 1
-          fi
 
   test:
     name: Test Suite
@@ -49,10 +39,6 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Install Zig (required by shesh-terminal build script)
-        uses: mlugg/setup-zig@v2
-        with:
-          version: ${{ env.ZIG_VERSION }}
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -73,8 +59,8 @@ jobs:
         run: |
           TOTAL=$(cargo test --workspace 2>&1 | grep -oP '\d+(?= passed)' | paste -sd+ | bc)
           echo "Total tests: $TOTAL"
-          if [ "$TOTAL" -lt 900 ]; then
-            echo "::error::Test count ($TOTAL) dropped below 900. Check for accidental test deletions."
+          if [ "$TOTAL" -lt 850 ]; then
+            echo "::error::Test count ($TOTAL) dropped below 850. Measured 872 on 2026-08-12 post-excision (ADR-0018); the floor absorbs refactors, raise it when adding tests."
             exit 1
           fi
 
@@ -86,10 +72,6 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Install Zig (required by shesh-terminal build script)
-        uses: mlugg/setup-zig@v2
-        with:
-          version: ${{ env.ZIG_VERSION }}
 
       - name: Build workspace
         run: cargo build --workspace
@@ -100,6 +82,11 @@ jobs:
   security:
     name: Security Audit
     runs-on: ubuntu-latest
+    # rustsec/audit-check publishes its report as a check run, which the
+    # default read-only GITHUB_TOKEN cannot do.
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v4
 

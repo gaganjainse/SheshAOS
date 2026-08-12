@@ -1,6 +1,6 @@
 //! Unified error types for SheshAOS.
 //!
-//! Each subsystem defines its own error type. `NexusError` wraps them all
+//! Each subsystem defines its own error type. `KernelError` wraps them all
 //! for propagation through the kernel and CLI.
 
 use thiserror::Error;
@@ -8,7 +8,7 @@ use thiserror::Error;
 /// Top-level error type for SheshAOS operations.
 #[derive(Error, Debug)]
 #[non_exhaustive]
-pub enum NexusError {
+pub enum KernelError {
     #[error("Configuration error: {0}")]
     Config(#[from] ConfigError),
 
@@ -200,62 +200,62 @@ mod tests {
     #[test]
     fn test_error_display() {
         let err =
-            NexusError::Config(ConfigError::NotFound { path: "/tmp/missing.toml".to_string() });
+            KernelError::Config(ConfigError::NotFound { path: "/tmp/missing.toml".to_string() });
         assert!(err.to_string().contains("missing.toml"));
     }
 
     #[test]
     fn test_error_from_storage() {
         let storage_err = StorageError::DuplicateEvent { id: "abc-123".to_string() };
-        let nexus_err: NexusError = storage_err.into();
-        assert!(nexus_err.to_string().contains("abc-123"));
+        let kernel_err: KernelError = storage_err.into();
+        assert!(kernel_err.to_string().contains("abc-123"));
     }
 
     #[test]
     fn test_error_from_policy() {
         let policy_err = PolicyError::Denied { reason: "no write access".to_string() };
-        let nexus_err: NexusError = policy_err.into();
-        assert!(nexus_err.to_string().contains("no write access"));
+        let kernel_err: KernelError = policy_err.into();
+        assert!(kernel_err.to_string().contains("no write access"));
     }
 
     #[test]
     fn test_error_from_provider() {
         let provider_err = ProviderError::Timeout { timeout_secs: 30 };
-        let nexus_err: NexusError = provider_err.into();
-        assert!(nexus_err.to_string().contains("30s"));
+        let kernel_err: KernelError = provider_err.into();
+        assert!(kernel_err.to_string().contains("30s"));
     }
 
     #[test]
     fn test_error_from_task() {
         let task_err = TaskError::QueueFull { max_depth: 32 };
-        let nexus_err: NexusError = task_err.into();
-        assert!(nexus_err.to_string().contains("32"));
+        let kernel_err: KernelError = task_err.into();
+        assert!(kernel_err.to_string().contains("32"));
     }
 
     #[test]
     fn test_error_from_resource() {
         let resource_err = ResourceError::InsufficientRam { needed_mb: 8000, available_mb: 4000 };
-        let nexus_err: NexusError = resource_err.into();
-        assert!(nexus_err.to_string().contains("8000"));
+        let kernel_err: KernelError = resource_err.into();
+        assert!(kernel_err.to_string().contains("8000"));
     }
 
     #[test]
     fn test_error_display_config_invalid() {
-        let err = NexusError::Config(ConfigError::Invalid { message: "bad config".to_string() });
+        let err = KernelError::Config(ConfigError::Invalid { message: "bad config".to_string() });
         assert!(err.to_string().contains("bad config"));
         assert!(err.to_string().contains("Configuration error"));
     }
 
     #[test]
     fn test_error_display_storage_event_not_found() {
-        let err = NexusError::Storage(StorageError::EventNotFound { id: "evt-1".to_string() });
+        let err = KernelError::Storage(StorageError::EventNotFound { id: "evt-1".to_string() });
         assert!(err.to_string().contains("evt-1"));
         assert!(err.to_string().contains("Storage error"));
     }
 
     #[test]
     fn test_error_display_storage_corrupted() {
-        let err = NexusError::Storage(StorageError::CorruptedSnapshot {
+        let err = KernelError::Storage(StorageError::CorruptedSnapshot {
             message: "bad data".to_string(),
         });
         assert!(err.to_string().contains("bad data"));
@@ -263,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_error_display_storage_not_writable() {
-        let err = NexusError::Storage(StorageError::NotWritable { path: "/ro".to_string() });
+        let err = KernelError::Storage(StorageError::NotWritable { path: "/ro".to_string() });
         assert!(err.to_string().contains("/ro"));
     }
 
@@ -271,45 +271,45 @@ mod tests {
     fn test_error_from_storage_serialization() {
         let json_err = serde_json::from_str::<serde_json::Value>("bad json").unwrap_err();
         let storage_err = StorageError::Serialization(json_err);
-        let nexus_err: NexusError = storage_err.into();
-        assert!(nexus_err.to_string().contains("Storage error"));
+        let kernel_err: KernelError = storage_err.into();
+        assert!(kernel_err.to_string().contains("Storage error"));
     }
 
     #[test]
     fn test_error_from_storage_io() {
         let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "file missing");
         let storage_err = StorageError::Io(io_err);
-        let nexus_err: NexusError = storage_err.into();
-        assert!(nexus_err.to_string().contains("Storage error"));
-        assert!(nexus_err.to_string().contains("file missing"));
+        let kernel_err: KernelError = storage_err.into();
+        assert!(kernel_err.to_string().contains("Storage error"));
+        assert!(kernel_err.to_string().contains("file missing"));
     }
 
     #[test]
     fn test_error_from_policy_missing_capability() {
         let policy_err = PolicyError::MissingCapability { capability: "fs.read".to_string() };
-        let nexus_err: NexusError = policy_err.into();
-        assert!(nexus_err.to_string().contains("fs.read"));
+        let kernel_err: KernelError = policy_err.into();
+        assert!(kernel_err.to_string().contains("fs.read"));
     }
 
     #[test]
     fn test_error_from_policy_expired() {
         let policy_err = PolicyError::ExpiredCapability { capability: "fs.write".to_string() };
-        let nexus_err: NexusError = policy_err.into();
-        assert!(nexus_err.to_string().contains("fs.write"));
+        let kernel_err: KernelError = policy_err.into();
+        assert!(kernel_err.to_string().contains("fs.write"));
     }
 
     #[test]
     fn test_error_from_policy_invalid_rule() {
         let policy_err = PolicyError::InvalidRule { message: "bad rule syntax".to_string() };
-        let nexus_err: NexusError = policy_err.into();
-        assert!(nexus_err.to_string().contains("bad rule syntax"));
+        let kernel_err: KernelError = policy_err.into();
+        assert!(kernel_err.to_string().contains("bad rule syntax"));
     }
 
     #[test]
     fn test_error_from_provider_unavailable() {
         let provider_err = ProviderError::Unavailable { name: "gpt4".to_string() };
-        let nexus_err: NexusError = provider_err.into();
-        assert!(nexus_err.to_string().contains("gpt4"));
+        let kernel_err: KernelError = provider_err.into();
+        assert!(kernel_err.to_string().contains("gpt4"));
     }
 
     #[test]
@@ -318,54 +318,54 @@ mod tests {
             name: "ollama".to_string(),
             reason: "connection refused".to_string(),
         };
-        let nexus_err: NexusError = provider_err.into();
-        assert!(nexus_err.to_string().contains("ollama"));
-        assert!(nexus_err.to_string().contains("connection refused"));
+        let kernel_err: KernelError = provider_err.into();
+        assert!(kernel_err.to_string().contains("ollama"));
+        assert!(kernel_err.to_string().contains("connection refused"));
     }
 
     #[test]
     fn test_error_from_provider_inference_failed() {
         let provider_err = ProviderError::InferenceFailed("model error".to_string());
-        let nexus_err: NexusError = provider_err.into();
-        assert!(nexus_err.to_string().contains("model error"));
+        let kernel_err: KernelError = provider_err.into();
+        assert!(kernel_err.to_string().contains("model error"));
     }
 
     #[test]
     fn test_error_from_provider_malformed_response() {
         let provider_err = ProviderError::MalformedResponse("invalid json".to_string());
-        let nexus_err: NexusError = provider_err.into();
-        assert!(nexus_err.to_string().contains("invalid json"));
+        let kernel_err: KernelError = provider_err.into();
+        assert!(kernel_err.to_string().contains("invalid json"));
     }
 
     #[test]
     fn test_error_from_provider_cancelled() {
         let provider_err = ProviderError::Cancelled;
-        let nexus_err: NexusError = provider_err.into();
+        let kernel_err: KernelError = provider_err.into();
         assert!(
-            nexus_err.to_string().contains("cancelled")
-                || nexus_err.to_string().contains("Cancelled")
+            kernel_err.to_string().contains("cancelled")
+                || kernel_err.to_string().contains("Cancelled")
         );
     }
 
     #[test]
     fn test_error_from_provider_http() {
         let provider_err = ProviderError::Http("502 Bad Gateway".to_string());
-        let nexus_err: NexusError = provider_err.into();
-        assert!(nexus_err.to_string().contains("502"));
+        let kernel_err: KernelError = provider_err.into();
+        assert!(kernel_err.to_string().contains("502"));
     }
 
     #[test]
     fn test_error_from_provider_no_role() {
         let provider_err = ProviderError::NoProviderForRole { role: "coder".to_string() };
-        let nexus_err: NexusError = provider_err.into();
-        assert!(nexus_err.to_string().contains("coder"));
+        let kernel_err: KernelError = provider_err.into();
+        assert!(kernel_err.to_string().contains("coder"));
     }
 
     #[test]
     fn test_error_from_tool_not_found() {
         let tool_err = ToolError::NotFound { name: "shell".to_string() };
-        let nexus_err: NexusError = tool_err.into();
-        assert!(nexus_err.to_string().contains("shell"));
+        let kernel_err: KernelError = tool_err.into();
+        assert!(kernel_err.to_string().contains("shell"));
     }
 
     #[test]
@@ -374,118 +374,119 @@ mod tests {
             name: "fs".to_string(),
             reason: "permission denied".to_string(),
         };
-        let nexus_err: NexusError = tool_err.into();
-        assert!(nexus_err.to_string().contains("permission denied"));
+        let kernel_err: KernelError = tool_err.into();
+        assert!(kernel_err.to_string().contains("permission denied"));
     }
 
     #[test]
     fn test_error_from_tool_timeout() {
         let tool_err = ToolError::Timeout { name: "term".to_string(), timeout_secs: 5 };
-        let nexus_err: NexusError = tool_err.into();
-        assert!(nexus_err.to_string().contains("5"));
+        let kernel_err: KernelError = tool_err.into();
+        assert!(kernel_err.to_string().contains("5"));
     }
 
     #[test]
     fn test_error_from_tool_path_denied() {
         let tool_err = ToolError::PathDenied { path: "/etc/shadow".to_string() };
-        let nexus_err: NexusError = tool_err.into();
-        assert!(nexus_err.to_string().contains("/etc/shadow"));
+        let kernel_err: KernelError = tool_err.into();
+        assert!(kernel_err.to_string().contains("/etc/shadow"));
     }
 
     #[test]
     fn test_error_from_tool_command_denied() {
         let tool_err = ToolError::CommandDenied { command: "rm -rf /".to_string() };
-        let nexus_err: NexusError = tool_err.into();
-        assert!(nexus_err.to_string().contains("rm -rf /"));
+        let kernel_err: KernelError = tool_err.into();
+        assert!(kernel_err.to_string().contains("rm -rf /"));
     }
 
     #[test]
     fn test_error_from_tool_io() {
         let io_err = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "nope");
         let tool_err: ToolError = io_err.into();
-        let nexus_err: NexusError = tool_err.into();
-        assert!(nexus_err.to_string().contains("Tool error"));
+        let kernel_err: KernelError = tool_err.into();
+        assert!(kernel_err.to_string().contains("Tool error"));
     }
 
     #[test]
     fn test_error_from_task_invalid_transition() {
         let task_err =
             TaskError::InvalidTransition { from: "Received".into(), to: "Completed".into() };
-        let nexus_err: NexusError = task_err.into();
-        assert!(nexus_err.to_string().contains("Received"));
-        assert!(nexus_err.to_string().contains("Completed"));
+        let kernel_err: KernelError = task_err.into();
+        assert!(kernel_err.to_string().contains("Received"));
+        assert!(kernel_err.to_string().contains("Completed"));
     }
 
     #[test]
     fn test_error_from_task_not_found() {
         let task_err = TaskError::NotFound { id: "task-123".to_string() };
-        let nexus_err: NexusError = task_err.into();
-        assert!(nexus_err.to_string().contains("task-123"));
+        let kernel_err: KernelError = task_err.into();
+        assert!(kernel_err.to_string().contains("task-123"));
     }
 
     #[test]
     fn test_error_from_task_queue_full() {
         let task_err = TaskError::QueueFull { max_depth: 100 };
-        let nexus_err: NexusError = task_err.into();
-        assert!(nexus_err.to_string().contains("100"));
+        let kernel_err: KernelError = task_err.into();
+        assert!(kernel_err.to_string().contains("100"));
     }
 
     #[test]
     fn test_error_from_task_duplicate() {
         let task_err = TaskError::Duplicate;
-        let nexus_err: NexusError = task_err.into();
+        let kernel_err: KernelError = task_err.into();
         assert!(
-            nexus_err.to_string().contains("Duplicate")
-                || nexus_err.to_string().contains("duplicate")
+            kernel_err.to_string().contains("Duplicate")
+                || kernel_err.to_string().contains("duplicate")
         );
     }
 
     #[test]
     fn test_error_from_task_cancelled() {
         let task_err = TaskError::Cancelled;
-        let nexus_err: NexusError = task_err.into();
+        let kernel_err: KernelError = task_err.into();
         assert!(
-            nexus_err.to_string().contains("cancel") || nexus_err.to_string().contains("Cancelled")
+            kernel_err.to_string().contains("cancel")
+                || kernel_err.to_string().contains("Cancelled")
         );
     }
 
     #[test]
     fn test_error_from_resource_insufficient_vram() {
         let res_err = ResourceError::InsufficientVram { needed_mb: 8000, available_mb: 2000 };
-        let nexus_err: NexusError = res_err.into();
-        assert!(nexus_err.to_string().contains("8000"));
-        assert!(nexus_err.to_string().contains("2000"));
+        let kernel_err: KernelError = res_err.into();
+        assert!(kernel_err.to_string().contains("8000"));
+        assert!(kernel_err.to_string().contains("2000"));
     }
 
     #[test]
     fn test_error_from_resource_insufficient_disk() {
         let res_err = ResourceError::InsufficientDisk { needed_gb: 50, available_gb: 10 };
-        let nexus_err: NexusError = res_err.into();
-        assert!(nexus_err.to_string().contains("50"));
-        assert!(nexus_err.to_string().contains("10"));
+        let kernel_err: KernelError = res_err.into();
+        assert!(kernel_err.to_string().contains("50"));
+        assert!(kernel_err.to_string().contains("10"));
     }
 
     #[test]
     fn test_error_from_resource_context_budget_exceeded() {
         let res_err =
             ResourceError::ContextBudgetExceeded { requested: 100000, max_allowed: 32000 };
-        let nexus_err: NexusError = res_err.into();
-        assert!(nexus_err.to_string().contains("100000"));
-        assert!(nexus_err.to_string().contains("32000"));
+        let kernel_err: KernelError = res_err.into();
+        assert!(kernel_err.to_string().contains("100000"));
+        assert!(kernel_err.to_string().contains("32000"));
     }
 
     #[test]
     fn test_error_from_serde() {
         let json_err = serde_json::from_str::<serde_json::Value>("bad json").unwrap_err();
-        let nexus_err: NexusError = json_err.into();
-        assert!(nexus_err.to_string().contains("Serialization error"));
+        let kernel_err: KernelError = json_err.into();
+        assert!(kernel_err.to_string().contains("Serialization error"));
     }
 
     #[test]
     fn test_error_from_io() {
         let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "no such file");
-        let nexus_err: NexusError = io_err.into();
-        assert!(nexus_err.to_string().contains("I/O error"));
+        let kernel_err: KernelError = io_err.into();
+        assert!(kernel_err.to_string().contains("I/O error"));
     }
 
     #[test]
@@ -513,8 +514,8 @@ mod tests {
     }
 
     #[test]
-    fn test_nexus_error_debug() {
-        let err = NexusError::Task(TaskError::NotFound { id: "x".into() });
+    fn test_kernel_error_debug() {
+        let err = KernelError::Task(TaskError::NotFound { id: "x".into() });
         let debug_str = format!("{:?}", err);
         assert!(debug_str.contains("Task"));
     }

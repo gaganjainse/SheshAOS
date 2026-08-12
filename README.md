@@ -11,7 +11,7 @@ lang: en
 ![Version](https://img.shields.io/badge/Version-v2.0.0-green?style=for-the-badge&logo=git-semver)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue?style=for-the-badge&logo=github)
-![Tests](https://img.shields.io/badge/Tests-981-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-872-success?style=for-the-badge)
 
 **🏛️ Governance-first, event-sourced AI operating environment
 for Ubuntu Linux.**
@@ -46,8 +46,8 @@ To provide a **governance-first AI platform** where:
 | Metric | Value |
 | ------- | ----- |
 | 🦀 **Language** | Rust 2024 |
-| 📦 **Crates** | 12 workspace crates |
-| 🧪 **Tests** | 981 passing |
+| 📦 **Crates** | 9 workspace crates + `shesh` CLI |
+| 🧪 **Tests** | 872 passing |
 | 🔍 **Lints** | 0 warnings |
 | 🚀 **CI/CD** | GitHub Actions |
 | 📄 **License** | MIT |
@@ -61,7 +61,7 @@ To provide a **governance-first AI platform** where:
 | No oversight | 🛡️ **Governance-first** — kernel validates everything |
 | Mutable state | 📝 **Event-sourced** — append-only audit trail |
 | Single model lock-in | 🔌 **Provider interface** — replaceable models |
-| No terminal integration | 🖥️ **Native terminal** — PTY + VT100 + SSH |
+| No terminal integration | 🌊 **Wave-native** — stock Wave Terminal frontend (ADR-0016) |
 
 ### 🏗️ System Architecture
 
@@ -69,8 +69,7 @@ To provide a **governance-first AI platform** where:
 graph TB
     subgraph "Interface Layer"
         CLI["🖥️ CLI<br/>shesh-cli"]
-        TUI["📱 TUI<br/>shesh-tui"]
-        GUI["🖼️ GUI<br/>shesh-gui"]
+        WAVE["🌊 Wave Terminal<br/>(stock, ADR-0016)"]
         RPC["🔌 RPC<br/>shesh-rpc"]
     end
 
@@ -91,7 +90,6 @@ graph TB
         T["🔧 Tool Broker"]
         B["🧱 Block Controller"]
         RM["🌐 Remote Shell"]
-        TE["🖥️ Terminal"]
     end
 
     subgraph "Storage Layer"
@@ -101,8 +99,7 @@ graph TB
     end
 
     CLI --> K
-    TUI --> K
-    GUI --> K
+    WAVE --> RPC
     RPC --> K
 
     K --> P
@@ -116,7 +113,6 @@ graph TB
     K --> T
     K --> B
     K --> RM
-    K --> TE
 
     K --> WO
     K --> WP
@@ -146,7 +142,7 @@ cargo build --release
 | ----- | ------ |
 | ✅ Compilation | 0 errors, 0 warnings |
 | ✅ Lints | 0 clippy warnings |
-| ✅ Tests | 981 passing |
+| ✅ Tests | 872 passing |
 | ✅ Benchmarks | 6 criterion benches |
 | ✅ CI/CD | Full pipeline configured |
 | ✅ Security | Policy + audit + scanning |
@@ -164,8 +160,8 @@ cargo build --release
 
 ### 🌐 Topics
 
-`rust` `terminal` `ai` `governance` `event-sourcing` `microkernel` `tui` `gui` `ssh`
-`pty` `sqlite` `iced` `ratatui` `local-first` `privacy` `open-source`
+`rust` `ai` `governance` `event-sourcing` `microkernel` `ssh`
+`pty` `sqlite` `local-first` `privacy` `open-source`
 
 ---
 
@@ -203,16 +199,14 @@ graph LR
 ### 🧠 AI Chat Engine
 
 - **Streaming responses** from OpenAI-compatible and Anthropic endpoints
-- **Real-time token streaming** directly into TUI/GUI
+- **Real-time token streaming** surfaced through Wave blocks / MCP clients
 - **Multi-modal support** with vision capabilities
 - **Session management** with full conversation history
 
-### 🖥️ Terminal Emulation
+### 🧱 Block & Shell Control
 
-- **Native PTY management** with backpressure-aware reading
-- **Zig VT100 parser** for zero-allocation ANSI parsing
-- **Split-pane layouts** with dynamic tile management
-- **AI-assisted terminal** with inline code suggestions
+- **PTY block controller** with backpressure-aware reading — the layer Wave blocks ride on
+- **Remote PTY shell tunneling** via russh
 
 ### 🔐 Security & Governance
 
@@ -230,9 +224,8 @@ graph LR
 
 ### 🎨 User Interfaces
 
-- **TUI**: Ratatui-based terminal interface
-- **GUI**: Iced-based native desktop GUI
-- **CLI**: Full-featured command-line interface
+- **Wave Terminal (stock)** — mission-control surface; bespoke ratatui/iced frontends were removed 2026-08-12 (ADR-0016, ADR-0018)
+- **CLI**: full-featured `shesh` command-line interface
 - **IPC**: JSON-RPC 2.0 over Unix sockets
 
 ---
@@ -245,8 +238,7 @@ graph LR
 graph TB
     subgraph "Interface Layer"
         CLI["🖥️ CLI<br/>shesh-cli"]
-        TUI["📱 TUI<br/>shesh-tui"]
-        GUI["🖼️ GUI<br/>shesh-gui"]
+        WAVE["🌊 Wave Terminal<br/>(stock, ADR-0016)"]
         RPC["🔌 RPC<br/>shesh-rpc"]
     end
 
@@ -268,7 +260,6 @@ graph TB
         TOOLS["🔧 Tool Broker"]
         BLOCKCTL["🧱 Block Controller"]
         REMOTE["🌐 Remote Shell"]
-        TERMINAL["🖥️ Terminal"]
     end
 
     subgraph "Storage Layer"
@@ -279,8 +270,7 @@ graph TB
     end
 
     CLI --> KERNEL
-    TUI --> KERNEL
-    GUI --> KERNEL
+    WAVE --> RPC
     RPC --> KERNEL
 
     KERNEL --> POLICY
@@ -294,7 +284,6 @@ graph TB
     KERNEL --> TOOLS
     KERNEL --> BLOCKCTL
     KERNEL --> REMOTE
-    KERNEL --> TERMINAL
 
     KERNEL --> WAVEOBJ
     KERNEL --> WPS
@@ -353,10 +342,7 @@ graph TD
 | **Language** | Rust 2024 | Core implementation |
 | **Async Runtime** | Tokio | Async execution |
 | **Serialization** | Serde / JSON | Data interchange |
-| **Terminal** | Ratatui + Crossterm | TUI rendering |
-| **GUI** | Iced 0.14 | Native desktop GUI |
-| **PTY** | portable-pty | Shell process management |
-| **ANSI Parser** | vte + Zig VT100 | Terminal escape parsing |
+| **PTY** | portable-pty | Block shell process management |
 | **AI/ML** | reqwest + SSE | Streaming providers |
 | **SSH** | russh | Remote connections |
 | **Persistence** | SQLite (rusqlite) | Object storage |
@@ -404,7 +390,7 @@ graph TD
 - Rust 1.75+ (edition 2024)
 - Ubuntu 22.04+ (or compatible Linux)
 - 16 GB RAM minimum
-- NVIDIA GPU recommended for GUI
+- NVIDIA GPU optional (local model inference)
 
 ### Installation
 
@@ -422,8 +408,8 @@ cargo build --release
 # Check system health
 ./target/release/shesh doctor
 
-# Start interactive TUI
-./target/release/shesh tui
+# Show kernel state
+./target/release/shesh status
 
 # Run a task
 ./target/release/shesh run "describe the project structure"
@@ -466,15 +452,11 @@ SheshAOS/
 │   ├── shesh-waveobj/      # 📦 Object store & ORef graph
 │   ├── shesh-wps/          # 📡 Pub/Sub event broker
 │   ├── shesh-blockctl/     # 🧱 PTY shell controller
-│   ├── shesh-terminal/     # 🖥️ Zig VT100 + PTY bridge
 │   ├── shesh-ai/           # 🤖 OpenAI/Anthropic streaming
 │   ├── shesh-remote/       # 🌐 SSH remote shell
 │   ├── shesh-rpc/          # 🔌 Unix socket JSON-RPC
-│   ├── shesh-gui/          # 🖼️ Iced native GUI
-│   ├── shesh-tui/          # 📱 Ratatui TUI
 │   ├── shesh-vault/        # 🔐 Command snippets & inspector
 │   └── shesh-wconfig/      # ⚙️ Config watcher & settings
-├── tests/                     # Integration tests & benchmarks
 ├── configs/                   # Configuration files
 ├── scripts/                   # Dev/test helper scripts
 ├── docs/                      # Additional documentation
@@ -498,19 +480,16 @@ SheshAOS/
 
 | Crate | Tests |
 | ----- | ----- |
-| shesh-kernel | 396 |
+| shesh-kernel | 401 |
 | shesh-waveobj | 204 |
 | shesh-wps | 71 |
 | shesh-blockctl | 48 |
 | shesh-ai | 18 |
 | shesh-rpc | 29 |
-| shesh-remote | 19 |
-| shesh-terminal | 19 |
-| shesh-vault | 53 |
+| shesh-remote | 16 |
+| shesh-vault | 54 |
 | shesh-wconfig | 31 |
-| shesh-gui | 32 |
-| shesh-tui | 30 |
-| **Total** | **981** |
+| **Total** | **872** |
 
 ### Running Tests
 
@@ -541,14 +520,11 @@ cargo bench --workspace
 cargo bench -p shesh-kernel bench_kernel_task_submission
 ```
 
-| Benchmark | Description |
-| --------- | ----------- |
-| `bench_terminal_parsing` | VT100 parser throughput |
-| `bench_kernel_task_submission` | Task submission latency |
-| `bench_event_store` | Event append/read throughput |
-| `bench_terminal_rendering` | Span-batching render simulation |
-| `bench_snapshot_projection` | Replay engine performance |
-| `bench_tool_broker_throughput` | Tool broker routing |
+| Benchmark | Where | Description |
+| --------- | ----- | ----------- |
+| `bench_event_store` | crates/shesh-kernel/benches | Event append/read throughput |
+| `bench_wavestore` | crates/shesh-waveobj/benches | WaveObj put/get latency |
+| `bench_broker_throughput` | crates/shesh-wps/benches | Pub/sub routing throughput |
 
 ---
 

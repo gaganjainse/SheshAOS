@@ -1,6 +1,6 @@
-# 🚀 SheshAOS Terminal — Developer Handover Document
+# 🚀 SheshAOS — Developer Handover Document
 
-**📅 Date**: 2026-08-02  
+**📅 Date**: 2026-08-12 (updated for the ADR-0018 excision)  
 **👥 Audience**: New contributors, maintainers, AI assistants  
 **📦 Version**: v2.0.0  
 **🏷️ Status**: Production Ready
@@ -11,13 +11,13 @@
 
 SheshAOS is a **production-ready, governance-first AI operating environment** built with Rust. It combines:
 
-- 🧠 **AI-powered terminal** with local LLM integration
-- 🖥️ **GPU-accelerated rendering** via Iced/wgpu
+- 🧠 **AI task orchestration** with local LLM integration
+- 🌊 **Stock Wave Terminal** as the mission-control surface (ADR-0016)
 - 🔐 **Governance engine** with policy enforcement
 - 🌐 **Native SSH** multiplexing
 - 📡 **Event-sourced architecture** with append-only audit trail
 
-**Current Status**: All 12 workspace crates compile, test, and lint cleanly. 981 tests passing. CI/CD fully configured.
+**Current Status**: 9 workspace crates + `shesh` CLI compile, test (872 passing), and lint cleanly. CI/CD fully configured.
 
 ---
 
@@ -29,8 +29,7 @@ SheshAOS is a **production-ready, governance-first AI operating environment** bu
 graph TB
     subgraph "Interface Layer"
         CLI["🖥️ CLI<br/>shesh-cli"]
-        TUI["📱 TUI<br/>shesh-tui"]
-        GUI["🖼️ GUI<br/>shesh-gui"]
+        WAVE["🌊 Wave Terminal<br/>(stock, ADR-0016)"]
     end
 
     subgraph "Kernel Core"
@@ -51,7 +50,6 @@ graph TB
         T["🔧 Tools"]
         B["🧱 Blocks"]
         RM["🌐 Remote"]
-        TE["🖥️ Terminal"]
     end
 
     subgraph "Storage Layer"
@@ -61,8 +59,6 @@ graph TB
     end
 
     CLI --> K
-    TUI --> K
-    GUI --> K
 
     K --> P
     K --> R
@@ -75,7 +71,6 @@ graph TB
     K --> T
     K --> B
     K --> RM
-    K --> TE
 
     K --> WO
     K --> WP
@@ -103,19 +98,19 @@ graph LR
 
 | Crate | Path | Description | Tests |
 |-------|------|-------------|-------|
-| 🏛️ `shesh-kernel` | `crates/shesh-kernel/` | Governance microkernel | 396 |
+| 🏛️ `shesh-kernel` | `crates/shesh-kernel/` | Governance microkernel | 401 |
 | 📦 `shesh-waveobj` | `crates/shesh-waveobj/` | Object store & ORef graph | 204 |
 | 📡 `shesh-wps` | `crates/shesh-wps/` | Pub/Sub event broker | 71 |
 | 🧱 `shesh-blockctl` | `crates/shesh-blockctl/` | PTY shell controller | 48 |
 | 🤖 `shesh-ai` | `crates/shesh-ai/` | AI providers & streaming | 18 |
 | 🔌 `shesh-rpc` | `crates/shesh-rpc/` | Unix socket JSON-RPC | 29 |
-| 🌐 `shesh-remote` | `crates/shesh-remote/` | SSH remote shell | 19 |
-| 🖥️ `shesh-terminal` | `crates/shesh-terminal/` | Zig VT100 + PTY | 19 |
-| 🔐 `shesh-vault` | `crates/shesh-vault/` | Command snippets | 53 |
+| 🌐 `shesh-remote` | `crates/shesh-remote/` | SSH remote shell | 16 |
+| 🔐 `shesh-vault` | `crates/shesh-vault/` | Command snippets | 54 |
 | ⚙️ `shesh-wconfig` | `crates/shesh-wconfig/` | Config watcher | 31 |
-| 🖼️ `shesh-gui` | `crates/shesh-gui/` | Iced native GUI | 32 |
-| 📱 `shesh-tui` | `crates/shesh-tui/` | Ratatui TUI | 30 |
-| 🧪 `shesh-tests` | `tests/` | Integration tests & benchmarks | - |
+| 🖥️ `shesh` (CLI) | `bin/shesh-cli/` | Headless CLI entrypoint | 0 |
+
+Removed 2026-08-12 (ADR-0018): `shesh-tui`, `shesh-gui`, `shesh-terminal`,
+the top-level `zig/` tree, and the dead `tests/` harness — see CHANGELOG.
 
 ---
 
@@ -126,7 +121,7 @@ graph LR
 - Rust 1.75+ (edition 2024)
 - Ubuntu 22.04+ or compatible Linux
 - 16 GB RAM minimum
-- NVIDIA GPU recommended for GUI
+- NVIDIA GPU optional (local model inference)
 
 ### Setup
 
@@ -198,22 +193,16 @@ graph TD
 - `crates/shesh-waveobj/src/oref.rs` — Object references
 - `crates/shesh-waveobj/src/meta.rs` — Metadata
 
-### Terminal Rendering Pipeline
+### Block Shell Control
 
-```mermaid
-graph LR
-    A["PTY Output"] --> B["ZigVt100Parser"]
-    B --> C["TermPerformer"]
-    C --> D["Span Batcher"]
-    D --> E["Iced Canvas"]
-    E --> F["GPU Render"]
-```
+The GUI/TUI/Zig rendering pipeline was removed in the 2026-08-12 excision
+(ADR-0018): rendering belongs to Wave Terminal. What remains here is the
+controller layer Wave blocks and the RPC server use:
 
 **Key Files**:
-- `crates/shesh-terminal/src/pty.rs` — PTY management
-- `crates/shesh-terminal/src/ffi.rs` — Zig FFI
-- `crates/shesh-gui/src/terminal.rs` — Terminal state machine
-- `crates/shesh-gui/src/view.rs` — Iced rendering
+- `crates/shesh-blockctl/src/` — PTY block controller (portable-pty)
+- `crates/shesh-remote/src/` — SSH remote shell (russh)
+- `crates/shesh-rpc/src/` — Unix-socket JSON-RPC surface
 
 ---
 
@@ -261,12 +250,12 @@ make all       # Full verification
 
 | Metric | Value | Target |
 |--------|-------|--------|
-| Tests | 981 | ✅ 1000+ |
+| Tests | 872 | ✅ grows with features |
 | Test Coverage | 100% public API | ✅ 100% |
 | Clippy Warnings | 0 | ✅ 0 |
 | Compilation Errors | 0 | ✅ 0 |
 | Orphaned Files | 0 | ✅ 0 |
-| Benchmarks | 6 | ✅ 5+ |
+| Benchmarks | 3 (real, see benches/) | ✅ ≥3 |
 
 ### CI/CD Pipeline
 

@@ -3,10 +3,10 @@
 use tracing::info;
 
 use crate::config::{AppConfig, ModelProviderConfig, ToolsConfig};
-use crate::error::NexusError;
+use crate::error::KernelError;
 
 /// Display the resolved configuration.
-pub fn run(config_path: &str) -> Result<(), NexusError> {
+pub fn run(config_path: &str) -> Result<(), KernelError> {
     info!("Showing resolved configuration");
 
     let config = AppConfig::load(config_path)?;

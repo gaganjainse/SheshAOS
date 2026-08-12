@@ -21,5 +21,5 @@ pub mod task;
 pub mod tools;
 
 // Re-export commonly used types at crate root
-pub use error::NexusError;
-pub type Result<T> = std::result::Result<T, NexusError>;
+pub use error::KernelError;
+pub type Result<T> = std::result::Result<T, KernelError>;

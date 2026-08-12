@@ -1,5 +1,5 @@
 use crate::{
-    error::NexusError,
+    error::KernelError,
     events::{Event, EventKind, EventPayload},
     state::{TaskRecord, TaskState},
     storage::{EventStore, TaskProjection},
@@ -11,7 +11,7 @@ pub struct ReplayEngine;
 
 impl ReplayEngine {
     /// Replay all events and rebuild the task projection.
-    pub async fn replay(store: &dyn EventStore) -> Result<TaskProjection, NexusError> {
+    pub async fn replay(store: &dyn EventStore) -> Result<TaskProjection, KernelError> {
         let events = store.get_all_events().await?;
         let mut projection = TaskProjection::new();
 
@@ -75,7 +75,7 @@ impl ReplayEngine {
     pub async fn task_history(
         store: &dyn EventStore,
         task_id: &TaskId,
-    ) -> Result<Vec<Event>, NexusError> {
+    ) -> Result<Vec<Event>, KernelError> {
         store.get_task_events(task_id).await
     }
 }
@@ -100,14 +100,14 @@ mod tests {
 
     #[async_trait]
     impl EventStore for MockEventStore {
-        async fn append(&self, event: Event) -> Result<(), NexusError> {
+        async fn append(&self, event: Event) -> Result<(), KernelError> {
             self.events.lock().unwrap().push(event);
             Ok(())
         }
-        async fn get_all_events(&self) -> Result<Vec<Event>, NexusError> {
+        async fn get_all_events(&self) -> Result<Vec<Event>, KernelError> {
             Ok(self.events.lock().unwrap().clone())
         }
-        async fn get_task_events(&self, task_id: &TaskId) -> Result<Vec<Event>, NexusError> {
+        async fn get_task_events(&self, task_id: &TaskId) -> Result<Vec<Event>, KernelError> {
             Ok(self
                 .events
                 .lock()
@@ -117,7 +117,7 @@ mod tests {
                 .cloned()
                 .collect())
         }
-        async fn read_since(&self, _sequence: u64) -> Result<Vec<Event>, NexusError> {
+        async fn read_since(&self, _sequence: u64) -> Result<Vec<Event>, KernelError> {
             Ok(self.events.lock().unwrap().clone())
         }
     }

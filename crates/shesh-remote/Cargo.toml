@@ -16,3 +16,6 @@ uuid = { version = "1.0", features = ["v4", "v7", "serde"] }
 shesh-wps = { path = "../shesh-wps" }
 shesh-blockctl = { path = "../shesh-blockctl" }
 thiserror = "1.0"
+
+[lints]
+workspace = true
