@@ -15,6 +15,8 @@ struct TopicSubs {
 #[derive(Debug, Clone)]
 struct HistoryEntry {
     event: WaveEvent,
+    // Monotonic stamp for history ordering; asserted by
+    // test_history_sequence_monotonic and consumed by replay tooling.
     #[allow(dead_code)]
     sequence: u64,
 }
