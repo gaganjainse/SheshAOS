@@ -49,6 +49,17 @@ jobs:
           shellcheck "${SHELLS[@]}"
           shfmt -d -i 4 -ci "${SHELLS[@]}"
 
+      # actionlint pinned at v1.7.12 (earlier versions ship a permissions
+      # scope list that predates the documented `models` scope — false
+      # positive on moderator-style workflows elsewhere in the org).
+      - name: actionlint (workflows)
+        run: |
+          curl -sfL -o /tmp/actionlint.tgz \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  /tmp/actionlint.tgz" | sha256sum -c -
+          tar -xzf /tmp/actionlint.tgz -C /tmp actionlint
+          /tmp/actionlint .github/workflows/*.yml
+
   test:
     name: Test Suite
     runs-on: ubuntu-latest
