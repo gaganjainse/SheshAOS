@@ -17,9 +17,9 @@ jobs:
     name: Lint & Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c  # stable (pinned snapshot 2026-08-13; quarterly review moves it)
         with:
           components: rustfmt, clippy
 
@@ -64,9 +64,9 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c  # stable (pinned snapshot 2026-08-13; quarterly review moves it)
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -96,9 +96,9 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c  # stable (pinned snapshot 2026-08-13; quarterly review moves it)
 
       - name: Build workspace
         run: cargo build --workspace
@@ -115,7 +115,7 @@ jobs:
       contents: read
       checks: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       # .cargo/audit.toml documents the single researched exception
       # (RUSTSEC-2023-0071 rsa via russh: no patched release exists; the
@@ -130,14 +130,14 @@ jobs:
     name: Supply Chain (deny, machete, typos)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c  # stable (pinned snapshot 2026-08-13; quarterly review moves it)
 
       # Versions pinned to the local dev toolchain (scripts/bootstrap pins
       # the same). taiki-e/install-action fetches prebuilt release binaries
       # and checksum-verifies them.
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@b20dedce73af6905cdc30d6611090c9b67557c8d  # v2.85.12
         with:
           tool: cargo-deny@0.20.2,cargo-machete@0.9.2,typos-cli@1.49.0
 
@@ -162,7 +162,7 @@ jobs:
     name: Architecture Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Verify architecture artifact exists
         run: |
