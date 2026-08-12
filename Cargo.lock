@@ -3017,224 +3017,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sheshaaos"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "crossterm",
- "sheshaaos-kernel",
- "sheshaaos-terminal",
- "sheshaaos-tui",
- "sheshaaos-vault",
- "ratatui",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "sheshaaos-ai"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "futures",
- "sheshaaos-wconfig",
- "sheshaaos-wps",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.19",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "sheshaaos-blockctl"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chrono",
- "sheshaaos-waveobj",
- "sheshaaos-wps",
- "portable-pty",
- "serde",
- "serde_json",
- "thiserror 2.0.19",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "sheshaaos-gui"
-version = "0.1.0"
-dependencies = [
- "iced",
- "sheshaaos-ai",
- "sheshaaos-blockctl",
- "sheshaaos-remote",
- "sheshaaos-waveobj",
- "sheshaaos-wconfig",
- "sheshaaos-wps",
- "portable-pty",
- "tokio",
- "tracing",
- "vte",
-]
-
-[[package]]
-name = "sheshaaos-kernel"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chrono",
- "clap",
- "futures",
- "reqwest",
- "rusqlite",
- "serde",
- "serde_json",
- "sysinfo",
- "tempfile",
- "thiserror 2.0.19",
- "tokio",
- "tokio-util",
- "toml",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "sheshaaos-remote"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "futures",
- "sheshaaos-blockctl",
- "sheshaaos-wps",
- "russh",
- "russh-keys",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "sheshaaos-rpc"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "futures",
- "sheshaaos-waveobj",
- "sheshaaos-wps",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.19",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "sheshaaos-terminal"
-version = "0.1.0"
-dependencies = [
- "sheshaaos-kernel",
- "portable-pty",
- "tempfile",
- "thiserror 2.0.19",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "sheshaaos-tui"
-version = "0.1.0"
-dependencies = [
- "crossterm",
- "futures",
- "sheshaaos-blockctl",
- "sheshaaos-kernel",
- "sheshaaos-waveobj",
- "sheshaaos-wconfig",
- "sheshaaos-wps",
- "ratatui",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.19",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "sheshaaos-vault"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "sheshaaos-kernel",
- "regex",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.19",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "sheshaaos-waveobj"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "rusqlite",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.19",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "sheshaaos-wconfig"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "sheshaaos-waveobj",
- "sheshaaos-wps",
- "notify",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.19",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "sheshaaos-wps"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "thiserror 2.0.19",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "nix"
 version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4877,6 +4659,224 @@ name = "shell-words"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc6fe69c597f9c37bfeeeeeb33da3530379845f10be461a66d16d03eca2ded77"
+
+[[package]]
+name = "shesh"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "crossterm",
+ "ratatui",
+ "shesh-kernel",
+ "shesh-terminal",
+ "shesh-tui",
+ "shesh-vault",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "shesh-ai"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "shesh-wconfig",
+ "shesh-wps",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "shesh-blockctl"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "portable-pty",
+ "serde",
+ "serde_json",
+ "shesh-waveobj",
+ "shesh-wps",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "shesh-gui"
+version = "0.1.0"
+dependencies = [
+ "iced",
+ "portable-pty",
+ "shesh-ai",
+ "shesh-blockctl",
+ "shesh-remote",
+ "shesh-waveobj",
+ "shesh-wconfig",
+ "shesh-wps",
+ "tokio",
+ "tracing",
+ "vte",
+]
+
+[[package]]
+name = "shesh-kernel"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "clap",
+ "futures",
+ "reqwest",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "tempfile",
+ "thiserror 2.0.19",
+ "tokio",
+ "tokio-util",
+ "toml",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "shesh-remote"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures",
+ "russh",
+ "russh-keys",
+ "serde",
+ "serde_json",
+ "shesh-blockctl",
+ "shesh-wps",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "shesh-rpc"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures",
+ "serde",
+ "serde_json",
+ "shesh-waveobj",
+ "shesh-wps",
+ "tempfile",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "shesh-terminal"
+version = "0.1.0"
+dependencies = [
+ "portable-pty",
+ "shesh-kernel",
+ "tempfile",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "shesh-tui"
+version = "0.1.0"
+dependencies = [
+ "crossterm",
+ "futures",
+ "ratatui",
+ "serde",
+ "serde_json",
+ "shesh-blockctl",
+ "shesh-kernel",
+ "shesh-waveobj",
+ "shesh-wconfig",
+ "shesh-wps",
+ "tempfile",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "shesh-vault"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "regex",
+ "serde",
+ "serde_json",
+ "shesh-kernel",
+ "tempfile",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "shesh-waveobj"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "shesh-wconfig"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "notify",
+ "serde",
+ "serde_json",
+ "shesh-waveobj",
+ "shesh-wps",
+ "tempfile",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "shesh-wps"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+ "uuid",
+]
 
 [[package]]
 name = "shlex"

@@ -1,4 +1,4 @@
-use sheshaaos_gui::terminal::TerminalState;
+use shesh_gui::terminal::TerminalState;
 use portable_pty::{CommandBuilder, PtySize, native_pty_system};
 use std::time::Duration;
 
@@ -54,7 +54,7 @@ async fn test_pty_resize() {
 /// Test Zig VT100 parser integration
 #[test]
 fn test_zig_vt100_parser() {
-    if let Some(parser) = sheshaaos_terminal::ZigVt100Parser::new(80, 24) {
+    if let Some(parser) = shesh_terminal::ZigVt100Parser::new(80, 24) {
         parser.feed(b"Hello World\r\n");
         parser.feed(b"\x1b[31mRed\x1b[0m");
         
@@ -98,8 +98,8 @@ async fn test_pty_with_zig_parser() {
 #[tokio::test]
 #[ignore] // Requires SSH server
 async fn test_ssh_connection() {
-    use sheshaaos_remote::connection::ConnectionManager;
-    use sheshaaos_wps::broker::Broker;
+    use shesh_remote::connection::ConnectionManager;
+    use shesh_wps::broker::Broker;
     
     let broker = Broker::new(10);
     let _manager = ConnectionManager::new(broker);
@@ -173,7 +173,7 @@ async fn test_pty_large_output() {
 }
 
 /// Helper: Convert grid to string
-fn grid_to_string(grid: &[Vec<sheshaaos_gui::terminal::Cell>]) -> String {
+fn grid_to_string(grid: &[Vec<shesh_gui::terminal::Cell>]) -> String {
     let mut result = String::new();
     for row in grid {
         for cell in row {

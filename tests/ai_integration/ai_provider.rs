@@ -1,6 +1,6 @@
-use sheshaaos_ai::{session::ChatSession, openai::OpenAIProvider};
-use sheshaaos_wps::broker::Broker;
-use sheshaaos_wconfig::settings::GlobalSettings;
+use shesh_ai::{session::ChatSession, openai::OpenAIProvider};
+use shesh_wps::broker::Broker;
+use shesh_wconfig::settings::GlobalSettings;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use mockito::{Server, ServerGuard};
@@ -33,8 +33,8 @@ impl MockAIProvider {
 }
 
 #[async_trait::async_trait]
-impl sheshaaos_ai::provider::ModelProvider for MockAIProvider {
-    async fn stream_chat(&self, _req: sheshaaos_ai::provider::ChatRequest) -> Result<BoxStream<'static, Result<String, sheshaaos_ai::provider::AiError>>, sheshaaos_ai::provider::AiError> {
+impl shesh_ai::provider::ModelProvider for MockAIProvider {
+    async fn stream_chat(&self, _req: shesh_ai::provider::ChatRequest) -> Result<BoxStream<'static, Result<String, shesh_ai::provider::AiError>>, shesh_ai::provider::AiError> {
         // Return a stream of mock chunks
         let stream = futures::stream::iter(vec![
             Ok("Hello ".to_string()),

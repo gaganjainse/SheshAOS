@@ -1,6 +1,6 @@
-# SheshaAOS Test Suite
+# SheshAOS Test Suite
 
-This directory contains comprehensive tests for SheshaAOS organized by category:
+This directory contains comprehensive tests for SheshAOS organized by category:
 
 ## Test Categories
 
@@ -23,22 +23,22 @@ This directory contains comprehensive tests for SheshaAOS organized by category:
 
 ```bash
 # Run all integration tests
-cargo test -p sheshaaos-tests --test integration
+cargo test -p shesh-tests --test integration
 
 # Run visual regression tests
-cargo test -p sheshaaos-tests --test visual
+cargo test -p shesh-tests --test visual
 
 # Run PTY/SSH tests
-cargo test -p sheshaaos-tests --test pty
+cargo test -p shesh-tests --test pty
 
 # Run benchmarks
-cargo bench -p sheshaaos-tests
+cargo bench -p shesh-tests
 
 # Run AI integration tests
-cargo test -p sheshaaos-tests --test ai_integration
+cargo test -p shesh-tests --test ai_integration
 
 # Run all tests
-cargo test -p sheshaaos-tests
+cargo test -p shesh-tests
 ```
 
 ## Visual Regression Testing
@@ -46,13 +46,13 @@ cargo test -p sheshaaos-tests
 Reference images are stored in `tests/visual/references/`. To regenerate:
 
 ```bash
-cargo test -p sheshaaos-tests --test visual generate_reference_images -- --ignored
+cargo test -p shesh-tests --test visual generate_reference_images -- --ignored
 ```
 
 To run visual regression tests:
 
 ```bash
-cargo test -p sheshaaos-tests --test visual
+cargo test -p shesh-tests --test visual
 ```
 
 ## Benchmarks
@@ -60,7 +60,7 @@ cargo test -p sheshaaos-tests --test visual
 Run with criterion:
 
 ```bash
-cargo bench -p sheshaaos-tests
+cargo bench -p shesh-tests
 ```
 
 Results are saved to `target/criterion/`.

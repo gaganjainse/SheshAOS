@@ -23,7 +23,7 @@ oidc:
       provider: aws
       conditions:
         - claim: repository
-          equals: SheshaAOS/SheshaAOS
+          equals: SheshAOS/SheshAOS
         - claim: environment
           equals: production
         - claim: actor
@@ -35,7 +35,7 @@ oidc:
       provider: aws
       conditions:
         - claim: repository
-          equals: SheshaAOS/SheshaAOS
+          equals: SheshAOS/SheshAOS
         - claim: environment
           equals: staging
         - claim: actor
@@ -47,7 +47,7 @@ oidc:
       provider: azure
       conditions:
         - claim: repository
-          equals: SheshaAOS/SheshaAOS
+          equals: SheshAOS/SheshAOS
         - claim: environment
           equals: production
       permissions:
@@ -57,7 +57,7 @@ oidc:
       provider: gcp
       conditions:
         - claim: repository
-          equals: SheshaAOS/SheshaAOS
+          equals: SheshAOS/SheshAOS
         - claim: environment
           equals: production
       permissions:
@@ -71,7 +71,7 @@ oidc:
         - https://sheshaaos-gcp.example.com
       condition:
         - claim: repository
-          equals: SheshaAOS/SheshaAOS
+          equals: SheshAOS/SheshAOS
         - claim: ref
           pattern: "^refs/heads/(main|master)$"
     - issuer: https://token.actions.githubusercontent.com
@@ -81,7 +81,7 @@ oidc:
         - https://sheshaaos-gcp.example.com
       condition:
         - claim: repository
-          equals: SheshaAOS/SheshaAOS
+          equals: SheshAOS/SheshAOS
         - claim: environment
           equals: staging
   token_exchange:

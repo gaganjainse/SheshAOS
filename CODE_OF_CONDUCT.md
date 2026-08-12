@@ -86,7 +86,7 @@ Examples of representing our community:
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement at:
 
-**📧 conduct@sheshaaos.dev**
+**📧 conduct@shesh.dev**
 
 All complaints will be reviewed and investigated promptly and fairly.
 
@@ -185,5 +185,5 @@ https://www.contributor-covenant.org/translations.
 ---
 
 <p align="center">
-  <b>🤗 We are committed to making SheshaAOS a welcoming community for everyone</b>
+  <b>🤗 We are committed to making SheshAOS a welcoming community for everyone</b>
 </p>

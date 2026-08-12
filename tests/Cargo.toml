@@ -1,5 +1,5 @@
 [package]
-name = "sheshaaos-tests"
+name = "shesh-tests"
 version = "0.1.0"
 edition = "2021"
 
@@ -28,15 +28,15 @@ name = "ai_integration"
 path = "ai_integration/ai_provider.rs"
 
 [dependencies]
-sheshaaos-gui = { path = "../crates/sheshaaos-gui" }
-sheshaaos-ai = { path = "../crates/sheshaaos-ai" }
-sheshaaos-kernel = { path = "../crates/sheshaaos-kernel" }
-sheshaaos-terminal = { path = "../crates/sheshaaos-terminal" }
-sheshaaos-remote = { path = "../crates/sheshaaos-remote" }
-sheshaaos-wps = { path = "../crates/sheshaaos-wps" }
-sheshaaos-waveobj = { path = "../crates/sheshaaos-waveobj" }
-sheshaaos-blockctl = { path = "../crates/sheshaaos-blockctl" }
-sheshaaos-wconfig = { path = "../crates/sheshaaos-wconfig" }
+shesh-gui = { path = "../crates/shesh-gui" }
+shesh-ai = { path = "../crates/shesh-ai" }
+shesh-kernel = { path = "../crates/shesh-kernel" }
+shesh-terminal = { path = "../crates/shesh-terminal" }
+shesh-remote = { path = "../crates/shesh-remote" }
+shesh-wps = { path = "../crates/shesh-wps" }
+shesh-waveobj = { path = "../crates/shesh-waveobj" }
+shesh-blockctl = { path = "../crates/shesh-blockctl" }
+shesh-wconfig = { path = "../crates/shesh-wconfig" }
 
 # Test dependencies
 async-trait = "0.1"

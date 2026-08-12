@@ -1,6 +1,6 @@
-# SheshaAOS — Repository Metadata
+# SheshAOS — Repository Metadata
 
-This file contains the canonical repository metadata for SheshaAOS. It can be used to configure GitHub repository settings, topics, and descriptions.
+This file contains the canonical repository metadata for SheshAOS. It can be used to configure GitHub repository settings, topics, and descriptions.
 
 ---
 
@@ -12,7 +12,7 @@ This file contains the canonical repository metadata for SheshaAOS. It can be us
 
 **Extended description** (used in README, docs, and package metadata):
 
-> SheshaAOS is a production-ready, open-source AI operating environment built with Rust. It combines local LLM inference, native terminal emulation, SSH multiplexing, and governance-first task execution into a unified microkernel-like system. Every action is validated by a policy engine, every state change is append-only, and every model is replaceable via a common provider interface.
+> SheshAOS is a production-ready, open-source AI operating environment built with Rust. It combines local LLM inference, native terminal emulation, SSH multiplexing, and governance-first task execution into a unified microkernel-like system. Every action is validated by a policy engine, every state change is append-only, and every model is replaceable via a common provider interface.
 
 ---
 
@@ -66,9 +66,9 @@ cqrs
 ## 📊 Repository Settings
 
 ```yaml
-name: SheshaAOS
+name: SheshAOS
 description: Governance-first, event-sourced AI operating environment for Ubuntu Linux
-homepage: https://github.com/sheshaaos/SheshaAOS
+homepage: https://github.com/shesh/SheshAOS
 private: false
 has_issues: true
 has_projects: true
@@ -151,7 +151,7 @@ name: production
 protection_rules:
   - type: required_reviewers
     reviewers:
-      - team: sheshaaos/maintainers
+      - team: shesh/maintainers
         required: true
   - type: wait_timer
     minutes: 5
@@ -172,7 +172,7 @@ name: staging
 protection_rules:
   - type: required_reviewers
     reviewers:
-      - team: sheshaaos/developers
+      - team: shesh/developers
         required: true
   - type: wait_timer
     minutes: 2
@@ -238,9 +238,9 @@ postStartCommand: cargo test --workspace
 
 | Provider | Purpose | Trust Policy |
 |----------|---------|--------------|
-| AWS | Deploy to EC2/S3 | arn:aws:iam::ACCOUNT_ID:role/sheshaaos-deploy |
+| AWS | Deploy to EC2/S3 | arn:aws:iam::ACCOUNT_ID:role/shesh-deploy |
 | Azure | Deploy to Azure | /subscriptions/SUBSCRIPTION_ID/resourceGroups/RESOURCE_GROUP |
-| GCP | Deploy to GCP | projects/PROJECT_ID/serviceAccounts/sheshaaos@PROJECT_ID.iam.gserviceaccount.com |
+| GCP | Deploy to GCP | projects/PROJECT_ID/serviceAccounts/shesh@PROJECT_ID.iam.gserviceaccount.com |
 
 ---
 
@@ -252,8 +252,8 @@ github_copilot:
   chat:
     enabled: true
     agents:
-      - name: SheshaAOS Assistant
-        description: Help with SheshaAOS development
+      - name: SheshAOS Assistant
+        description: Help with SheshAOS development
         tools:
           - read
           - search
@@ -265,7 +265,7 @@ github_copilot:
   restrictions:
     allow_private_repos: false
     allowed_users:
-      - org: sheshaaos
+      - org: shesh
       - team: maintainers
 ```
 
@@ -300,7 +300,7 @@ source:
   branch: main
   path: /docs
 build_type: legacy
-custom_domain: docs.sheshaaos.dev
+custom_domain: docs.shesh.dev
 https_enforced: true
 ```
 
@@ -357,15 +357,15 @@ https_enforced: true
 
 ## 📞 Contact
 
-- **Website**: https://sheshaaos.dev
-- **Email**: team@sheshaaos.dev
-- **Issues**: https://github.com/sheshaaos/SheshaAOS/issues
-- **Discussions**: https://github.com/sheshaaos/SheshaAOS/discussions
-- **Security**: security@sheshaaos.dev
-- **Conduct**: conduct@sheshaaos.dev
+- **Website**: https://shesh.dev
+- **Email**: team@shesh.dev
+- **Issues**: https://github.com/shesh/SheshAOS/issues
+- **Discussions**: https://github.com/shesh/SheshAOS/discussions
+- **Security**: security@shesh.dev
+- **Conduct**: conduct@shesh.dev
 
 ---
 
 *Generated: 2026-08-02*  
-*Repository: SheshaAOS*  
-*Owner: sheshaaos*
+*Repository: SheshAOS*  
+*Owner: shesh*

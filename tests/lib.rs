@@ -1,10 +1,10 @@
-//! SheshaAOS Test Suite Library
+//! SheshAOS Test Suite Library
 //! 
 //! This library provides common test utilities and re-exports
-//! for the SheshaAOS test suite.
+//! for the SheshAOS test suite.
 
 pub mod test_utils {
-    use sheshaaos_kernel::{
+    use shesh_kernel::{
         runtime::kernel::Kernel,
         storage::JsonlEventStore,
         model::registry::ProviderRegistry,

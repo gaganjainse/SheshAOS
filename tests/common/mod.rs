@@ -1,3 +1,3 @@
-//! Shared test utilities for SheshaAOS integration tests.
+//! Shared test utilities for SheshAOS integration tests.
 
-pub use sheshaaos::*;
+pub use shesh::*;

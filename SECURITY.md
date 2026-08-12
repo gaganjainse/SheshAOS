@@ -22,7 +22,7 @@ If you discover a security vulnerability, **please report it privately**. Do not
 
 | Method | Contact | Purpose |
 |--------|---------|---------|
-| 📧 Email | security@sheshaaos.dev | Primary reporting channel |
+| 📧 Email | security@shesh.dev | Primary reporting channel |
 | 🐛 GitHub | Private security advisory | Alternative reporting |
 
 ### Report Content
@@ -43,7 +43,7 @@ Subject: [SECURITY] Buffer overflow in VT100 parser
 Affected: v0.1.0, commit abc1234
 Impact: Remote code execution via crafted terminal input
 Steps:
-  1. Connect to NexusaOS via SSH
+  1. Connect to SheshAOS via SSH
   2. Send crafted ANSI sequence
   3. Observe memory corruption
 Suggested fix: Validate input length before parsing
@@ -212,9 +212,9 @@ graph LR
 
 ## 📞 Contact
 
-- **Security Team**: security@sheshaaos.dev
-- **General Contact**: team@sheshaaos.dev
-- **Conduct Issues**: conduct@sheshaaos.dev
+- **Security Team**: security@shesh.dev
+- **General Contact**: team@shesh.dev
+- **Conduct Issues**: conduct@shesh.dev
 
 ---
 

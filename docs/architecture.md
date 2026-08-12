@@ -1,4 +1,4 @@
-# SheshaAOS v2 — Architecture
+# SheshAOS v2 — Architecture
 
 See the full architecture brief in the project root `nexus_aos_architecture_brief.md`.
 

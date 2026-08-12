@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SheshaAOS GitHub Repository Setup Script
+# SheshAOS GitHub Repository Setup Script
 # Run this from the repository root: ./scripts/setup-github.sh
 set -euo pipefail
 

@@ -1,10 +1,10 @@
 ---
-title: SheshaAOS
+title: SheshAOS
 description: Governance-first, event-sourced AI operating environment for Ubuntu Linux
 lang: en
 ---
 
-## 🦀 SheshaAOS
+## 🦀 SheshAOS
 
 ![Rust](https://img.shields.io/badge/Rust-2024-important?style=for-the-badge&logo=rust)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
@@ -20,13 +20,13 @@ for Ubuntu Linux.**
 [🤝 Contributing](CONTRIBUTING.md)  
 [🔒 Security](SECURITY.md)  
 [📝 Changelog](CHANGELOG.md)  
-[💬 Discussions](https://github.com/sheshaaos/SheshaAOS/discussions)
+[💬 Discussions](https://github.com/shesh/SheshAOS/discussions)
 
 ---
 
 ## 📋 About
 
-**SheshaAOS** is a production-ready, open-source AI operating
+**SheshAOS** is a production-ready, open-source AI operating
 environment that combines local LLM inference, terminal
 emulation, SSH multiplexing, and governance-first task
 execution into a unified Rust system.
@@ -53,9 +53,9 @@ To provide a **governance-first AI platform** where:
 | 📄 **License** | MIT |
 | 🏷️ **Status** | Production Ready |
 
-### 🌟 What Makes SheshaAOS Different
+### 🌟 What Makes SheshAOS Different
 
-| Traditional AI Tools | SheshaAOS |
+| Traditional AI Tools | SheshAOS |
 | ------------------- | -------- |
 | Cloud-dependent | 💻 **Local-first** — works offline |
 | No oversight | 🛡️ **Governance-first** — kernel validates everything |
@@ -68,14 +68,14 @@ To provide a **governance-first AI platform** where:
 ```mermaid
 graph TB
     subgraph "Interface Layer"
-        CLI["🖥️ CLI<br/>sheshaaos-cli"]
-        TUI["📱 TUI<br/>sheshaaos-tui"]
-        GUI["🖼️ GUI<br/>sheshaaos-gui"]
-        RPC["🔌 RPC<br/>sheshaaos-rpc"]
+        CLI["🖥️ CLI<br/>shesh-cli"]
+        TUI["📱 TUI<br/>shesh-tui"]
+        GUI["🖼️ GUI<br/>shesh-gui"]
+        RPC["🔌 RPC<br/>shesh-rpc"]
     end
 
     subgraph "Kernel Core"
-        K["🏛️ Kernel<br/>sheshaaos-kernel"]
+        K["🏛️ Kernel<br/>shesh-kernel"]
         P["🛡️ Policy Engine"]
         R["🔀 Task Router"]
         S["⏰ Scheduler"]
@@ -127,17 +127,17 @@ graph TB
 
 ```bash
 # Clone
-git clone https://github.com/sheshaaos/SheshaAOS.git
-cd SheshaAOS
+git clone https://github.com/shesh/SheshAOS.git
+cd SheshAOS
 
 # Build
 cargo build --release
 
 # Initialize
-./target/release/sheshaaos init
+./target/release/shesh init
 
 # Run
-./target/release/sheshaaos run "describe the project structure"
+./target/release/shesh run "describe the project structure"
 ```
 
 ### 🧪 Quality Metrics
@@ -171,12 +171,12 @@ cargo build --release
 
 ## 🎯 Overview
 
-SheshaAOS is a **microkernel-like system** that routes tasks to
+SheshAOS is a **microkernel-like system** that routes tasks to
 specialist local AI models (planner, coder, vision), enforces
 policy on every action, and keeps an **append-only audit trail**
 of every state change.
 
-### Why SheshaAOS?
+### Why SheshAOS?
 
 | Problem | Solution |
 | -------- | -------- |
@@ -244,14 +244,14 @@ graph LR
 ```mermaid
 graph TB
     subgraph "Interface Layer"
-        CLI["🖥️ CLI<br/>sheshaaos-cli"]
-        TUI["📱 TUI<br/>sheshaaos-tui"]
-        GUI["🖼️ GUI<br/>sheshaaos-gui"]
-        RPC["🔌 RPC<br/>sheshaaos-rpc"]
+        CLI["🖥️ CLI<br/>shesh-cli"]
+        TUI["📱 TUI<br/>shesh-tui"]
+        GUI["🖼️ GUI<br/>shesh-gui"]
+        RPC["🔌 RPC<br/>shesh-rpc"]
     end
 
     subgraph "Kernel Core"
-        KERNEL["🏛️ Kernel<br/>sheshaaos-kernel"]
+        KERNEL["🏛️ Kernel<br/>shesh-kernel"]
         POLICY["🛡️ Policy Engine"]
         ROUTER["🔀 Task Router"]
         SCHEDULER["⏰ Scheduler"]
@@ -410,23 +410,23 @@ graph TD
 
 ```bash
 # Clone the repository
-git clone https://github.com/sheshaaos/SheshaAOS.git
-cd SheshaAOS
+git clone https://github.com/shesh/SheshAOS.git
+cd SheshAOS
 
 # Build the project
 cargo build --release
 
 # Run initialization
-./target/release/sheshaaos init
+./target/release/shesh init
 
 # Check system health
-./target/release/sheshaaos doctor
+./target/release/shesh doctor
 
 # Start interactive TUI
-./target/release/sheshaaos tui
+./target/release/shesh tui
 
 # Run a task
-./target/release/sheshaaos run "describe the project structure"
+./target/release/shesh run "describe the project structure"
 ```
 
 ### Development Setup
@@ -453,27 +453,27 @@ cargo bench --workspace
 ## 📁 Project Structure
 
 ```text
-SheshaAOS/
+SheshAOS/
 ├── .github/                    # GitHub Actions, templates, dependabot
 │   ├── workflows/             # CI/CD pipelines
 │   ├── ISSUE_TEMPLATE/        # Issue templates
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── CODEOWNERS
 │   └── BRANCH_PROTECTION.md
-├── bin/sheshaaos-cli/          # CLI binary entrypoint
+├── bin/shesh-cli/          # CLI binary entrypoint
 ├── crates/
-│   ├── sheshaaos-kernel/       # 🏛️ Core governance microkernel
-│   ├── sheshaaos-waveobj/      # 📦 Object store & ORef graph
-│   ├── sheshaaos-wps/          # 📡 Pub/Sub event broker
-│   ├── sheshaaos-blockctl/     # 🧱 PTY shell controller
-│   ├── sheshaaos-terminal/     # 🖥️ Zig VT100 + PTY bridge
-│   ├── sheshaaos-ai/           # 🤖 OpenAI/Anthropic streaming
-│   ├── sheshaaos-remote/       # 🌐 SSH remote shell
-│   ├── sheshaaos-rpc/          # 🔌 Unix socket JSON-RPC
-│   ├── sheshaaos-gui/          # 🖼️ Iced native GUI
-│   ├── sheshaaos-tui/          # 📱 Ratatui TUI
-│   ├── sheshaaos-vault/        # 🔐 Command snippets & inspector
-│   └── sheshaaos-wconfig/      # ⚙️ Config watcher & settings
+│   ├── shesh-kernel/       # 🏛️ Core governance microkernel
+│   ├── shesh-waveobj/      # 📦 Object store & ORef graph
+│   ├── shesh-wps/          # 📡 Pub/Sub event broker
+│   ├── shesh-blockctl/     # 🧱 PTY shell controller
+│   ├── shesh-terminal/     # 🖥️ Zig VT100 + PTY bridge
+│   ├── shesh-ai/           # 🤖 OpenAI/Anthropic streaming
+│   ├── shesh-remote/       # 🌐 SSH remote shell
+│   ├── shesh-rpc/          # 🔌 Unix socket JSON-RPC
+│   ├── shesh-gui/          # 🖼️ Iced native GUI
+│   ├── shesh-tui/          # 📱 Ratatui TUI
+│   ├── shesh-vault/        # 🔐 Command snippets & inspector
+│   └── shesh-wconfig/      # ⚙️ Config watcher & settings
 ├── tests/                     # Integration tests & benchmarks
 ├── configs/                   # Configuration files
 ├── scripts/                   # Dev/test helper scripts
@@ -498,18 +498,18 @@ SheshaAOS/
 
 | Crate | Tests |
 | ----- | ----- |
-| sheshaaos-kernel | 396 |
-| sheshaaos-waveobj | 204 |
-| sheshaaos-wps | 71 |
-| sheshaaos-blockctl | 48 |
-| sheshaaos-ai | 18 |
-| sheshaaos-rpc | 29 |
-| sheshaaos-remote | 19 |
-| sheshaaos-terminal | 19 |
-| sheshaaos-vault | 53 |
-| sheshaaos-wconfig | 31 |
-| sheshaaos-gui | 32 |
-| sheshaaos-tui | 30 |
+| shesh-kernel | 396 |
+| shesh-waveobj | 204 |
+| shesh-wps | 71 |
+| shesh-blockctl | 48 |
+| shesh-ai | 18 |
+| shesh-rpc | 29 |
+| shesh-remote | 19 |
+| shesh-terminal | 19 |
+| shesh-vault | 53 |
+| shesh-wconfig | 31 |
+| shesh-gui | 32 |
+| shesh-tui | 30 |
 | **Total** | **981** |
 
 ### Running Tests
@@ -538,7 +538,7 @@ cargo test --workspace -- --nocapture
 cargo bench --workspace
 
 # Specific benchmark
-cargo bench -p sheshaaos-kernel bench_kernel_task_submission
+cargo bench -p shesh-kernel bench_kernel_task_submission
 ```
 
 | Benchmark | Description |
@@ -599,7 +599,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-### Built with ❤️ by the SheshaAOS Team
+### Built with ❤️ by the SheshAOS Team
 
-[GitHub](https://github.com/sheshaaos/SheshaAOS) • [Issues](https://github.com/sheshaaos/SheshaAOS/issues)
-• [Discussions](https://github.com/sheshaaos/SheshaAOS/discussions)
+[GitHub](https://github.com/shesh/SheshAOS) • [Issues](https://github.com/shesh/SheshAOS/issues)
+• [Discussions](https://github.com/shesh/SheshAOS/discussions)
