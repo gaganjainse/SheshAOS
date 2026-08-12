@@ -32,7 +32,7 @@ case "${1:-help}" in
         shift
         cargo run -- "$@"
         ;;
-    help|*)
+    help | *)
         echo "Usage: $0 {check|test|lint|fmt|all|run}"
         echo ""
         echo "  check  - Run cargo check"
