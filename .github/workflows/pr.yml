@@ -17,9 +17,12 @@ jobs:
 
 
       - name: Check PR title follows convention
+        env:
+          # Title passes through env, never inline — PR titles are attacker
+          # input (actionlint expression injection, fixed 2026-08-12).
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          TITLE="${{ github.event.pull_request.title }}"
-          if [[ ! "$TITLE" =~ ^(feat|fix|docs|refactor|test|chore|ci|perf|style)(\(.+\))?: ]]; then
+          if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|refactor|test|chore|ci|perf|style)(\(.+\))?: ]]; then
             echo "::error::PR title must follow conventional commits: type(scope): description"
             echo "Example: feat(kernel): add task deduplication"
             exit 1
