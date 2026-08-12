@@ -4,18 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
+# Keep this crate minimal: pure type definitions (machete-enforced — see the
+# supply-chain CI job). Reintroduce a dependency only with the code using it.
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-toml = "0.8"
-anyhow = "1.0"
-thiserror = "1.0"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-clap = { version = "4.4", features = ["derive"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
-async-trait = "0.1"
 
 [dev-dependencies]
 tempfile = "3.9"
