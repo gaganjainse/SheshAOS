@@ -179,6 +179,8 @@ impl ContextManager {
         Ok(ContextBudget { max_tokens, complexity, was_clamped, clamp_reason })
     }
 
+    // Positional by design: pressure checks take raw gauge values from the
+    // collectors; a params struct would just re-name the same eight slots.
     #[allow(clippy::too_many_arguments)]
     fn check_pressure(
         &self,
