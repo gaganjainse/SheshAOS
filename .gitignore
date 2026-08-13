@@ -44,3 +44,5 @@ logs/
 # ===== Zig cache =====
 zig-cache/
 zig-out/
+
+fuzz/target
