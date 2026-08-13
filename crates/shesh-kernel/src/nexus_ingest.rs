@@ -101,7 +101,8 @@ mod tests {
 
     fn write_tmp(lines: &[&str]) -> std::path::PathBuf {
         let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        let path = std::env::temp_dir().join(format!("nexus-test-{}-{n}.jsonl", std::process::id()));
+        let path =
+            std::env::temp_dir().join(format!("nexus-test-{}-{n}.jsonl", std::process::id()));
         let mut f = File::create(&path).unwrap();
         for l in lines {
             writeln!(f, "{l}").unwrap();
