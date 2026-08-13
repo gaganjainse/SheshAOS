@@ -61,8 +61,8 @@ jobs:
 
       - name: Check test coverage
         run: |
-          TOTAL=$(cargo test --workspace 2>&1 | grep "test result:" | awk '{print $4}' | sed 's/;//g' | tr '\n' '+' | sed 's/+$//' | bc 2>/dev/null || echo "0")
-          if [ "$TOTAL" -lt 100 ]; then
+          TOTAL=$(cargo test --workspace -- --list 2>/dev/null | grep -c ': test$')
+          if [ -n "$TOTAL" ] && [ "$TOTAL" -lt 100 ]; then
             echo "::warning::Test count ($TOTAL) is below threshold (100). Add more tests."
           fi
 
