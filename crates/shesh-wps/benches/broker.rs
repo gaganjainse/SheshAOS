@@ -5,7 +5,7 @@
 // allow-*-in-tests (which handles #[test]/tests/ code). Bench setup failures
 // must panic loudly anyway; the no-unwrap policy targets production paths.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use shesh_wps::broker::Broker;
 use shesh_wps::events::SubscriptionRequest;
 use shesh_wps::events::WaveEvent;
@@ -30,8 +30,8 @@ fn bench_broker(c: &mut Criterion) {
         }
         let ev = WaveEvent::new("block", vec![], serde_json::json!({}));
         b.iter(|| {
-            let routes = broker.get_matching_routes(black_box(&ev));
-            black_box(routes);
+            let routes = broker.get_matching_routes(std::hint::black_box(&ev));
+            std::hint::black_box(routes);
         })
     });
 }

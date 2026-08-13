@@ -5,7 +5,7 @@
 // allow-*-in-tests (which handles #[test]/tests/ code). Bench setup failures
 // must panic loudly anyway; the no-unwrap policy targets production paths.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use shesh_waveobj::meta::MetaMap;
 use shesh_waveobj::store::WaveStore;
 use shesh_waveobj::types::Block;
@@ -30,7 +30,7 @@ fn bench_wavestore(c: &mut Criterion) {
     c.bench_function("bench_wavestore/db_insert", |b| {
         b.iter(|| {
             let mut block = new_block();
-            store.db_insert(black_box(&mut block)).expect("insert");
+            store.db_insert(std::hint::black_box(&mut block)).expect("insert");
         })
     });
 
@@ -45,8 +45,8 @@ fn bench_wavestore(c: &mut Criterion) {
     c.bench_function("bench_wavestore/db_get_500", |b| {
         b.iter(|| {
             for oid in &ids {
-                let block: Option<Block> = store.db_get(black_box(oid)).expect("get");
-                black_box(block);
+                let block: Option<Block> = store.db_get(std::hint::black_box(oid)).expect("get");
+                std::hint::black_box(block);
             }
         })
     });

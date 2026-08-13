@@ -115,16 +115,23 @@ impl SqliteEventStore {
                 .prepare("SELECT data FROM events WHERE sequence >= ?1 ORDER BY sequence ASC")
                 .map_err(StorageError::Database)?;
             let rows = stmt
-                .query_map([&sequence], |row| {
-                    let data: String = row.get(0)?;
-                    serde_json::from_str(&data).map_err(|e| {
-                        rusqlite::Error::FromSqlConversionFailure(
-                            0,
-                            rusqlite::types::Type::Text,
-                            Box::new(e),
-                        )
-                    })
-                })
+                .query_map(
+                    [i64::try_from(sequence).map_err(|_| {
+                        StorageError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(
+                            std::io::Error::other("sequence exceeds i64 range"),
+                        )))
+                    })?],
+                    |row| {
+                        let data: String = row.get(0)?;
+                        serde_json::from_str(&data).map_err(|e| {
+                            rusqlite::Error::FromSqlConversionFailure(
+                                0,
+                                rusqlite::types::Type::Text,
+                                Box::new(e),
+                            )
+                        })
+                    },
+                )
                 .map_err(StorageError::Database)?;
             rows.collect::<Result<Vec<_>, _>>().map_err(StorageError::Database)
         })
@@ -162,7 +169,18 @@ impl EventStore for SqliteEventStore {
                 .map_err(|e| KernelError::Storage(StorageError::Database(e)))?;
             conn.execute(
                 "INSERT INTO events (id, task_id, sequence, data) VALUES (?1, ?2, ?3, ?4)",
-                (event.id.0.to_string(), event.task_id.map(|id| id.0.to_string()), sequence, data),
+                (
+                    event.id.0.to_string(),
+                    event.task_id.map(|id| id.0.to_string()),
+                    i64::try_from(sequence).map_err(|_| {
+                        KernelError::Storage(StorageError::Database(
+                            rusqlite::Error::ToSqlConversionFailure(Box::new(
+                                std::io::Error::other("sequence exceeds i64 range"),
+                            )),
+                        ))
+                    })?,
+                    data,
+                ),
             )
             .map_err(|e| KernelError::Storage(StorageError::Database(e)))?;
             Ok(())

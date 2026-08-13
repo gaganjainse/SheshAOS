@@ -5,7 +5,7 @@
 // allow-*-in-tests (which handles #[test]/tests/ code). Bench setup failures
 // must panic loudly anyway; the no-unwrap policy targets production paths.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use shesh_kernel::events::{Event, EventKind, EventPayload};
 use shesh_kernel::storage::event_store::JsonlEventStore;
 use shesh_kernel::task::TaskId;
@@ -24,7 +24,7 @@ fn bench_event_store(c: &mut Criterion) {
                 EventPayload::SystemEvent { message: "bench".to_string() },
                 "bench".to_string(),
             );
-            rt.block_on(store.append(black_box(&mut ev))).expect("append");
+            rt.block_on(store.append(std::hint::black_box(&mut ev))).expect("append");
         })
     });
 
@@ -44,14 +44,15 @@ fn bench_event_store(c: &mut Criterion) {
     c.bench_function("bench_event_store/read_all_500", |b| {
         b.iter(|| {
             let events = rt.block_on(store.read_all()).expect("read_all");
-            black_box(events);
+            std::hint::black_box(events);
         })
     });
 
     c.bench_function("bench_event_store/read_since_tail", |b| {
         b.iter(|| {
-            let events = rt.block_on(store.read_since(black_box(490))).expect("read_since");
-            black_box(events);
+            let events =
+                rt.block_on(store.read_since(std::hint::black_box(490))).expect("read_since");
+            std::hint::black_box(events);
         })
     });
 }

@@ -21,29 +21,29 @@ exclude = ["sesha"]
 license = "MIT"
 
 [workspace.dependencies]
-criterion = "0.5"
+criterion = "0.8"
 tokio = { version = "1", features = ["full"] }
 tokio-util = { version = "0.7", features = ["rt"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-toml = "0.8"
+toml = "1.1"
 clap = { version = "4", features = ["derive"] }
 thiserror = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
-reqwest = { version = "0.12", features = ["json", "stream"] }
+reqwest = { version = "0.13", features = ["json", "stream"] }
 uuid = { version = "1", features = ["v4", "v7", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
-sysinfo = "0.32"
+sysinfo = "0.39"
 async-trait = "0.1"
 futures = "0.3"
 regex = "1"
-portable-pty = "0.8"
+portable-pty = "0.9"
 # rusqlite uses the "bundled" feature to compile SQLite from source.
 # This ensures consistent behavior across platforms without requiring
 # system SQLite libraries. Trade-off: longer build times and larger binaries.
-rusqlite = { version = "0.32", features = ["bundled", "backup"] }
-notify = "6.1"
+rusqlite = { version = "0.40", features = ["bundled", "backup"] }
+notify = "8.2"
 
 # Internal workspace crates (explicit versions: cargo-deny `wildcards = "deny"`)
 shesh-waveobj = { path = "crates/shesh-waveobj", version = "0.1.0" }
