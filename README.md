@@ -11,7 +11,7 @@ lang: en
 ![Version](https://img.shields.io/badge/Version-v2.0.0-green?style=for-the-badge&logo=git-semver)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue?style=for-the-badge&logo=github)
-![Tests](https://img.shields.io/badge/Tests-872-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-877-success?style=for-the-badge)
 
 **🏛️ Governance-first, event-sourced AI operating environment
 for Ubuntu Linux.**
@@ -47,7 +47,7 @@ To provide a **governance-first AI platform** where:
 | ------- | ----- |
 | 🦀 **Language** | Rust 2024 |
 | 📦 **Crates** | 9 workspace crates + `shesh` CLI |
-| 🧪 **Tests** | 872 passing |
+| 🧪 **Tests** | 877 passing |
 | 🔍 **Lints** | 0 warnings |
 | 🚀 **CI/CD** | GitHub Actions |
 | 📄 **License** | MIT |
@@ -142,7 +142,7 @@ cargo build --release
 | ----- | ------ |
 | ✅ Compilation | 0 errors, 0 warnings |
 | ✅ Lints | 0 clippy warnings |
-| ✅ Tests | 872 passing |
+| ✅ Tests | 877 passing |
 | ✅ Benchmarks | 6 criterion benches |
 | ✅ CI/CD | Full pipeline configured |
 | ✅ Security | Policy + audit + scanning |
@@ -480,7 +480,7 @@ SheshAOS/
 
 | Crate | Tests |
 | ----- | ----- |
-| shesh-kernel | 401 |
+| shesh-kernel | 406 |
 | shesh-waveobj | 204 |
 | shesh-wps | 71 |
 | shesh-blockctl | 48 |
@@ -489,7 +489,7 @@ SheshAOS/
 | shesh-remote | 16 |
 | shesh-vault | 54 |
 | shesh-wconfig | 31 |
-| **Total** | **872** |
+| **Total** | **877** |
 
 ### Running Tests
 
