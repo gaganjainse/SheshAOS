@@ -11,6 +11,7 @@ pub mod context;
 pub mod error;
 pub mod events;
 pub mod model;
+pub mod nexus_ingest;
 pub mod policy;
 pub mod resource;
 pub mod router;
