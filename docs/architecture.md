@@ -1,6 +1,6 @@
 # SheshAOS v2 — Architecture
 
-See the full architecture brief in the project root `nexus_aos_architecture_brief.md`.
+See the architecture overview in the project root `README.md` and the full handover brief in `HANDOVER.md`.
 
 ## Quick Reference
 

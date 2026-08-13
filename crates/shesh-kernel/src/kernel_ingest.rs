@@ -1,4 +1,4 @@
-//! nexus_ingest — consume kernel events written by the Python Soma layer.
+//! kernel_ingest — consume kernel events written by the Python Soma layer.
 //!
 //! shesh-audit's `KernelBridge` appends events to a shared JSONL file
 //! (`kernel-events.jsonl`) in the shape:
@@ -35,7 +35,7 @@ impl NexusEvent {
     }
 }
 
-/// Result of ingesting a nexus JSONL file.
+/// Result of ingesting a kernel JSONL file.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct IngestResult {
     /// Events accepted and ordered by file order.
@@ -50,7 +50,7 @@ pub struct IngestResult {
     pub max_sequence: u64,
 }
 
-/// Read and validate a nexus JSONL file.
+/// Read and validate a kernel JSONL file.
 pub fn ingest(path: &Path) -> std::io::Result<IngestResult> {
     let file = File::open(path)?;
     let reader = BufReader::new(file);
@@ -102,7 +102,7 @@ mod tests {
     fn write_tmp(lines: &[&str]) -> std::path::PathBuf {
         let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let path =
-            std::env::temp_dir().join(format!("nexus-test-{}-{n}.jsonl", std::process::id()));
+            std::env::temp_dir().join(format!("kernel-test-{}-{n}.jsonl", std::process::id()));
         let mut f = File::create(&path).unwrap();
         for l in lines {
             writeln!(f, "{l}").unwrap();
