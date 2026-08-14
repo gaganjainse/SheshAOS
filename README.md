@@ -11,7 +11,7 @@ actions, the kernel validates and records every state change in an append-only
 audit trail, and the whole thing runs local-first with replaceable AI providers.
 
 ![Rust](https://img.shields.io/badge/Rust-2024-important?style=for-the-badge&logo=rust)
-![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
+![License](https://img.shields.io/badge/License-GPL--3.0--or--later-blue?style=for-the-badge)
 ![Version](https://img.shields.io/badge/Version-0.1.0-green?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/Tests-877-success?style=for-the-badge)
 ![CI](https://github.com/gaganjainse/SheshAOS/actions/workflows/ci.yml/badge.svg)
@@ -46,7 +46,7 @@ of every state change. It ships with a stock **Wave Terminal** frontend
 | 📦 **Crates** | 9 workspace crates + `shesh` CLI |
 | 🧪 **Tests** | 877 passing |
 | 🔍 **Lints** | 0 clippy warnings (`-D warnings`) |
-| 🔒 **License** | MIT |
+| 🔒 **License** | GPL-3.0-or-later |
 | 🏷️ **Status** | Production-ready flagship (personal project) |
 
 ## Why SheshAOS
@@ -249,7 +249,7 @@ cargo bench --workspace      # 6 criterion benches
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+GPL-3.0-or-later — see [LICENSE](LICENSE).
 
 ---
 

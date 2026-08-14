@@ -166,8 +166,8 @@ jobs:
 
       - name: Verify architecture artifact exists
         run: |
-          if [ ! -f ".kilo/plans/architecture.md" ]; then
-            echo "::error::Missing architecture.md artifact"
+          if [ ! -f "docs/architecture.md" ]; then
+            echo "::error::Missing docs/architecture.md artifact"
             exit 1
           fi
 
@@ -176,7 +176,7 @@ jobs:
         # treat the backticks as command substitution and the step aborts
         # with "unexpected EOF" regardless of the file's contents.
         run: |
-          if ! grep -q '^```mermaid' .kilo/plans/architecture.md; then
-            echo "::error::No Mermaid diagrams found in architecture.md"
+          if ! grep -q '^```mermaid' docs/architecture.md; then
+            echo "::error::No Mermaid diagrams found in docs/architecture.md"
             exit 1
           fi
