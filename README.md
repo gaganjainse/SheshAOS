@@ -16,6 +16,10 @@ audit trail, and the whole thing runs local-first with replaceable AI providers.
 ![Tests](https://img.shields.io/badge/Tests-877-success?style=for-the-badge)
 ![CI](https://github.com/gaganjainse/SheshAOS/actions/workflows/ci.yml/badge.svg)
 
+- **License:** GPL-3.0-or-later
+- **Owner:** Gagan Jain ([@gaganjainse](https://github.com/gaganjainse))
+- **Target:** CachyOS/Arch · Linux-native · Rust
+
 [📖 Docs](https://github.com/gaganjainse/shesh-docs) · [🗺 Architecture](docs/architecture.md) · [🤝 Contributing](CONTRIBUTING.md) · [🔒 Security](SECURITY.md) · [📝 Changelog](CHANGELOG.md)
 
 ---
@@ -247,6 +251,11 @@ cargo bench --workspace      # 6 criterion benches
 | [🔒 Security](SECURITY.md) | Vulnerability reporting |
 | [📝 Changelog](CHANGELOG.md) | Version history |
 | [🤗 Code of Conduct](CODE_OF_CONDUCT.md) | Community standards |
+
+## Status
+
+CI green. Security: [SECURITY.md](SECURITY.md). Compiled reading:
+[shesh-docs](https://github.com/gaganjainse/shesh-docs).
 
 ## License
 
