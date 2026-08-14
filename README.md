@@ -1,8 +1,3 @@
----
-title: SheshAOS
-description: Governance-first, event-sourced AI operating system in Rust — local-first, Linux-native
-lang: en
----
 
 # 🦀 SheshAOS
 
