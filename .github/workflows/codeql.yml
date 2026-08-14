@@ -1,0 +1,20 @@
+# CodeQL scan — thin caller of the fleet's reusable workflow
+# (gaganjainse/shesh-ecosystem/.github/workflows/codeql.yml). The language list
+# is the only per-repo delta; the job body lives in shesh-ecosystem.
+
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 3 * * 3"
+  workflow_dispatch:
+
+jobs:
+  codeql:
+    uses: gaganjainse/shesh-ecosystem/.github/workflows/codeql.yml@56e774ea7dc85de2b3a586b634925d84a5223b2c
+    with:
+      languages: '["actions"]'
