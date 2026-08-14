@@ -1,9 +1,3 @@
----
-title: SheshAOS
-description: Governance-first, event-sourced AI operating environment in Rust
-lang: en
----
-
 ## 🦀 SheshAOS
 
 ![Rust](https://img.shields.io/badge/Rust-2024-important?style=for-the-badge&logo=rust)
