@@ -46,3 +46,6 @@ zig-cache/
 zig-out/
 
 fuzz/target
+
+# Kilo Code (AI agent) workspace scratch — plans/memory, never committed
+.kilo/

@@ -119,7 +119,7 @@ the top-level `zig/` tree, and the dead `tests/` harness — see CHANGELOG.
 ### Prerequisites
 
 - Rust 1.75+ (edition 2024)
-- Ubuntu 22.04+ or compatible Linux
+- Linux (CachyOS/Arch primary; any Linux with a Rust toolchain)
 - 16 GB RAM minimum
 - NVIDIA GPU optional (local model inference)
 
@@ -127,7 +127,7 @@ the top-level `zig/` tree, and the dead `tests/` harness — see CHANGELOG.
 
 ```bash
 # 1. Clone
-git clone https://github.com/shesh/SheshAOS.git
+git clone https://github.com/gaganjainse/SheshAOS.git
 cd SheshAOS
 
 # 2. Build
@@ -306,7 +306,7 @@ graph LR
 | [SECURITY.md](SECURITY.md) | Security policy | Security researchers |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards | Everyone |
 | [CHANGELOG.md](CHANGELOG.md) | Version history | Users |
-| [.kilo/plans/architecture.md](.kilo/plans/architecture.md) | System diagrams | Developers |
+| [docs/architecture.md](docs/architecture.md) | System diagrams | Developers |
 
 ---
 
@@ -338,9 +338,9 @@ graph LR
 ## 🤝 Getting Help
 
 - 📖 **Documentation**: Check this file and linked docs
-- 🐛 **Issues**: [GitHub Issues](https://github.com/shesh/SheshAOS/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/shesh/SheshAOS/discussions)
-- 📧 **Email**: team@shesh.dev
+- 🐛 **Issues**: [GitHub Issues](https://github.com/gaganjainse/SheshAOS/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/gaganjainse/SheshAOS/discussions)
+- 📧 **Email**: gagan.jain.se@gmail.com
 
 ---
 
@@ -358,7 +358,7 @@ Contributors are recognized in:
 </p>
 
 <p align="center">
-  <a href="https://github.com/shesh/SheshAOS">⭐ Star on GitHub</a> •
-  <a href="https://github.com/shesh/SheshAOS/fork">🍴 Fork</a> •
-  <a href="https://github.com/shesh/SheshAOS/issues">🐛 Report Bug</a>
+  <a href="https://github.com/gaganjainse/SheshAOS">⭐ Star on GitHub</a> •
+  <a href="https://github.com/gaganjainse/SheshAOS/fork">🍴 Fork</a> •
+  <a href="https://github.com/gaganjainse/SheshAOS/issues">🐛 Report Bug</a>
 </p>

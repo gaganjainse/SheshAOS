@@ -19,7 +19,7 @@ Clear description of the bug.
 
 ## Environment
 
-- OS: [e.g., Ubuntu 26.04 LTS]
+- OS: [e.g., CachyOS/Arch — distro + version]
 - Rust version: [e.g., 1.75.0]
 - SheshAOS version/commit:
 - Hardware: [e.g., Intel i7-14700HX, 16GB RAM]

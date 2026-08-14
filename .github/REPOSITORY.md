@@ -8,7 +8,7 @@ This file contains the canonical repository metadata for SheshAOS. It can be use
 
 **Short description** (GitHub repo "About" field):
 
-> Governance-first, event-sourced AI operating environment for Ubuntu Linux.
+> Governance-first, event-sourced AI operating environment in Rust.
 
 **Extended description** (used in README, docs, and package metadata):
 
@@ -53,7 +53,7 @@ vte
 ansii
 cross-platform
 linux
-ubuntu
+archlinux
 cargo
 workspace
 microkernel
@@ -67,8 +67,8 @@ cqrs
 
 ```yaml
 name: SheshAOS
-description: Governance-first, event-sourced AI operating environment for Ubuntu Linux
-homepage: https://github.com/shesh/SheshAOS
+description: Governance-first, event-sourced AI operating environment in Rust
+homepage: https://github.com/gaganjainse/SheshAOS
 private: false
 has_issues: true
 has_projects: true
@@ -265,7 +265,7 @@ github_copilot:
   restrictions:
     allow_private_repos: false
     allowed_users:
-      - org: shesh
+      - org: gaganjainse
       - team: maintainers
 ```
 
@@ -300,7 +300,7 @@ source:
   branch: main
   path: /docs
 build_type: legacy
-custom_domain: docs.shesh.dev
+custom_domain: ""
 https_enforced: true
 ```
 
@@ -357,15 +357,15 @@ https_enforced: true
 
 ## 📞 Contact
 
-- **Website**: https://shesh.dev
-- **Email**: team@shesh.dev
-- **Issues**: https://github.com/shesh/SheshAOS/issues
-- **Discussions**: https://github.com/shesh/SheshAOS/discussions
-- **Security**: security@shesh.dev
-- **Conduct**: conduct@shesh.dev
+- **Website**: https://github.com/gaganjainse/SheshAOS
+- **Email**: gagan.jain.se@gmail.com
+- **Issues**: https://github.com/gaganjainse/SheshAOS/issues
+- **Discussions**: https://github.com/gaganjainse/SheshAOS/discussions
+- **Security**: gagan.jain.se@gmail.com
+- **Conduct**: gagan.jain.se@gmail.com
 
 ---
 
 *Generated: 2026-08-02*  
 *Repository: SheshAOS*  
-*Owner: shesh*
+*Owner: gaganjainse*

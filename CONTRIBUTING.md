@@ -30,7 +30,7 @@ Thank you for your interest in contributing to **SheshAOS**! This document descr
 
 Be respectful, constructive, and inclusive. We follow the [Contributor Covenant](https://www.contributor-covenant.org/).
 
-Report violations to: **conduct@shesh.dev**
+Report violations to: **gagan.jain.se@gmail.com**
 
 ---
 
@@ -235,7 +235,7 @@ Brief description of the change.
 - [ ] `cargo clippy --all-targets -- -D warnings` passes
 - [ ] `cargo test --workspace` passes
 - [ ] Added tests for new public functions
-- [ ] Updated `.kilo/plans/architecture.md` if adding modules
+- [ ] Updated `docs/architecture.md` if adding modules
 - [ ] No `unwrap()` or `expect()` in production code
 - [ ] No orphaned files added
 - [ ] PR title follows conventional commits
@@ -491,10 +491,10 @@ Comment `"/assign"` on the issue to claim it.
 
 ## 📞 Contact
 
-- **Issues**: [GitHub Issues](https://github.com/shesh/SheshAOS/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/shesh/SheshAOS/discussions)
-- **Email**: team@shesh.dev
-- **Conduct**: conduct@shesh.dev
+- **Issues**: [GitHub Issues](https://github.com/gaganjainse/SheshAOS/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/gaganjainse/SheshAOS/discussions)
+- **Email**: gagan.jain.se@gmail.com
+- **Conduct**: gagan.jain.se@gmail.com
 
 ---
 
@@ -503,7 +503,7 @@ Comment `"/assign"` on the issue to claim it.
 </p>
 
 <p align="center">
-  <a href="https://github.com/shesh/SheshAOS">GitHub</a> •
-  <a href="https://github.com/shesh/SheshAOS/issues">Issues</a> •
-  <a href="https://github.com/shesh/SheshAOS/discussions">Discussions</a>
+  <a href="https://github.com/gaganjainse/SheshAOS">GitHub</a> •
+  <a href="https://github.com/gaganjainse/SheshAOS/issues">Issues</a> •
+  <a href="https://github.com/gaganjainse/SheshAOS/discussions">Discussions</a>
 </p>

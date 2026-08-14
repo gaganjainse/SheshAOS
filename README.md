@@ -1,6 +1,6 @@
 ---
 title: SheshAOS
-description: Governance-first, event-sourced AI operating environment for Ubuntu Linux
+description: Governance-first, event-sourced AI operating environment in Rust
 lang: en
 ---
 
@@ -8,19 +8,19 @@ lang: en
 
 ![Rust](https://img.shields.io/badge/Rust-2024-important?style=for-the-badge&logo=rust)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-v2.0.0-green?style=for-the-badge&logo=git-semver)
+![Version](https://img.shields.io/badge/Version-0.1.0-green?style=for-the-badge&logo=git-semver)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue?style=for-the-badge&logo=github)
 ![Tests](https://img.shields.io/badge/Tests-877-success?style=for-the-badge)
 
-**🏛️ Governance-first, event-sourced AI operating environment
-for Ubuntu Linux.**
+**🏛️ Governance-first, event-sourced AI operating environment in Rust —
+local-first and Linux-native.**
 
-[📖 Docs](.kilo/plans/architecture.md)  
+[📖 Docs](docs/architecture.md)  
 [🤝 Contributing](CONTRIBUTING.md)  
 [🔒 Security](SECURITY.md)  
 [📝 Changelog](CHANGELOG.md)  
-[💬 Discussions](https://github.com/shesh/SheshAOS/discussions)
+[💬 Discussions](https://github.com/gaganjainse/SheshAOS/discussions)
 
 ---
 
@@ -123,7 +123,7 @@ graph TB
 
 ```bash
 # Clone
-git clone https://github.com/shesh/SheshAOS.git
+git clone https://github.com/gaganjainse/SheshAOS.git
 cd SheshAOS
 
 # Build
@@ -151,7 +151,7 @@ cargo build --release
 
 | Document | Purpose |
 | --------- | -------- |
-| [📖 Architecture](.kilo/plans/architecture.md) | System diagrams and data flows |
+| [📖 Architecture](docs/architecture.md) | System diagrams and data flows |
 | [🤝 Contributing](CONTRIBUTING.md) | Development workflow |
 | [🔒 Security](SECURITY.md) | Vulnerability reporting |
 | [📝 Changelog](CHANGELOG.md) | Version history |
@@ -368,7 +368,7 @@ graph TD
 | **CPU** | Intel i7-14700HX |
 | **GPU** | NVIDIA RTX 4050 (6 GB VRAM) |
 | **Memory** | 16 GB RAM |
-| **OS** | Ubuntu 26.04 LTS |
+| **OS** | Linux (primary target: CachyOS/Arch + Hyprland) |
 | **Storage** | NVMe SSD recommended |
 
 ---
@@ -388,7 +388,7 @@ graph TD
 ### Prerequisites
 
 - Rust 1.75+ (edition 2024)
-- Ubuntu 22.04+ (or compatible Linux)
+- Linux (CachyOS/Arch primary; any Linux with a Rust toolchain)
 - 16 GB RAM minimum
 - NVIDIA GPU optional (local model inference)
 
@@ -396,7 +396,7 @@ graph TD
 
 ```bash
 # Clone the repository
-git clone https://github.com/shesh/SheshAOS.git
+git clone https://github.com/gaganjainse/SheshAOS.git
 cd SheshAOS
 
 # Build the project
@@ -460,7 +460,7 @@ SheshAOS/
 ├── configs/                   # Configuration files
 ├── scripts/                   # Dev/test helper scripts
 ├── docs/                      # Additional documentation
-├── .kilo/plans/architecture.md # 🏗️ System architecture diagrams
+├── docs/architecture.md      # 🏗️ System architecture
 ├── Cargo.toml                 # Workspace definition
 ├── Makefile                   # Build shortcuts
 ├── .clippy.toml               # Lint configuration
@@ -530,7 +530,7 @@ cargo bench -p shesh-kernel bench_kernel_task_submission
 
 ## 📚 Docs
 
-- **📖 Architecture**: `.kilo/plans/architecture.md` — Complete system diagrams
+- **📖 Architecture**: `docs/architecture.md` — Complete system diagrams
 - **🤝 Contributing**: `CONTRIBUTING.md` — Development workflow
 - **🔒 Security**: `SECURITY.md` — Vulnerability reporting
 - **📝 Changelog**: `CHANGELOG.md` — Version history
@@ -577,5 +577,5 @@ This project is licensed under the [MIT License](LICENSE).
 
 ### Built with ❤️ by the SheshAOS Team
 
-[GitHub](https://github.com/shesh/SheshAOS) • [Issues](https://github.com/shesh/SheshAOS/issues)
-• [Discussions](https://github.com/shesh/SheshAOS/discussions)
+[GitHub](https://github.com/gaganjainse/SheshAOS) • [Issues](https://github.com/gaganjainse/SheshAOS/issues)
+• [Discussions](https://github.com/gaganjainse/SheshAOS/discussions)

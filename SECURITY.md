@@ -22,7 +22,7 @@ If you discover a security vulnerability, **please report it privately**. Do not
 
 | Method | Contact | Purpose |
 |--------|---------|---------|
-| 📧 Email | security@shesh.dev | Primary reporting channel |
+| 📧 Email | gagan.jain.se@gmail.com | Primary reporting channel |
 | 🐛 GitHub | Private security advisory | Alternative reporting |
 
 ### Report Content
@@ -212,9 +212,9 @@ graph LR
 
 ## 📞 Contact
 
-- **Security Team**: security@shesh.dev
-- **General Contact**: team@shesh.dev
-- **Conduct Issues**: conduct@shesh.dev
+- **Security Team**: gagan.jain.se@gmail.com
+- **General Contact**: gagan.jain.se@gmail.com
+- **Conduct Issues**: gagan.jain.se@gmail.com
 
 ---
 

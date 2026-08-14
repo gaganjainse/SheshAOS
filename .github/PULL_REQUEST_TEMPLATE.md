@@ -18,7 +18,7 @@ Brief description of the change.
 - [ ] `cargo clippy --all-targets -- -D warnings` passes
 - [ ] `cargo test --workspace` passes
 - [ ] Added tests for new public functions
-- [ ] Updated `.kilo/plans/architecture.md` if adding modules
+- [ ] Updated `docs/architecture.md` if adding modules
 - [ ] No `unwrap()` or `expect()` in production code
 - [ ] No orphaned files added
 - [ ] PR title follows conventional commits
