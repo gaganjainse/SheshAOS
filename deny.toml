@@ -23,7 +23,6 @@ ignore = [
 allow = [
     "MIT",
     "Apache-2.0",
-    "GPL-3.0-only",
     "GPL-3.0-or-later",
     "Apache-2.0 WITH LLVM-exception",
     "BSD-2-Clause",
