@@ -5,11 +5,11 @@
 actions, the kernel validates and records every state change in an append-only
 audit trail, and the whole thing runs local-first with replaceable AI providers.
 
-![Rust](https://img.shields.io/badge/Rust-2024-important?style=for-the-badge&logo=rust)
-![License](https://img.shields.io/badge/License-GPL--3.0--or--later-blue?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-0.1.0-green?style=for-the-badge)
-![Tests](https://img.shields.io/badge/Tests-877-success?style=for-the-badge)
-![CI](https://img.shields.io/github/actions/workflow/status/gaganjainse/SheshAOS/ci.yml?style=for-the-badge&label=CI)
+![Rust](https://img.shields.io/badge/Rust-2024-important?logo=rust)
+![License](https://img.shields.io/badge/License-GPL--3.0--or--later-blue)
+![Version](https://img.shields.io/badge/Version-0.1.0-green)
+![Tests](https://img.shields.io/badge/Tests-877-success)
+![CI](https://github.com/gaganjainse/SheshAOS/actions/workflows/ci.yml/badge.svg)
 
 - **License:** GPL-3.0-or-later
 - **Owner:** Gagan Jain ([@gaganjainse](https://github.com/gaganjainse))
