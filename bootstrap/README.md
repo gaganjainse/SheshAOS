@@ -1,6 +1,6 @@
-# SheshAOS v2
+# SheshAOS — Bootstrap Realm
 
-SheshAOS v2 is a governance-first, event-sourced AI operating environment for Ubuntu Linux.
+SheshAOS is a governance-first, event-sourced AI operating environment. This crate is the **bootstrap realm**: a deliberately separate, workspace-excluded crate holding the host-provisioning design brief and script.
 
 ## Core Principles
 
@@ -12,7 +12,7 @@ SheshAOS v2 is a governance-first, event-sourced AI operating environment for Ub
 ## Tech Stack
 
 - **Language**: Rust
-- **OS**: Ubuntu 26.04 (Wayland/GNOME)
+- **OS (historical brief)**: Ubuntu 26.04 (Wayland/GNOME) — the current stack targets CachyOS/Arch; see the root `README.md`
 - **Specialist Models**:
   - Gemma 4 12B (Planner)
   - Qwen3-Coder 30B (Implementation)

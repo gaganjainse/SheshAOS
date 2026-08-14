@@ -1,4 +1,4 @@
-# SheshAOS v2 — Architecture
+# SheshAOS — Architecture
 
 See the architecture overview in the project root `README.md` and the full handover brief in `HANDOVER.md`.
 

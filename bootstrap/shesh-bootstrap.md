@@ -1,4 +1,4 @@
-# Sesha Bootstrap Script
+# Shesh Bootstrap Script
 
 This script bootstraps and updates a Ubuntu workstation for AI and software development.
 
@@ -11,8 +11,8 @@ This script bootstraps and updates a Ubuntu workstation for AI and software deve
 ## Usage
 
 ```bash
-chmod +x sesha-bootstrap.sh
-./sesha-bootstrap.sh
+chmod +x shesh-bootstrap.sh
+./shesh-bootstrap.sh
 ```
 
 ## What it does

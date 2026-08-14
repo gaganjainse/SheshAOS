@@ -37,7 +37,7 @@ jobs:
 
       # Shell scripts: syntax (bash -n) + static analysis (shellcheck) +
       # formatting (shfmt, -i 4 -ci matches the repo's established style).
-      # Gate added 2026-08-12; it immediately caught sesha-bootstrap.sh's
+      # Gate added 2026-08-12; it immediately caught shesh-bootstrap.sh's
       # multi-line brace expansion, which bash could not parse at all.
       - name: Lint shell scripts (bash -n, shellcheck, shfmt)
         run: |

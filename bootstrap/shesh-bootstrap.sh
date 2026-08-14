@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sesha-bootstrap.sh — provision the Shesh host machine layout & tools.
+# shesh-bootstrap.sh — provision the Shesh host machine layout & tools.
 #
 #   --install   tools + workspace + shell + git defaults
 #   --update    system refresh only

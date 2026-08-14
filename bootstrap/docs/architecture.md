@@ -1,8 +1,12 @@
-# SheshAOS v2 — Architecture Brief
+# SheshAOS — Architecture Brief (bootstrap realm, historical)
+
+> Historical design brief from the Ubuntu-era prototype. The current SheshAOS
+> stack targets CachyOS/Arch — see the root `README.md` and `docs/architecture.md`
+> for the canonical architecture.
 
 ## 1. Executive Summary
 
-SheshAOS v2 should be designed as a governance-first, event-sourced AI operating environment for Ubuntu Linux. The system is not a chatbot wrapper and not a monolithic agent. It is a small kernel plus a set of well-bounded specialist services that route tasks to local models, tools, and persistent state safely.
+SheshAOS should be designed as a governance-first, event-sourced AI operating environment for Ubuntu Linux. The system is not a chatbot wrapper and not a monolithic agent. It is a small kernel plus a set of well-bounded specialist services that route tasks to local models, tools, and persistent state safely.
 
 The practical constraints matter: 16 GB RAM, 6 GB VRAM, Ubuntu 26.04, local-first execution, and only three chosen models. That means the architecture must assume model switching, not simultaneous residency of everything. The system should keep the kernel lightweight, make models replaceable, and treat every action as auditable, reversible, and permissioned.
 
@@ -565,7 +569,7 @@ The best near-term outcome is a system that can:
 - recover from failure
 - and keep an audit trail for every important action
 
-That is the correct foundation for SheshAOS v2.
+That is the correct foundation for SheshAOS.
 
 ## 16. Refinement notes after review
 
@@ -578,6 +582,6 @@ The first-pass design is structurally correct, but the following clarifications 
 - **Heavy model policy:** the 30B coder should be treated as a cold-loaded specialist with hard queueing and refusal when memory pressure would cause swap-thrash.
 - **Tool sandboxing:** tools should run as same-machine isolated workers with explicit capability leases, not as in-process plugins.
 - **Resource budgets:** codify hard ceilings for RAM, VRAM, context length, queue depth, and disk watermarks so the kernel can refuse work before the system becomes unstable.
-- **Worker isolation:** clarify that all workers are local processes on the same host in v2; this is not a networked microservices deployment.
+- **Worker isolation:** clarify that all workers are local processes on the same host; this is not a networked microservices deployment.
 
 These refinements do not change the architecture; they make the existing direction concrete enough to implement safely.

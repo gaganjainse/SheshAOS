@@ -13,9 +13,9 @@ members = [
     "crates/shesh-vault",
     "bin/shesh-cli",
 ]
-# sesha/ is a deliberately separate crate (AOS bootstrap realm, own lock +
-# own scripts); keep it out of the main workspace.
-exclude = ["sesha"]
+# bootstrap/ is a deliberately separate crate (AOS bootstrap realm, own lock
+# + own scripts); keep it out of the main workspace.
+exclude = ["bootstrap"]
 
 [workspace.package]
 license = "MIT"
