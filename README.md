@@ -14,7 +14,7 @@ audit trail, and the whole thing runs local-first with replaceable AI providers.
 ![License](https://img.shields.io/badge/License-GPL--3.0--or--later-blue?style=for-the-badge)
 ![Version](https://img.shields.io/badge/Version-0.1.0-green?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/Tests-877-success?style=for-the-badge)
-![CI](https://github.com/gaganjainse/SheshAOS/actions/workflows/ci.yml/badge.svg)
+![CI](https://img.shields.io/github/actions/workflow/status/gaganjainse/SheshAOS/ci.yml?style=for-the-badge&label=CI)
 
 - **License:** GPL-3.0-or-later
 - **Owner:** Gagan Jain ([@gaganjainse](https://github.com/gaganjainse))
