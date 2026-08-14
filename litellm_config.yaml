@@ -1,7 +1,9 @@
 litellm_settings:
   drop_params: true  # Drops Anthropic parameters to prevent breaking NVIDIA NIM
 
-NVIDIA_NIM_API_KEY=REDACTED-NVIDIA-NIM-KEY
+# NVIDIA_NIM_API_KEY is supplied via the environment at runtime
+# (os.environ/NVIDIA_NIM_API_KEY). Never commit the key — set it in .env
+# (gitignored) or your shell before launching.
 
 model_list:
   - model_name: nvidia/nemotron-3-ultra-550b-a55b
