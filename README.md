@@ -16,7 +16,7 @@ audit trail, and the whole thing runs local-first with replaceable AI providers.
 ![Tests](https://img.shields.io/badge/Tests-877-success?style=for-the-badge)
 ![CI](https://github.com/gaganjainse/SheshAOS/actions/workflows/ci.yml/badge.svg)
 
-[📖 Docs](docs/architecture.md) · [🤝 Contributing](CONTRIBUTING.md) · [🔒 Security](SECURITY.md) · [📝 Changelog](CHANGELOG.md)
+[📖 Docs](https://github.com/gaganjainse/shesh-docs) · [🗺 Architecture](docs/architecture.md) · [🤝 Contributing](CONTRIBUTING.md) · [🔒 Security](SECURITY.md) · [📝 Changelog](CHANGELOG.md)
 
 ---
 
@@ -220,7 +220,7 @@ SheshAOS/
 ├── bootstrap/              # 🧩 workspace-excluded host-provisioning crate
 ├── configs/                # example configuration files
 ├── scripts/                # dev/test helper scripts
-├── docs/                   # architecture + event spec
+├── docs/                   # architecture (event model → crates/shesh-kernel/src/events.rs)
 ├── fuzz/                   # libfuzzer targets (config parse, event JSON)
 ├── Cargo.toml              # workspace definition
 └── Makefile                # build shortcuts
@@ -241,6 +241,7 @@ cargo bench --workspace      # 6 criterion benches
 | Document | Purpose |
 | --- | --- |
 | [📖 Architecture](docs/architecture.md) | System diagrams & data flows |
+| [📚 Compiled docs](https://github.com/gaganjainse/shesh-docs) | Fleet-wide reading compilation (mdBook) |
 | [📋 Handover](HANDOVER.md) | Developer transition guide |
 | [🤝 Contributing](CONTRIBUTING.md) | Development workflow |
 | [🔒 Security](SECURITY.md) | Vulnerability reporting |

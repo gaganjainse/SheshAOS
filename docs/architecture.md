@@ -115,3 +115,24 @@ User → CLI → Kernel → Router (classify) → Policy (check) → Provider (i
 - Kernel validates everything
 - Every state change is an event
 - Every event is durable
+
+## Event Model (canonical source: code)
+
+Events are the source of truth: every state change, model interaction, tool call,
+and policy decision is appended as an immutable JSON Lines (`.jsonl`) record.
+
+**The canonical `EventKind` list lives in [`crates/shesh-kernel/src/events.rs`](../crates/shesh-kernel/src/events.rs)** —
+20 kinds (TaskCreated → Error) grouped as task lifecycle, model interactions,
+tool interactions, policy, and system. This doc does not duplicate the enum; the
+fuzz target `event_json` and the doc-tests pin the code as the single source of truth.
+
+Guarantees:
+1. Append-only — events are never modified or deleted
+2. Unique `EventId` (UUIDv7); duplicates rejected
+3. Sequence numbers monotonically increasing
+4. `fsync` after each write batch
+
+Example record:
+```json
+{"id":"01912345-6789-7abc-def0-123456789abc","task_id":"01912345-0000-7abc-def0-123456789000","sequence":42,"kind":"TaskStateChanged","payload":{"StateChanged":{"from":"Received","to":"Classified"}},"metadata":{"source":"kernel","correlation_id":null},"timestamp":"2026-07-31T12:00:00Z"}
+```
