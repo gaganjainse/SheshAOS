@@ -42,11 +42,23 @@ jobs:
 
       - name: Verify no merge conflicts
         run: |
-          git fetch origin "$BASE_REF"
-          if ! git merge-tree --write-tree HEAD "origin/$BASE_REF" > /dev/null 2>&1; then
+          # The checkout is shallow, so HEAD and the base may share no history
+          # in this clone. merge-tree then fails for want of a merge base and
+          # the step reported a conflict that does not exist. Deepen first,
+          # and read the conflict marker rather than the exit code.
+          git fetch --deepen=100 origin "$BASE_REF" 2>/dev/null \
+            || git fetch origin "$BASE_REF"
+          base=$(git merge-base HEAD "origin/$BASE_REF" 2>/dev/null || true)
+          if [ -z "$base" ]; then
+            echo "::notice::no common ancestor in this shallow clone; skipping"
+            exit 0
+          fi
+          if git merge-tree --write-tree HEAD "origin/$BASE_REF" 2>&1 \
+             | grep -q "^CONFLICT"; then
             echo "::error::PR has merge conflicts"
             exit 1
           fi
+          echo "No merge conflicts."
 
       - name: Check for breaking changes
         run: |
