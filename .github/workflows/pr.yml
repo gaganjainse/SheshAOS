@@ -4,10 +4,14 @@ on:
   pull_request:
     branches: [main, master]
 
+concurrency:
+  group: pr-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   pr-validation:
     name: PR Validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     env:
@@ -16,6 +20,13 @@ jobs:
       BASE_REF: ${{ github.base_ref }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v7.0.1
+        with:
+          # Full history: the size, conflict, and breaking-change steps all diff
+          # against the base. On a shallow clone the base ref is absent, the
+          # merge base cannot be computed, and every one of those gates passes
+          # while inspecting nothing.
+          fetch-depth: 0
+          persist-credentials: false
 
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c  # stable (pinned snapshot 2026-08-13; quarterly review moves it)
         with:
@@ -84,7 +95,7 @@ jobs:
 
   auto-merge:
     name: Auto-merge Dependencies
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: pr-validation
     permissions:
       contents: write

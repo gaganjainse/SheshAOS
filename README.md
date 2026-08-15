@@ -227,7 +227,7 @@ SheshAOS/
 
 ```bash
 cargo build                  # build
-cargo test --workspace       # 877 tests
+cargo test --workspace       # the workspace test suite
 cargo clippy --all-targets -- -D warnings   # zero-warning gate
 cargo fmt --check            # formatting
 cargo bench --workspace      # 6 criterion benches
