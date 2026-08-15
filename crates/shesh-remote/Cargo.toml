@@ -7,12 +7,12 @@ license.workspace = true
 [dependencies]
 russh = "0.62.6"  # >=0.60.3: RUSTSEC-2026-0153/0154 (CVE-2026-46673)
 # russh-keys merged into russh as russh::keys in the 0.4x line.
-tokio = { version = "1.0", features = ["full"] }
-async-trait = "0.1"
-tracing = "0.1"
-serde_json = "1.0"
-shesh-wps = { path = "../shesh-wps", version = "0.1.0" }
-shesh-blockctl = { path = "../shesh-blockctl", version = "0.1.0" }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }
+serde_json = { workspace = true }
+shesh-wps = { workspace = true }
+shesh-blockctl = { workspace = true }
 
 [dev-dependencies]
 rand = "0.10"
