@@ -19,6 +19,8 @@ exclude = ["bootstrap"]
 
 [workspace.package]
 license = "GPL-3.0-or-later"
+# MSRV floor: builds are verified against this and CI must not silently move it.
+rust-version = "1.85"
 
 [workspace.dependencies]
 criterion = "0.8"
