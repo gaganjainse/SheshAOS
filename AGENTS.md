@@ -9,11 +9,11 @@ Read that first, then
 [HANDOFF.md](https://github.com/gaganjainse/shesh-ecosystem/blob/main/HANDOFF.md)
 for where to continue work.
 
-This file records only what differs in `SheshAOS`.
+This file records only what differs in `shesh-aos`.
 
 ## This repository
 
-`Product. The Rust governance kernel.`
+`Component.`
 
 See [README.md](README.md) for what this component does, how to build it, and
 how to run its tests.
