@@ -1,5 +1,5 @@
 
-# 🦀 SheshAOS
+# SheshAOS
 
 **A governance-first, event-sourced AI operating system in Rust** — models propose
 actions, the kernel validates and records every state change in an append-only
@@ -7,15 +7,13 @@ audit trail, and the whole thing runs local-first with replaceable AI providers.
 
 ![Rust](https://img.shields.io/badge/Rust-2024-important?logo=rust)
 ![License](https://img.shields.io/badge/License-GPL--3.0--or--later-blue)
-![Version](https://img.shields.io/badge/Version-0.1.0-green)
-![Tests](https://img.shields.io/badge/Tests-877-success)
 ![CI](https://github.com/gaganjainse/SheshAOS/actions/workflows/ci.yml/badge.svg)
 
 - **License:** GPL-3.0-or-later
 - **Owner:** Gagan Jain ([@gaganjainse](https://github.com/gaganjainse))
 - **Target:** CachyOS/Arch · Linux-native · Rust
 
-[📖 Docs](https://github.com/gaganjainse/shesh-docs) · [🗺 Architecture](docs/architecture.md) · [🤝 Contributing](CONTRIBUTING.md) · [🔒 Security](SECURITY.md) · [📝 Changelog](CHANGELOG.md)
+[ Docs](https://github.com/gaganjainse/shesh-docs) · [ Architecture](docs/architecture.md) · [ Contributing](CONTRIBUTING.md) · [ Security](SECURITY.md) · [ Changelog](CHANGELOG.md)
 
 ---
 
@@ -28,7 +26,6 @@ cargo build --release
 ./target/release/shesh init
 ./target/release/shesh run "describe the project structure"
 ```
-
 Runs on Linux (primary target: **CachyOS/Arch + Hyprland**), offline-capable.
 
 ## What it is
@@ -41,22 +38,22 @@ of every state change. It ships with a stock **Wave Terminal** frontend
 
 | Metric | Value |
 | --- | --- |
-| 🦀 **Language** | Rust (edition 2024) |
-| 📦 **Crates** | 9 workspace crates + `shesh` CLI |
-| 🧪 **Tests** | 877 passing |
-| 🔍 **Lints** | 0 clippy warnings (`-D warnings`) |
-| 🔒 **License** | GPL-3.0-or-later |
-| 🏷️ **Status** | Production-ready flagship (personal project) |
+|  **Language** | Rust (edition 2024) |
+|  **Crates** | 9 workspace crates + `shesh` CLI |
+|  **Tests** | 877 passing |
+|  **Lints** | 0 clippy warnings (`-D warnings`) |
+|  **License** | GPL-3.0-or-later |
+|  **Status** | Production-ready flagship (personal project) |
 
 ## Why SheshAOS
 
 | Problem | SheshAOS |
 | --- | --- |
-| AI tools act without oversight | 🛡️ **Governance-first** — the kernel validates every action |
-| State is mutable | 📝 **Event-sourced** — append-only, hash-chained audit log |
-| Cloud-dependent | 💻 **Local-first** — works fully offline |
-| Locked to one model | 🔌 **Provider interface** — OpenAI-compatible + Anthropic, LiteLLM routing |
-| No terminal integration | 🌊 **Wave Terminal (stock)** + PTY/VT100 + SSH multiplexing |
+| AI tools act without oversight |  **Governance-first** — the kernel validates every action |
+| State is mutable |  **Event-sourced** — append-only, hash-chained audit log |
+| Cloud-dependent |  **Local-first** — works fully offline |
+| Locked to one model |  **Provider interface** — OpenAI-compatible + Anthropic, LiteLLM routing |
+| No terminal integration |  **Wave Terminal (stock)** + PTY/VT100 + SSH multiplexing |
 
 ## Architecture
 
@@ -66,31 +63,31 @@ title: SheshAOS system layers
 ---
 graph TB
     subgraph interface["Interface Layer"]
-        CLI["🖥️ CLI<br/>shesh-cli"]
-        WAVE["🌊 Wave Terminal<br/>(stock, ADR-0016)"]
-        RPC["🔌 RPC<br/>shesh-rpc"]
+        CLI[" CLI<br/>shesh-cli"]
+        WAVE[" Wave Terminal<br/>(stock, ADR-0016)"]
+        RPC[" RPC<br/>shesh-rpc"]
     end
     subgraph kernel["Kernel Core"]
-        K["🏛️ Kernel<br/>shesh-kernel"]
-        P["🛡️ Policy Engine"]
-        R["🔀 Task Router"]
+        K[" Kernel<br/>shesh-kernel"]
+        P[" Policy Engine"]
+        R[" Task Router"]
         S["⏰ Scheduler"]
     end
     subgraph model["Model Layer"]
-        PL["📋 Planner"]
-        CO["💻 Coder"]
-        VI["👁️ Vision"]
+        PL[" Planner"]
+        CO[" Coder"]
+        VI[" Vision"]
     end
     subgraph exec["Execution Layer"]
-        T["🔧 Tool Broker"]
-        B["🧱 Block Controller<br/>shesh-blockctl"]
-        RM["🌐 Remote Shell<br/>shesh-remote"]
+        T[" Tool Broker"]
+        B[" Block Controller<br/>shesh-blockctl"]
+        RM[" Remote Shell<br/>shesh-remote"]
     end
     subgraph storage["Storage Layer"]
-        WO["📦 WaveObj Store<br/>shesh-waveobj"]
-        WP["📡 Pub/Sub Broker<br/>shesh-wps"]
-        ES["📝 Event Store"]
-        SN["📸 Snapshots"]
+        WO[" WaveObj Store<br/>shesh-waveobj"]
+        WP[" Pub/Sub Broker<br/>shesh-wps"]
+        ES[" Event Store"]
+        SN[" Snapshots"]
     end
     CLI --> K
     WAVE --> RPC
@@ -109,24 +106,22 @@ graph TB
     K -->|records to| ES
     ES -->|compacts into| SN
 ```
-
 ```mermaid
 ---
 title: SheshAOS runtime data flow
 ---
 graph LR
-    A["📥 Submit Task"] --> B["🔍 Dedup Check"]
-    B --> C["🛡️ Policy Check"]
-    C --> D["🔀 Route Task"]
-    D --> E["📋 Plan"]
-    E --> F["💻 Code"]
-    F --> G["👁️ Review"]
-    G --> H["🔧 Execute Tools"]
-    H --> I["📝 Record Events"]
-    I --> J["💾 Update State"]
-    J --> K["📸 Snapshot"]
+    A[" Submit Task"] --> B[" Dedup Check"]
+    B --> C[" Policy Check"]
+    C --> D[" Route Task"]
+    D --> E[" Plan"]
+    E --> F[" Code"]
+    F --> G[" Review"]
+    G --> H[" Execute Tools"]
+    H --> I[" Record Events"]
+    I --> J[" Update State"]
+    J --> K[" Snapshot"]
 ```
-
 ```mermaid
 ---
 title: SheshAOS Wave object model
@@ -144,41 +139,44 @@ graph TD
     I["MetaMap"] -->|describes| A
     J["WaveStore"] -->|persists| A
 ```
-
 ```mermaid
 ---
 title: SheshAOS design principles
 ---
 graph LR
-    A["🏛️ Kernel owns truth"] --> B["📝 Event sourcing"]
-    B --> C["🛡️ Governance first"]
-    C --> D["💻 Local first"]
-    D --> E["🔌 Models are replaceable"]
+    A[" Kernel owns truth"] --> B[" Event sourcing"]
+    B --> C[" Governance first"]
+    C --> D[" Local first"]
+    D --> E[" Models are replaceable"]
 ```
 
 ## Key features
+### AI engine
 
-### 🧠 AI engine
 - Streaming responses from OpenAI-compatible and Anthropic endpoints (SSE)
 - LiteLLM-compatible model routing; local-first inference, fully offline
 - Multi-modal (vision) support; session history + context management
 
-### 🧱 Block & shell control
+### Block & shell control
+
 - PTY block controller (backpressure-aware reads) — the layer Wave blocks ride on
 - Remote PTY shell tunneling via **russh**
 
-### 🔐 Security & governance
+### Security & governance
+
 - Policy engine with trust tiers and capability-based security
 - Approval gating for destructive operations
 - Append-only event store with cryptographic integrity (hash chain + verify)
 - SSH multiplexing with connection monitoring
 - Secrets vault (`shesh-vault`)
 
-### 🌐 Remote management
+### Remote management
+
 - Native SSH client (russh), connection health monitoring, remote PTY
 - Config watcher with live reload (`shesh-wconfig`)
 
-### 🎨 Interfaces
+### Interfaces
+
 - **Wave Terminal (stock)** — mission-control surface (ADR-0016)
 - **CLI** — `shesh` init / run / doctor / status / replay
 - **IPC** — JSON-RPC 2.0 over Unix sockets (`shesh-rpc`)
@@ -197,26 +195,26 @@ graph LR
 
 | Role | Model | Use case |
 | --- | --- | --- |
-| 📋 **Planner** | local first (phi4-mini / Gemma class) | architecture, planning, review |
-| 💻 **Coder** | qwen2.5-coder:3b class | implementation, debugging, tests |
-| 👁️ **Vision** | moondream2 class | screenshots, diagrams, documents |
+|  **Planner** | local first (phi4-mini / Gemma class) | architecture, planning, review |
+|  **Coder** | qwen2.5-coder:3b class | implementation, debugging, tests |
+|  **Vision** | moondream2 class | screenshots, diagrams, documents |
 
 ## Project structure
 
 ```text
 SheshAOS/
-├── bin/shesh-cli/          # 🖥️ CLI entrypoint
+├── bin/shesh-cli/          #  CLI entrypoint
 ├── crates/
-│   ├── shesh-kernel/       # 🏛️ governance microkernel (policy, router, scheduler)
-│   ├── shesh-waveobj/      # 📦 object store & ORef graph
-│   ├── shesh-wps/          # 📡 pub/sub event broker
-│   ├── shesh-blockctl/     # 🧱 PTY shell controller
-│   ├── shesh-ai/           # 🤖 OpenAI/Anthropic streaming + LiteLLM routing
-│   ├── shesh-remote/       # 🌐 SSH remote shell (russh)
-│   ├── shesh-rpc/          # 🔌 Unix-socket JSON-RPC
-│   ├── shesh-vault/        # 🔐 command snippets & inspector
-│   └── shesh-wconfig/      # ⚙️ config watcher & settings
-├── bootstrap/              # 🧩 workspace-excluded host-provisioning crate
+│   ├── shesh-kernel/       #  governance microkernel (policy, router, scheduler)
+│   ├── shesh-waveobj/      #  object store & ORef graph
+│   ├── shesh-wps/          #  pub/sub event broker
+│   ├── shesh-blockctl/     #  PTY shell controller
+│   ├── shesh-ai/           #  OpenAI/Anthropic streaming + LiteLLM routing
+│   ├── shesh-remote/       #  SSH remote shell (russh)
+│   ├── shesh-rpc/          #  Unix-socket JSON-RPC
+│   ├── shesh-vault/        #  command snippets & inspector
+│   └── shesh-wconfig/      #  config watcher & settings
+├── bootstrap/              #  workspace-excluded host-provisioning crate
 ├── configs/                # example configuration files
 ├── scripts/                # dev/test helper scripts
 ├── docs/                   # architecture (event model → crates/shesh-kernel/src/events.rs)
@@ -239,13 +237,13 @@ cargo bench --workspace      # 6 criterion benches
 
 | Document | Purpose |
 | --- | --- |
-| [📖 Architecture](docs/architecture.md) | System diagrams & data flows |
-| [📚 Compiled docs](https://github.com/gaganjainse/shesh-docs) | Fleet-wide reading compilation (mdBook) |
-| [📋 Handover](HANDOVER.md) | Developer transition guide |
-| [🤝 Contributing](CONTRIBUTING.md) | Development workflow |
-| [🔒 Security](SECURITY.md) | Vulnerability reporting |
-| [📝 Changelog](CHANGELOG.md) | Version history |
-| [🤗 Code of Conduct](CODE_OF_CONDUCT.md) | Community standards |
+| [ Architecture](docs/architecture.md) | System diagrams & data flows |
+| [ Compiled docs](https://github.com/gaganjainse/shesh-docs) | Fleet-wide reading compilation (mdBook) |
+| [ Handover](HANDOVER.md) | Developer transition guide |
+| [ Contributing](CONTRIBUTING.md) | Development workflow |
+| [ Security](SECURITY.md) | Vulnerability reporting |
+| [ Changelog](CHANGELOG.md) | Version history |
+| [ Code of Conduct](CODE_OF_CONDUCT.md) | Community standards |
 
 ## Status
 
@@ -258,4 +256,4 @@ GPL-3.0-or-later — see [LICENSE](LICENSE).
 
 ---
 
-Built with ❤️ by [gaganjainse](https://github.com/gaganjainse).
+Built with  by [gaganjainse](https://github.com/gaganjainse).
