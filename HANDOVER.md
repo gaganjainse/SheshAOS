@@ -127,7 +127,7 @@ the top-level `zig/` tree, and the dead `tests/` harness — see CHANGELOG.
 
 ```bash
 # 1. Clone
-git clone https://github.com/gaganjainse/SheshAOS.git
+git clone https://github.com/gaganjainse/shesh-aos.git
 cd SheshAOS
 
 # 2. Build
@@ -338,8 +338,8 @@ graph LR
 ## 🤝 Getting Help
 
 - 📖 **Documentation**: Check this file and linked docs
-- 🐛 **Issues**: [GitHub Issues](https://github.com/gaganjainse/SheshAOS/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/gaganjainse/SheshAOS/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/gaganjainse/shesh-aos/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/gaganjainse/shesh-aos/discussions)
 - 📧 **Email**: gagan.jain.se@gmail.com
 
 ---
@@ -358,7 +358,7 @@ Contributors are recognized in:
 </p>
 
 <p align="center">
-  <a href="https://github.com/gaganjainse/SheshAOS">⭐ Star on GitHub</a> •
-  <a href="https://github.com/gaganjainse/SheshAOS/fork">🍴 Fork</a> •
-  <a href="https://github.com/gaganjainse/SheshAOS/issues">🐛 Report Bug</a>
+  <a href="https://github.com/gaganjainse/shesh-aos">⭐ Star on GitHub</a> •
+  <a href="https://github.com/gaganjainse/shesh-aos/fork">🍴 Fork</a> •
+  <a href="https://github.com/gaganjainse/shesh-aos/issues">🐛 Report Bug</a>
 </p>

@@ -7,7 +7,7 @@ audit trail, and the whole thing runs local-first with replaceable AI providers.
 
 ![Rust](https://img.shields.io/badge/Rust-2024-important?logo=rust)
 ![License](https://img.shields.io/badge/License-GPL--3.0--or--later-blue)
-![CI](https://github.com/gaganjainse/SheshAOS/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/gaganjainse/shesh-aos/actions/workflows/ci.yml/badge.svg)
 
 - **License:** GPL-3.0-or-later
 - **Owner:** Gagan Jain ([@gaganjainse](https://github.com/gaganjainse))
@@ -20,7 +20,7 @@ audit trail, and the whole thing runs local-first with replaceable AI providers.
 ## Quick start
 
 ```bash
-git clone https://github.com/gaganjainse/SheshAOS.git
+git clone https://github.com/gaganjainse/shesh-aos.git
 cd SheshAOS
 cargo build --release
 ./target/release/shesh init

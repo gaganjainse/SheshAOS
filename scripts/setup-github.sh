@@ -3,7 +3,7 @@
 # Run this from the repository root: ./scripts/setup-github.sh
 set -euo pipefail
 
-REPO="gaganjainse/shesha-kernel"
+REPO="gaganjainse/shesh-kernel"
 HOMEPAGE="https://sheshaaos.dev"
 
 echo "🚀 Setting up GitHub repository: $REPO"
