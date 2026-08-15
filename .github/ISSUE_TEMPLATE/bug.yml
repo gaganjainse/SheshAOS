@@ -1,0 +1,35 @@
+name: Bug
+description: Something behaves incorrectly
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happens. Evidence, not opinion.
+    validations: {required: true}
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What should happen instead.
+    validations: {required: true}
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Exact commands, with real output.
+      render: shell
+    validations: {required: true}
+  - type: input
+    id: scope
+    attributes:
+      label: Scope
+      description: Repositories and files affected.
+    validations: {required: true}
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: ["p0 blocker", "p1 next", "p2 planned", "p3 someday"]
+    validations: {required: true}

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Working agreement
+    url: https://github.com/gaganjainse/shesh-workspace/blob/main/FACTORY.md
+    about: How work is taken, done, committed, and released.
+  - name: Security
+    url: https://github.com/gaganjainse/shesh-ecosystem/blob/main/SECURITY.md
+    about: Report a vulnerability privately, not as an issue.
