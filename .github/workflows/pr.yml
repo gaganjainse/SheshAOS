@@ -38,7 +38,10 @@ jobs:
           # input (actionlint expression injection, fixed 2026-08-12).
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|refactor|test|chore|ci|perf|style)(\(.+\))?: ]]; then
+          # `deps` and `build` are included because this repository's own
+          # dependabot.yml emits `deps:` — the gate rejected every dependency
+          # PR it opened. `revert` is Conventional Commits' own type.
+          if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|refactor|test|chore|ci|perf|style|deps|build|revert)(\(.+\))?!?: ]]; then
             echo "::error::PR title must follow conventional commits: type(scope): description"
             echo "Example: feat(kernel): add task deduplication"
             exit 1
