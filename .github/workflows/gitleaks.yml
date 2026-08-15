@@ -22,5 +22,5 @@ jobs:
           persist-credentials: false  # don't persist token (zizmor artipacked)
 
       - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e  # v3.0.0
-        # GITHUB_TOKEN intentionally omitted: the gate fails the job on findings
-        # (no PR comment needed) and avoids passing credentials to the action.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
