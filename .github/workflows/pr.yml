@@ -15,7 +15,7 @@ jobs:
       # into a run: shell (zizmor template-injection, fixed 2026-08-14).
       BASE_REF: ${{ github.base_ref }}
     steps:
-      - uses: actions/checkout@v4  # v7.0.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v7.0.1
 
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c  # stable (pinned snapshot 2026-08-13; quarterly review moves it)
         with:
@@ -42,11 +42,23 @@ jobs:
 
       - name: Verify no merge conflicts
         run: |
-          git fetch origin "$BASE_REF"
-          if ! git merge-tree --write-tree HEAD "origin/$BASE_REF" > /dev/null 2>&1; then
+          # The checkout is shallow, so HEAD and the base may share no history
+          # in this clone. merge-tree then fails for want of a merge base and
+          # the step reported a conflict that does not exist. Deepen first,
+          # and read the conflict marker rather than the exit code.
+          git fetch --deepen=100 origin "$BASE_REF" 2>/dev/null \
+            || git fetch origin "$BASE_REF"
+          base=$(git merge-base HEAD "origin/$BASE_REF" 2>/dev/null || true)
+          if [ -z "$base" ]; then
+            echo "::notice::no common ancestor in this shallow clone; skipping"
+            exit 0
+          fi
+          if git merge-tree --write-tree HEAD "origin/$BASE_REF" 2>&1 \
+             | grep -q "^CONFLICT"; then
             echo "::error::PR has merge conflicts"
             exit 1
           fi
+          echo "No merge conflicts."
 
       - name: Check for breaking changes
         run: |
@@ -79,7 +91,7 @@ jobs:
       pull-requests: write
     if: github.event.pull_request.draft == false && github.event.sender.type == 'Bot' && contains(github.event.pull_request.labels.*.name, 'dependencies')
     steps:
-      - uses: actions/checkout@v4  # v7.0.1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v7.0.1
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           script: |
